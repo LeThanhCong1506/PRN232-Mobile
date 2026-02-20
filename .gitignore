@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# IDE files
+/.idea/deploymentTargetSelector.xml
+/.idea/misc.xml
+/.idea/codeStyles/
+/.vs/
