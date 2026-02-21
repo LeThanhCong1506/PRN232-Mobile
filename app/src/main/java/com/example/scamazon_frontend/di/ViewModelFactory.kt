@@ -18,6 +18,7 @@ import com.example.scamazon_frontend.data.repository.ProfileRepository
 import com.example.scamazon_frontend.ui.screens.auth.AuthViewModel
 import com.example.scamazon_frontend.ui.screens.cart.CartViewModel
 import com.example.scamazon_frontend.ui.screens.home.HomeViewModel
+import com.example.scamazon_frontend.ui.screens.product.ProductListViewModel
 import com.example.scamazon_frontend.ui.screens.product.ProductDetailViewModel
 import com.example.scamazon_frontend.ui.screens.profile.ProfileViewModel
 
@@ -39,6 +40,14 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             val homeRepository = HomeRepository(productService, categoryService)
             @Suppress("UNCHECKED_CAST")
             return HomeViewModel(homeRepository) as T
+        }
+
+        if (modelClass.isAssignableFrom(ProductListViewModel::class.java)) {
+            val productService = retrofit.create(ProductService::class.java)
+            val categoryService = retrofit.create(CategoryService::class.java)
+            val homeRepository = HomeRepository(productService, categoryService)
+            @Suppress("UNCHECKED_CAST")
+            return ProductListViewModel(homeRepository) as T
         }
 
         if (modelClass.isAssignableFrom(ProductDetailViewModel::class.java)) {
