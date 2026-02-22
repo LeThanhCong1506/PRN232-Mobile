@@ -81,9 +81,9 @@ fun AdminDashboardScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = { viewModel.loadStats() },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = White)
                         ) {
-                            Text("Retry", fontFamily = Poppins)
+                            Text("Retry", fontFamily = Poppins, color = White)
                         }
                     }
                 }
