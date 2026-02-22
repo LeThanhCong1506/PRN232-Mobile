@@ -12,6 +12,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.scamazon_frontend.ui.screens.admin.account.AdminAccountScreen
+import com.example.scamazon_frontend.ui.screens.admin.category.AdminCategoryFormScreen
+import com.example.scamazon_frontend.ui.screens.admin.category.AdminCategoryListScreen
+import com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardScreen
+import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductFormScreen
+import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductListScreen
 import com.example.scamazon_frontend.ui.screens.auth.LoginScreen
 import com.example.scamazon_frontend.ui.screens.auth.RegisterScreen
 import com.example.scamazon_frontend.ui.screens.cart.CartScreen
@@ -51,6 +57,11 @@ fun NavGraph(
                 },
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onNavigateToAdminDashboard = {
+                    navController.navigate(Screen.AdminDashboard.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
@@ -301,6 +312,127 @@ fun NavGraph(
             )
         ) {
             PlaceholderScreen(screenName = "Reviews")
+        }
+
+        // ==========================================
+        // ADMIN SCREENS
+        // ==========================================
+        composable(route = Screen.AdminDashboard.route) {
+            AdminDashboardScreen()
+        }
+
+        composable(route = Screen.AdminProducts.route) {
+            AdminProductListScreen(
+                onNavigateToAddProduct = {
+                    navController.navigate(Screen.AdminProductAdd.route)
+                },
+                onNavigateToEditProduct = { productId ->
+                    navController.navigate(Screen.AdminProductEdit.createRoute(productId))
+                }
+            )
+        }
+
+        composable(route = Screen.AdminProductAdd.route) {
+            AdminProductFormScreen(
+                productId = null,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminProductEdit.route,
+            arguments = listOf(
+                navArgument(NavArgs.PRODUCT_ID) { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString(NavArgs.PRODUCT_ID)?.toIntOrNull()
+            AdminProductFormScreen(
+                productId = productId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Screen.AdminCategories.route) {
+            AdminCategoryListScreen(
+                onNavigateToAddCategory = {
+                    navController.navigate(Screen.AdminCategoryAdd.route)
+                },
+                onNavigateToEditCategory = { categoryId ->
+                    navController.navigate(Screen.AdminCategoryEdit.createRoute(categoryId))
+                },
+                onNavigateToAddBrand = {
+                    navController.navigate(Screen.AdminBrandAdd.route)
+                },
+                onNavigateToEditBrand = { brandId ->
+                    navController.navigate(Screen.AdminBrandEdit.createRoute(brandId))
+                }
+            )
+        }
+
+        composable(route = Screen.AdminCategoryAdd.route) {
+            AdminCategoryFormScreen(
+                isBrand = false,
+                editId = null,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminCategoryEdit.route,
+            arguments = listOf(
+                navArgument("categoryId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val categoryId = backStackEntry.arguments?.getString("categoryId")?.toIntOrNull()
+            AdminCategoryFormScreen(
+                isBrand = false,
+                editId = categoryId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Screen.AdminBrandAdd.route) {
+            AdminCategoryFormScreen(
+                isBrand = true,
+                editId = null,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminBrandEdit.route,
+            arguments = listOf(
+                navArgument("brandId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val brandId = backStackEntry.arguments?.getString("brandId")?.toIntOrNull()
+            AdminCategoryFormScreen(
+                isBrand = true,
+                editId = brandId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Screen.AdminAccount.route) {
+            AdminAccountScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

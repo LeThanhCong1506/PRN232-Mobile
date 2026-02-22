@@ -5,18 +5,24 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.scamazon_frontend.core.network.RetrofitClient
 import com.example.scamazon_frontend.core.utils.TokenManager
+import com.example.scamazon_frontend.data.remote.AdminService
 import com.example.scamazon_frontend.data.remote.AuthService
+import com.example.scamazon_frontend.data.remote.BrandService
 import com.example.scamazon_frontend.data.remote.CartService
 import com.example.scamazon_frontend.data.remote.CategoryService
 import com.example.scamazon_frontend.data.remote.OrderService
 import com.example.scamazon_frontend.data.remote.ProductService
 import com.example.scamazon_frontend.data.remote.ProfileService
+import com.example.scamazon_frontend.data.repository.AdminRepository
 import com.example.scamazon_frontend.data.repository.AuthRepository
 import com.example.scamazon_frontend.data.repository.CartRepository
 import com.example.scamazon_frontend.data.repository.HomeRepository
 import com.example.scamazon_frontend.data.repository.OrderRepository
 import com.example.scamazon_frontend.data.repository.ProductRepository
 import com.example.scamazon_frontend.data.repository.ProfileRepository
+import com.example.scamazon_frontend.ui.screens.admin.category.AdminCategoryViewModel
+import com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardViewModel
+import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductViewModel
 import com.example.scamazon_frontend.ui.screens.auth.AuthViewModel
 import com.example.scamazon_frontend.ui.screens.cart.CartViewModel
 import com.example.scamazon_frontend.ui.screens.checkout.CheckoutViewModel
@@ -97,6 +103,37 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             val orderRepository = OrderRepository(orderService)
             @Suppress("UNCHECKED_CAST")
             return OrderHistoryViewModel(orderRepository) as T
+        }
+
+        // Admin ViewModels
+        if (modelClass.isAssignableFrom(AdminDashboardViewModel::class.java)) {
+            val adminService = retrofit.create(AdminService::class.java)
+            val productService = retrofit.create(ProductService::class.java)
+            val categoryService = retrofit.create(CategoryService::class.java)
+            val brandService = retrofit.create(BrandService::class.java)
+            val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
+            @Suppress("UNCHECKED_CAST")
+            return AdminDashboardViewModel(adminRepository) as T
+        }
+
+        if (modelClass.isAssignableFrom(AdminProductViewModel::class.java)) {
+            val adminService = retrofit.create(AdminService::class.java)
+            val productService = retrofit.create(ProductService::class.java)
+            val categoryService = retrofit.create(CategoryService::class.java)
+            val brandService = retrofit.create(BrandService::class.java)
+            val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
+            @Suppress("UNCHECKED_CAST")
+            return AdminProductViewModel(adminRepository, productService) as T
+        }
+
+        if (modelClass.isAssignableFrom(AdminCategoryViewModel::class.java)) {
+            val adminService = retrofit.create(AdminService::class.java)
+            val productService = retrofit.create(ProductService::class.java)
+            val categoryService = retrofit.create(CategoryService::class.java)
+            val brandService = retrofit.create(BrandService::class.java)
+            val adminRepository = AdminRepository(adminService, productService, categoryService, brandService)
+            @Suppress("UNCHECKED_CAST")
+            return AdminCategoryViewModel(adminRepository) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")
