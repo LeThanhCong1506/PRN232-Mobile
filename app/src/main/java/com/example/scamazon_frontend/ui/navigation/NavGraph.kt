@@ -34,6 +34,7 @@ import com.example.scamazon_frontend.ui.screens.product.ProductListScreen
 import com.example.scamazon_frontend.ui.screens.profile.AccountScreen
 import com.example.scamazon_frontend.ui.screens.profile.EditProfileScreen
 import com.example.scamazon_frontend.ui.screens.review.ReviewScreen
+import com.example.scamazon_frontend.ui.screens.favorite.FavoriteScreen
 import com.example.scamazon_frontend.ui.screens.search.ExploreScreen
 import com.example.scamazon_frontend.ui.theme.TextSecondary
 import com.example.scamazon_frontend.ui.theme.Typography
@@ -358,7 +359,14 @@ fun NavGraph(
         }
 
         composable(route = Screen.Wishlist.route) {
-            PlaceholderScreen(screenName = "Wishlist")
+            FavoriteScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToProductDetail = { productId ->
+                    navController.navigate(Screen.ProductDetail.createRoute(productId))
+                }
+            )
         }
 
         composable(route = Screen.Notifications.route) {
