@@ -26,7 +26,7 @@ class HomeRepository(
         categoryId: Int? = null,
         sort: String? = null
     ): Resource<ProductPaginationResponse> {
-        return safeApiCall { productService.getProducts(page, limit, categoryId, sort) }
+        return safeApiCall { productService.getProducts(page = page, limit = limit, categoryId = categoryId, sortBy = sort) }
     }
 
     private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<ApiResponse<T>>): Resource<T> {
