@@ -3,8 +3,8 @@ package com.example.scamazon_frontend.ui.screens.admin.order
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.order.AdminOrderSummaryDto
 import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
-import com.example.scamazon_frontend.data.models.order.OrderSummaryDto
 import com.example.scamazon_frontend.data.repository.AdminRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,8 +13,8 @@ import kotlinx.coroutines.launch
 
 class AdminOrderViewModel(private val repository: AdminRepository) : ViewModel() {
 
-    private val _ordersState = MutableStateFlow<Resource<List<OrderSummaryDto>>>(Resource.Loading())
-    val ordersState: StateFlow<Resource<List<OrderSummaryDto>>> = _ordersState.asStateFlow()
+    private val _ordersState = MutableStateFlow<Resource<List<AdminOrderSummaryDto>>>(Resource.Loading())
+    val ordersState: StateFlow<Resource<List<AdminOrderSummaryDto>>> = _ordersState.asStateFlow()
 
     private val _orderDetailState = MutableStateFlow<Resource<OrderDetailDataDto>?>(null)
     val orderDetailState: StateFlow<Resource<OrderDetailDataDto>?> = _orderDetailState.asStateFlow()
@@ -32,7 +32,15 @@ class AdminOrderViewModel(private val repository: AdminRepository) : ViewModel()
     fun fetchOrders() {
         viewModelScope.launch {
             _ordersState.value = Resource.Loading()
-            _ordersState.value = repository.getAdminOrders()
+            val result = repository.getAdminOrders()
+            _ordersState.value = when (result) {
+                is Resource.Success -> {
+                    val orders = result.data?.orders ?: emptyList()
+                    Resource.Success(orders)
+                }
+                is Resource.Error -> Resource.Error(result.message ?: "Error loading orders")
+                is Resource.Loading -> Resource.Loading()
+            }
         }
     }
 

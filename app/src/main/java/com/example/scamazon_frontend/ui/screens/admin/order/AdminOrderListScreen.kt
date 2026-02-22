@@ -23,7 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.core.utils.formatPrice
-import com.example.scamazon_frontend.data.models.order.OrderSummaryDto
+import com.example.scamazon_frontend.data.models.order.AdminOrderSummaryDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
@@ -208,7 +208,7 @@ private fun StatusFilterRow(
 
 @Composable
 private fun AdminOrderCard(
-    order: OrderSummaryDto,
+    order: AdminOrderSummaryDto,
     onClick: () -> Unit
 ) {
     Card(
@@ -235,6 +235,25 @@ private fun AdminOrderCard(
                 )
 
                 AdminOrderStatusBadge(status = order.status ?: "pending")
+            }
+
+            // Customer name
+            order.customerName?.let { name ->
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = TextHint,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = name,
+                        style = Typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))

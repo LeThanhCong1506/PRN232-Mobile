@@ -4,8 +4,8 @@ import com.example.scamazon_frontend.core.network.ApiResponse
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.*
 import com.example.scamazon_frontend.data.models.category.CategoryDto
+import com.example.scamazon_frontend.data.models.order.AdminOrderListDataDto
 import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
-import com.example.scamazon_frontend.data.models.order.OrderSummaryDto
 import com.example.scamazon_frontend.data.models.product.ProductPaginationResponse
 import com.example.scamazon_frontend.data.remote.AdminService
 import com.example.scamazon_frontend.data.remote.BrandService
@@ -112,7 +112,7 @@ class AdminRepository(
 
     // ==================== Order Management ====================
 
-    suspend fun getAdminOrders(): Resource<List<OrderSummaryDto>> {
+    suspend fun getAdminOrders(): Resource<AdminOrderListDataDto> {
         return safeApiCall { adminService.getAdminOrders() }
     }
 
