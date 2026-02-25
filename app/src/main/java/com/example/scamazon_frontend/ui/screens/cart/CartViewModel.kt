@@ -1,17 +1,15 @@
 package com.example.scamazon_frontend.ui.screens.cart
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.cart.CartDataDto
-import com.example.scamazon_frontend.data.models.cart.UpdateCartItemRequest
-import com.example.scamazon_frontend.data.repository.CartRepository
+import com.example.scamazon_frontend.data.models.cart.CartItemDto
+import com.example.scamazon_frontend.data.mock.MockData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
-class CartViewModel(private val repository: CartRepository) : ViewModel() {
+class CartViewModel : ViewModel() {
 
     private val _cartState = MutableStateFlow<Resource<CartDataDto>>(Resource.Loading())
     val cartState: StateFlow<Resource<CartDataDto>> = _cartState.asStateFlow()
@@ -19,50 +17,39 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
     private val _operationMessage = MutableStateFlow<String?>(null)
     val operationMessage: StateFlow<String?> = _operationMessage.asStateFlow()
 
+    private val cartItems = MockData.cartData.items.toMutableList()
+
     init {
         fetchCart()
     }
 
     fun fetchCart() {
-        viewModelScope.launch {
-            _cartState.value = Resource.Loading()
-            _cartState.value = repository.getCart()
-        }
+        rebuildCart()
     }
 
     fun updateQuantity(itemId: Int, quantity: Int) {
-        viewModelScope.launch {
-            val result = repository.updateCartItem(itemId, UpdateCartItemRequest(quantity))
-            when (result) {
-                is Resource.Success -> {
-                    // Refresh the whole cart to get updated totals
-                    _cartState.value = result
-                }
-                is Resource.Error -> {
-                    _operationMessage.value = result.message
-                }
-                else -> {}
-            }
+        val index = cartItems.indexOfFirst { it.id == itemId }
+        if (index != -1) {
+            val item = cartItems[index]
+            cartItems[index] = item.copy(quantity = quantity, itemTotal = (item.salePrice ?: item.price) * quantity)
+            rebuildCart()
         }
     }
 
     fun removeItem(itemId: Int) {
-        viewModelScope.launch {
-            val result = repository.removeCartItem(itemId)
-            when (result) {
-                is Resource.Success -> {
-                    // Refresh cart after removal
-                    fetchCart()
-                }
-                is Resource.Error -> {
-                    _operationMessage.value = result.message
-                }
-                else -> {}
-            }
-        }
+        cartItems.removeAll { it.id == itemId }
+        rebuildCart()
     }
 
     fun clearMessage() {
         _operationMessage.value = null
+    }
+
+    private fun rebuildCart() {
+        val subtotal = cartItems.sumOf { it.itemTotal }
+        val totalItems = cartItems.sumOf { it.quantity }
+        _cartState.value = Resource.Success(
+            CartDataDto(cartId = 1, items = cartItems.toList(), subtotal = subtotal, totalItems = totalItems)
+        )
     }
 }

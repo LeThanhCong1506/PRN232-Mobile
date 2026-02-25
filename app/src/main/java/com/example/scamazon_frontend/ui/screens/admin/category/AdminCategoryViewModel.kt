@@ -1,19 +1,15 @@
 package com.example.scamazon_frontend.ui.screens.admin.category
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.*
 import com.example.scamazon_frontend.data.models.category.CategoryDto
-import com.example.scamazon_frontend.data.repository.AdminRepository
+import com.example.scamazon_frontend.data.mock.MockData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
-class AdminCategoryViewModel(
-    private val repository: AdminRepository
-) : ViewModel() {
+class AdminCategoryViewModel : ViewModel() {
 
     private val _categoriesState = MutableStateFlow<Resource<List<CategoryDto>>>(Resource.Loading())
     val categoriesState: StateFlow<Resource<List<CategoryDto>>> = _categoriesState.asStateFlow()
@@ -33,68 +29,39 @@ class AdminCategoryViewModel(
     }
 
     fun loadCategories() {
-        viewModelScope.launch {
-            _categoriesState.value = Resource.Loading()
-            _categoriesState.value = repository.getCategories()
-        }
+        _categoriesState.value = Resource.Success(MockData.categories)
     }
 
     fun loadBrands() {
-        viewModelScope.launch {
-            _brandsState.value = Resource.Loading()
-            _brandsState.value = repository.getBrands()
-        }
+        _brandsState.value = Resource.Success(MockData.brands)
     }
 
     // Category CRUD
     fun createCategory(request: CreateCategoryRequest) {
-        viewModelScope.launch {
-            _saveState.value = Resource.Loading()
-            _saveState.value = repository.createCategory(request)
-        }
+        _saveState.value = Resource.Success(Unit)
     }
 
     fun updateCategory(id: Int, request: UpdateCategoryRequest) {
-        viewModelScope.launch {
-            _saveState.value = Resource.Loading()
-            _saveState.value = repository.updateCategory(id, request)
-        }
+        _saveState.value = Resource.Success(Unit)
     }
 
     fun deleteCategory(id: Int) {
-        viewModelScope.launch {
-            _deleteState.value = Resource.Loading()
-            _deleteState.value = repository.deleteCategory(id)
-        }
+        _deleteState.value = Resource.Success(Unit)
     }
 
     // Brand CRUD
     fun createBrand(request: CreateBrandRequest) {
-        viewModelScope.launch {
-            _saveState.value = Resource.Loading()
-            _saveState.value = repository.createBrand(request)
-        }
+        _saveState.value = Resource.Success(Unit)
     }
 
     fun updateBrand(id: Int, request: UpdateBrandRequest) {
-        viewModelScope.launch {
-            _saveState.value = Resource.Loading()
-            _saveState.value = repository.updateBrand(id, request)
-        }
+        _saveState.value = Resource.Success(Unit)
     }
 
     fun deleteBrand(id: Int) {
-        viewModelScope.launch {
-            _deleteState.value = Resource.Loading()
-            _deleteState.value = repository.deleteBrand(id)
-        }
+        _deleteState.value = Resource.Success(Unit)
     }
 
-    fun resetSaveState() {
-        _saveState.value = null
-    }
-
-    fun resetDeleteState() {
-        _deleteState.value = null
-    }
+    fun resetSaveState() { _saveState.value = null }
+    fun resetDeleteState() { _deleteState.value = null }
 }

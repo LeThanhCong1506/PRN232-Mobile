@@ -1,17 +1,14 @@
 package com.example.scamazon_frontend.ui.screens.checkout
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.order.CreateOrderDataDto
 import com.example.scamazon_frontend.data.models.order.CreateOrderRequest
-import com.example.scamazon_frontend.data.repository.OrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
-class CheckoutViewModel(private val orderRepository: OrderRepository) : ViewModel() {
+class CheckoutViewModel : ViewModel() {
 
     // Form fields
     private val _shippingName = MutableStateFlow("")
@@ -56,21 +53,17 @@ class CheckoutViewModel(private val orderRepository: OrderRepository) : ViewMode
             return
         }
 
-        viewModelScope.launch {
-            _orderState.value = Resource.Loading()
-            _orderState.value = orderRepository.createOrder(
-                CreateOrderRequest(
-                    shippingName = _shippingName.value,
-                    shippingPhone = _shippingPhone.value,
-                    shippingAddress = _shippingAddress.value,
-                    shippingCity = _shippingCity.value.ifBlank { null },
-                    shippingDistrict = _shippingDistrict.value.ifBlank { null },
-                    shippingWard = _shippingWard.value.ifBlank { null },
-                    paymentMethod = _paymentMethod.value,
-                    note = _note.value.ifBlank { null }
-                )
+        _orderState.value = Resource.Loading()
+        // Simulate order creation
+        _orderState.value = Resource.Success(
+            CreateOrderDataDto(
+                orderId = 99,
+                orderCode = "ORD-099",
+                total = 42500000.0,
+                paymentMethod = _paymentMethod.value,
+                paymentUrl = if (_paymentMethod.value == "vnpay") "https://example.com/pay" else null
             )
-        }
+        )
     }
 
     fun resetOrderState() {

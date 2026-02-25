@@ -1,21 +1,14 @@
 package com.example.scamazon_frontend.ui.screens.product
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.product.ProductDto
-import com.example.scamazon_frontend.data.repository.HomeRepository
+import com.example.scamazon_frontend.data.mock.MockData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import com.example.scamazon_frontend.core.network.AppEvent
-import com.example.scamazon_frontend.core.network.SignalRManager
 
-class ProductListViewModel(
-    private val repository: HomeRepository,
-    private val signalRManager: SignalRManager
-) : ViewModel() {
+class ProductListViewModel : ViewModel() {
 
     private val _productsState = MutableStateFlow<Resource<List<ProductDto>>>(Resource.Loading())
     val productsState: StateFlow<Resource<List<ProductDto>>> = _productsState.asStateFlow()
@@ -30,19 +23,7 @@ class ProductListViewModel(
     val totalPages: StateFlow<Int> = _totalPages.asStateFlow()
 
     private var categoryId: Int? = null
-
-    // Raw data from API (unsorted)
     private val allProducts = mutableListOf<ProductDto>()
-
-    init {
-        viewModelScope.launch {
-            signalRManager.events.collect { event ->
-                if (event == AppEvent.ProductUpdated) {
-                    refresh()
-                }
-            }
-        }
-    }
 
     fun init(categoryId: Int?) {
         this.categoryId = categoryId
@@ -52,7 +33,6 @@ class ProductListViewModel(
     fun setSort(sort: String) {
         if (_currentSort.value != sort) {
             _currentSort.value = sort
-            // Client-side sort: just re-sort the already-loaded data
             applySortAndEmit()
         }
     }
@@ -69,36 +49,20 @@ class ProductListViewModel(
     }
 
     private fun fetchProducts(reset: Boolean) {
-        viewModelScope.launch {
-            if (reset) {
-                _currentPage.value = 1
-                allProducts.clear()
-                _productsState.value = Resource.Loading()
-            }
-
-            val result = repository.getProducts(
-                page = _currentPage.value,
-                limit = 20,
-                categoryId = categoryId
-            )
-
-            when (result) {
-                is Resource.Success -> {
-                    val data = result.data
-                    if (data != null) {
-                        _totalPages.value = data.pagination.totalPages
-                        allProducts.addAll(data.items)
-                        applySortAndEmit()
-                    } else {
-                        _productsState.value = Resource.Success(emptyList())
-                    }
-                }
-                is Resource.Error -> {
-                    _productsState.value = Resource.Error(result.message ?: "Unknown error")
-                }
-                is Resource.Loading -> {}
-            }
+        if (reset) {
+            _currentPage.value = 1
+            allProducts.clear()
+            _productsState.value = Resource.Loading()
         }
+
+        val result = MockData.getProductsPaginated(
+            page = _currentPage.value,
+            limit = 20,
+            categoryId = categoryId
+        )
+        _totalPages.value = result.pagination.totalPages
+        allProducts.addAll(result.items)
+        applySortAndEmit()
     }
 
     private fun applySortAndEmit() {

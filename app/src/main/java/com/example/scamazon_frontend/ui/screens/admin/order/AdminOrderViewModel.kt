@@ -1,23 +1,15 @@
 package com.example.scamazon_frontend.ui.screens.admin.order
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.order.AdminOrderSummaryDto
 import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
-import com.example.scamazon_frontend.data.repository.AdminRepository
+import com.example.scamazon_frontend.data.mock.MockData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
-import com.example.scamazon_frontend.core.network.AppEvent
-import com.example.scamazon_frontend.core.network.SignalRManager
-
-class AdminOrderViewModel(
-    private val repository: AdminRepository,
-    private val signalRManager: SignalRManager
-) : ViewModel() {
+class AdminOrderViewModel : ViewModel() {
 
     private val _ordersState = MutableStateFlow<Resource<List<AdminOrderSummaryDto>>>(Resource.Loading())
     val ordersState: StateFlow<Resource<List<AdminOrderSummaryDto>>> = _ordersState.asStateFlow()
@@ -33,43 +25,19 @@ class AdminOrderViewModel(
 
     init {
         fetchOrders()
-
-        viewModelScope.launch {
-            signalRManager.events.collect { event ->
-                if (event == AppEvent.OrderUpdated) {
-                    fetchOrders()
-                }
-            }
-        }
     }
 
     fun fetchOrders() {
-        viewModelScope.launch {
-            _ordersState.value = Resource.Loading()
-            val result = repository.getAdminOrders()
-            _ordersState.value = when (result) {
-                is Resource.Success -> {
-                    val orders = result.data?.orders ?: emptyList()
-                    Resource.Success(orders)
-                }
-                is Resource.Error -> Resource.Error(result.message ?: "Error loading orders")
-                is Resource.Loading -> Resource.Loading()
-            }
-        }
+        _ordersState.value = Resource.Success(MockData.adminOrders.orders)
     }
 
     fun fetchOrderDetail(id: Int) {
-        viewModelScope.launch {
-            _orderDetailState.value = Resource.Loading()
-            _orderDetailState.value = repository.getAdminOrderDetail(id)
-        }
+        _orderDetailState.value = Resource.Loading()
+        _orderDetailState.value = Resource.Success(MockData.getOrderDetail(id))
     }
 
     fun updateOrderStatus(orderId: Int, newStatus: String) {
-        viewModelScope.launch {
-            _updateStatusState.value = Resource.Loading()
-            _updateStatusState.value = repository.updateOrderStatus(orderId, newStatus)
-        }
+        _updateStatusState.value = Resource.Success(Unit)
     }
 
     fun onFilterChange(filter: String) {

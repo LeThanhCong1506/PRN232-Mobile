@@ -3,31 +3,17 @@ package com.example.scamazon_frontend.ui.screens.admin.product
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.*
 import com.example.scamazon_frontend.data.models.category.CategoryDto
 import com.example.scamazon_frontend.data.models.product.ProductDetailDto
-import com.example.scamazon_frontend.data.models.product.ProductDto
 import com.example.scamazon_frontend.data.models.product.ProductPaginationResponse
-import com.example.scamazon_frontend.data.repository.AdminRepository
-import com.example.scamazon_frontend.data.remote.ProductService
+import com.example.scamazon_frontend.data.mock.MockData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.toRequestBody
 
-import com.example.scamazon_frontend.core.network.AppEvent
-import com.example.scamazon_frontend.core.network.SignalRManager
-
-class AdminProductViewModel(
-    private val repository: AdminRepository,
-    private val productService: ProductService,
-    private val signalRManager: SignalRManager
-) : ViewModel() {
+class AdminProductViewModel : ViewModel() {
 
     private val _productsState = MutableStateFlow<Resource<ProductPaginationResponse>>(Resource.Loading())
     val productsState: StateFlow<Resource<ProductPaginationResponse>> = _productsState.asStateFlow()
@@ -50,115 +36,62 @@ class AdminProductViewModel(
     private val _uploadState = MutableStateFlow<Resource<UploadDataDto>?>(null)
     val uploadState: StateFlow<Resource<UploadDataDto>?> = _uploadState.asStateFlow()
 
-    private var currentPage = 1
-
     init {
         loadProducts()
         loadCategories()
         loadBrands()
-
-        viewModelScope.launch {
-            signalRManager.events.collect { event ->
-                if (event == AppEvent.ProductUpdated) {
-                    loadProducts(currentPage)
-                }
-            }
-        }
     }
 
     fun loadProducts(page: Int = 1, search: String? = null) {
-        currentPage = page
-        viewModelScope.launch {
-            _productsState.value = Resource.Loading()
-            _productsState.value = repository.getProducts(page = page, limit = 20, search = search)
+        _productsState.value = Resource.Loading()
+        val filtered = if (!search.isNullOrBlank()) {
+            val items = MockData.products.filter { it.name.lowercase().contains(search.lowercase()) }
+            ProductPaginationResponse(
+                items = items,
+                pagination = com.example.scamazon_frontend.data.models.product.PaginationMetadata(1, 1, items.size)
+            )
+        } else {
+            MockData.getProductsPaginated(page = page, limit = 20)
         }
+        _productsState.value = Resource.Success(filtered)
     }
 
     fun loadProductDetail(slug: String) {
-        viewModelScope.launch {
-            _productDetailState.value = Resource.Loading()
-            try {
-                val response = productService.getProductBySlug(slug)
-                if (response.isSuccessful && response.body()?.success == true) {
-                    _productDetailState.value = Resource.Success(response.body()!!.data!!)
-                } else {
-                    _productDetailState.value = Resource.Error(response.body()?.message ?: "Error")
-                }
-            } catch (e: Exception) {
-                _productDetailState.value = Resource.Error(e.message ?: "Network error")
-            }
-        }
+        _productDetailState.value = Resource.Loading()
+        _productDetailState.value = Resource.Success(MockData.getProductDetail(slug))
     }
 
     fun loadCategories() {
-        viewModelScope.launch {
-            _categoriesState.value = repository.getCategories()
-        }
+        _categoriesState.value = Resource.Success(MockData.categories)
     }
 
     fun loadBrands() {
-        viewModelScope.launch {
-            _brandsState.value = repository.getBrands()
-        }
+        _brandsState.value = Resource.Success(MockData.brands)
     }
 
     fun createProduct(request: CreateProductRequest) {
-        viewModelScope.launch {
-            _saveState.value = Resource.Loading()
-            _saveState.value = repository.createProduct(request)
-        }
+        _saveState.value = Resource.Loading()
+        _saveState.value = Resource.Success(Unit)
     }
 
     fun updateProduct(id: Int, request: UpdateProductRequest) {
-        viewModelScope.launch {
-            _saveState.value = Resource.Loading()
-            _saveState.value = repository.updateProduct(id, request)
-        }
+        _saveState.value = Resource.Loading()
+        _saveState.value = Resource.Success(Unit)
     }
 
     fun deleteProduct(id: Int) {
-        viewModelScope.launch {
-            _deleteState.value = Resource.Loading()
-            _deleteState.value = repository.deleteProduct(id)
-        }
+        _deleteState.value = Resource.Loading()
+        _deleteState.value = Resource.Success(Unit)
     }
 
     fun uploadImage(context: Context, uri: Uri) {
-        viewModelScope.launch {
-            _uploadState.value = Resource.Loading()
-            try {
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val bytes = inputStream?.readBytes() ?: byteArrayOf()
-                inputStream?.close()
-
-                val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
-                val extension = when (mimeType) {
-                    "image/png" -> "png"
-                    "image/gif" -> "gif"
-                    "image/webp" -> "webp"
-                    else -> "jpg"
-                }
-                val fileName = "upload_${System.currentTimeMillis()}.$extension"
-
-                val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
-                val part = MultipartBody.Part.createFormData("file", fileName, requestBody)
-
-                _uploadState.value = repository.uploadImage(part)
-            } catch (e: Exception) {
-                _uploadState.value = Resource.Error(e.message ?: "Upload failed")
-            }
-        }
+        _uploadState.value = Resource.Loading()
+        _uploadState.value = Resource.Success(
+            UploadDataDto(url = "https://picsum.photos/seed/upload${System.currentTimeMillis()}/400/400", fileName = "uploaded.jpg")
+        )
     }
 
-    fun resetSaveState() {
-        _saveState.value = null
-    }
-
-    fun resetDeleteState() {
-        _deleteState.value = null
-    }
-
-    fun resetUploadState() {
-        _uploadState.value = null
-    }
+    fun resetSaveState() { _saveState.value = null }
+    fun resetDeleteState() { _deleteState.value = null }
+    fun resetUploadState() { _uploadState.value = null }
 }

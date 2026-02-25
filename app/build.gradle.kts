@@ -49,8 +49,6 @@ dependencies {
     // Compose
     implementation(platform(libs.androidx.compose.bom))
     
-    // SignalR
-    implementation("com.microsoft.signalr:signalr:7.0.0")
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
@@ -72,11 +70,7 @@ dependencies {
     // Image Loading - Coil
     implementation(libs.coil.compose)
 
-    // Networking - Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging.interceptor)
+    // Gson (kept for data model annotations)
     implementation(libs.gson)
 
     // Testing

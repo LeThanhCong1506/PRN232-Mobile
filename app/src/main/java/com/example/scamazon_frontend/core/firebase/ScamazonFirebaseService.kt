@@ -9,13 +9,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.scamazon_frontend.MainActivity
 import com.example.scamazon_frontend.R
-import com.example.scamazon_frontend.core.network.RetrofitClient
-import com.example.scamazon_frontend.core.utils.TokenManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class ScamazonFirebaseService : FirebaseMessagingService() {
 
@@ -28,8 +23,7 @@ class ScamazonFirebaseService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d(TAG, "New FCM token: $token")
-        // Send token to backend
-        sendTokenToServer(token)
+        // No longer sending to server (API removed)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -79,31 +73,5 @@ class ScamazonFirebaseService : FirebaseMessagingService() {
             .build()
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
-    }
-
-    private fun sendTokenToServer(token: String) {
-        val tokenManager = TokenManager(applicationContext)
-        val authToken = tokenManager.getToken()
-        if (authToken.isNullOrEmpty()) {
-            Log.d(TAG, "No auth token - skipping FCM registration")
-            return
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val retrofit = RetrofitClient.getClient(applicationContext)
-                val authService = retrofit.create(com.example.scamazon_frontend.data.remote.AuthService::class.java)
-                val response = authService.saveFcmToken(
-                    mapOf("token" to token, "deviceType" to "android")
-                )
-                if (response.isSuccessful) {
-                    Log.d(TAG, "FCM token sent to server successfully")
-                } else {
-                    Log.e(TAG, "Failed to send FCM token: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error sending FCM token: ${e.message}")
-            }
-        }
     }
 }
