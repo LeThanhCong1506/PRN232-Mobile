@@ -3,17 +3,23 @@ package com.example.scamazon_frontend.ui.screens.admin.product
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.*
 import com.example.scamazon_frontend.data.models.category.CategoryDto
 import com.example.scamazon_frontend.data.models.product.ProductDetailDto
 import com.example.scamazon_frontend.data.models.product.ProductPaginationResponse
-import com.example.scamazon_frontend.data.mock.MockData
+import com.example.scamazon_frontend.data.repository.AdminProductRepository
+import com.example.scamazon_frontend.data.repository.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class AdminProductViewModel : ViewModel() {
+class AdminProductViewModel(
+    private val adminProductRepo: AdminProductRepository,
+    private val productRepo: ProductRepository
+) : ViewModel() {
 
     private val _productsState = MutableStateFlow<Resource<ProductPaginationResponse>>(Resource.Loading())
     val productsState: StateFlow<Resource<ProductPaginationResponse>> = _productsState.asStateFlow()
@@ -43,52 +49,97 @@ class AdminProductViewModel : ViewModel() {
     }
 
     fun loadProducts(page: Int = 1, search: String? = null) {
-        _productsState.value = Resource.Loading()
-        val filtered = if (!search.isNullOrBlank()) {
-            val items = MockData.products.filter { it.name.lowercase().contains(search.lowercase()) }
-            ProductPaginationResponse(
-                items = items,
-                pagination = com.example.scamazon_frontend.data.models.product.PaginationMetadata(1, 1, items.size)
-            )
-        } else {
-            MockData.getProductsPaginated(page = page, limit = 20)
+        viewModelScope.launch {
+            _productsState.value = Resource.Loading()
+            _productsState.value = adminProductRepo.getAdminProducts(page = page, search = search)
         }
-        _productsState.value = Resource.Success(filtered)
     }
 
-    fun loadProductDetail(slug: String) {
-        _productDetailState.value = Resource.Loading()
-        _productDetailState.value = Resource.Success(MockData.getProductDetail(slug))
+    fun loadProductDetail(productIdOrSlug: String) {
+        viewModelScope.launch {
+            _productDetailState.value = Resource.Loading()
+            val productId = productIdOrSlug.toIntOrNull()
+            if (productId != null) {
+                _productDetailState.value = productRepo.getProductDetail(productId)
+            } else {
+                _productDetailState.value = Resource.Error("Invalid product ID")
+            }
+        }
     }
 
     fun loadCategories() {
-        _categoriesState.value = Resource.Success(MockData.categories)
+        viewModelScope.launch {
+            val result = productRepo.getCategories()
+            when (result) {
+                is Resource.Success -> _categoriesState.value = Resource.Success(result.data ?: emptyList())
+                is Resource.Error -> _categoriesState.value = Resource.Error(result.message ?: "Error loading categories")
+                is Resource.Loading -> _categoriesState.value = Resource.Loading()
+            }
+        }
     }
 
     fun loadBrands() {
-        _brandsState.value = Resource.Success(MockData.brands)
+        viewModelScope.launch {
+            _brandsState.value = Resource.Success(emptyList())
+        }
     }
 
     fun createProduct(request: CreateProductRequest) {
-        _saveState.value = Resource.Loading()
-        _saveState.value = Resource.Success(Unit)
+        viewModelScope.launch {
+            _saveState.value = Resource.Loading()
+            val result = adminProductRepo.createProduct(request)
+            _saveState.value = when (result) {
+                is Resource.Success -> Resource.Success(Unit)
+                is Resource.Error -> Resource.Error(result.message ?: "Failed to create product")
+                is Resource.Loading -> Resource.Loading()
+            }
+        }
     }
 
     fun updateProduct(id: Int, request: UpdateProductRequest) {
-        _saveState.value = Resource.Loading()
-        _saveState.value = Resource.Success(Unit)
+        viewModelScope.launch {
+            _saveState.value = Resource.Loading()
+            val result = adminProductRepo.updateProduct(id, request)
+            _saveState.value = when (result) {
+                is Resource.Success -> Resource.Success(Unit)
+                is Resource.Error -> Resource.Error(result.message ?: "Failed to update product")
+                is Resource.Loading -> Resource.Loading()
+            }
+        }
     }
 
     fun deleteProduct(id: Int) {
-        _deleteState.value = Resource.Loading()
-        _deleteState.value = Resource.Success(Unit)
+        viewModelScope.launch {
+            _deleteState.value = Resource.Loading()
+            val result = adminProductRepo.deleteProduct(id)
+            _deleteState.value = when (result) {
+                is Resource.Success -> Resource.Success(Unit)
+                is Resource.Error -> Resource.Error(result.message ?: "Failed to delete product")
+                is Resource.Loading -> Resource.Loading()
+            }
+        }
     }
 
     fun uploadImage(context: Context, uri: Uri) {
-        _uploadState.value = Resource.Loading()
-        _uploadState.value = Resource.Success(
-            UploadDataDto(url = "https://picsum.photos/seed/upload${System.currentTimeMillis()}/400/400", fileName = "uploaded.jpg")
-        )
+        viewModelScope.launch {
+            _uploadState.value = Resource.Loading()
+            // Store URI locally; batch upload will be called with uploadImages()
+            _uploadState.value = Resource.Success(
+                UploadDataDto(url = uri.toString(), fileName = uri.lastPathSegment ?: "image.jpg")
+            )
+        }
+    }
+
+    fun uploadImages(context: Context, productId: Int, uris: List<Uri>) {
+        viewModelScope.launch {
+            _uploadState.value = Resource.Loading()
+            val result = adminProductRepo.uploadImages(context, productId, uris)
+            _uploadState.value = when (result) {
+                is Resource.Success -> Resource.Success(UploadDataDto(url = "", fileName = "uploaded"))
+                is Resource.Error -> Resource.Error(result.message ?: "Upload failed")
+                is Resource.Loading -> Resource.Loading()
+            }
+        }
     }
 
     fun resetSaveState() { _saveState.value = null }

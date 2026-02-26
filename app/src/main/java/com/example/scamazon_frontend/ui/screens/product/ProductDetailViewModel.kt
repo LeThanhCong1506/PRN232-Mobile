@@ -1,31 +1,50 @@
 package com.example.scamazon_frontend.ui.screens.product
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
-import com.example.scamazon_frontend.data.models.cart.CartDataDto
 import com.example.scamazon_frontend.data.models.product.ProductDetailDto
-import com.example.scamazon_frontend.data.mock.MockData
+import com.example.scamazon_frontend.data.repository.CartRepository
+import com.example.scamazon_frontend.data.repository.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class ProductDetailViewModel : ViewModel() {
+class ProductDetailViewModel(
+    private val productRepository: ProductRepository,
+    private val cartRepository: CartRepository
+) : ViewModel() {
 
     private val _productState = MutableStateFlow<Resource<ProductDetailDto>>(Resource.Loading())
     val productState: StateFlow<Resource<ProductDetailDto>> = _productState.asStateFlow()
 
-    private val _addToCartState = MutableStateFlow<Resource<CartDataDto>?>(null)
-    val addToCartState: StateFlow<Resource<CartDataDto>?> = _addToCartState.asStateFlow()
+    private val _addToCartState = MutableStateFlow<Resource<String>?>(null)
+    val addToCartState: StateFlow<Resource<String>?> = _addToCartState.asStateFlow()
 
-    fun loadProduct(slug: String) {
+    fun loadProduct(productId: Int) {
         _productState.value = Resource.Loading()
-        _productState.value = Resource.Success(MockData.getProductDetail(slug))
+        viewModelScope.launch {
+            _productState.value = productRepository.getProductDetail(productId)
+        }
+    }
+
+    // Keep backward compatibility for slug-based navigation
+    fun loadProduct(slug: String) {
+        // If slug is actually a numeric ID, parse it
+        val id = slug.toIntOrNull()
+        if (id != null) {
+            loadProduct(id)
+        } else {
+            _productState.value = Resource.Error("Invalid product identifier")
+        }
     }
 
     fun addToCart(productId: Int, quantity: Int = 1) {
         _addToCartState.value = Resource.Loading()
-        // Simulate adding to cart
-        _addToCartState.value = Resource.Success(MockData.cartData)
+        viewModelScope.launch {
+            _addToCartState.value = cartRepository.addToCart(productId, quantity)
+        }
     }
 
     fun resetAddToCartState() {

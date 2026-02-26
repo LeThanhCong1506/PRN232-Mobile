@@ -131,7 +131,14 @@ object MockData {
         createdAt = "2025-01-01"
     )
 
-    val mockAuthResponse = AuthResponse(user = mockUser, token = "mock-jwt-token-12345")
+    val mockAuthResponse = AuthResponse(
+        userId = mockUser.id,
+        username = mockUser.username,
+        email = mockUser.email ?: "",
+        role = mockUser.role,
+        token = "mock-jwt-token-12345",
+        expiresIn = 3600
+    )
 
     // ==================== PROFILE ====================
     val profileData = ProfileDataDto(
@@ -213,8 +220,8 @@ object MockData {
     )
 
     val chatMessages = listOf(
-        ChatMessageDto(1, 1, 1, "Nguyễn Văn A", "text", "Xin chào, tôi muốn hỏi về sản phẩm", null, null, null, false, true, "2025-02-24T10:00:00"),
-        ChatMessageDto(2, 1, null, "Store", "text", "Chào bạn! Mình có thể giúp gì cho bạn?", null, null, null, true, true, "2025-02-24T10:05:00"),
-        ChatMessageDto(3, 1, 1, "Nguyễn Văn A", "text", "Cảm ơn bạn!", null, null, null, false, true, "2025-02-24T10:30:00"),
+        ChatMessageDto(1, 1, 1, "Nguyễn Văn A", "text", "Xin chào, tôi muốn hỏi về sản phẩm", null, null, null, null, false, true, "2025-02-24T10:00:00"),
+        ChatMessageDto(2, 1, null, "Store", "text", "Chào bạn! Mình có thể giúp gì cho bạn?", null, null, null, null, true, true, "2025-02-24T10:05:00"),
+        ChatMessageDto(3, 1, 1, "Nguyễn Văn A", "text", "Cảm ơn bạn!", null, null, null, null, false, true, "2025-02-24T10:30:00"),
     )
 }

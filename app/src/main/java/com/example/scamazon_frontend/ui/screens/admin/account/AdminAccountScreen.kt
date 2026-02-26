@@ -27,6 +27,7 @@ import com.example.scamazon_frontend.ui.theme.*
 @Composable
 fun AdminAccountScreen(
     viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
+    onNavigateToWarrantyClaims: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -137,6 +138,13 @@ fun AdminAccountScreen(
                         icon = Icons.Filled.Person,
                         title = "Profile",
                         subtitle = "View your profile information"
+                    )
+                    HorizontalDivider(color = BorderLight)
+                    AdminMenuItem(
+                        icon = Icons.Filled.Shield,
+                        title = "Warranty Claims",
+                        subtitle = "Manage customer warranty claims",
+                        onClick = onNavigateToWarrantyClaims
                     )
                     HorizontalDivider(color = BorderLight)
                     AdminMenuItem(

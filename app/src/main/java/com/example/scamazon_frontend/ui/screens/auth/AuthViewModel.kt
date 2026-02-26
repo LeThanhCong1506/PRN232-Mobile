@@ -11,8 +11,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+import androidx.lifecycle.viewModelScope
+import com.example.scamazon_frontend.data.repository.AuthRepository
+import kotlinx.coroutines.launch
+
 class AuthViewModel(
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<Resource<AuthResponse>?>(null)
@@ -23,21 +28,26 @@ class AuthViewModel(
 
     fun login(request: LoginRequest) {
         _loginState.value = Resource.Loading()
-        // Simulate login: admin credentials → Admin role, else Customer role
-        val isAdmin = request.username == "admin" || request.email == "admin@example.com"
-        val user = if (isAdmin) MockData.mockAdminUser else MockData.mockUser
-        val response = AuthResponse(user = user, token = "mock-jwt-token")
-        tokenManager.saveToken(response.token)
-        tokenManager.saveUserRole(response.user.role)
-        _loginState.value = Resource.Success(response)
+        viewModelScope.launch {
+            val result = authRepository.login(request)
+            if (result is Resource.Success) {
+                result.data?.token?.let { tokenManager.saveToken(it) }
+                result.data?.role?.let { tokenManager.saveUserRole(it.lowercase()) }
+            }
+            _loginState.value = result
+        }
     }
 
     fun register(request: RegisterRequest) {
         _registerState.value = Resource.Loading()
-        val response = MockData.mockAuthResponse
-        tokenManager.saveToken(response.token)
-        tokenManager.saveUserRole(response.user.role)
-        _registerState.value = Resource.Success(response)
+        viewModelScope.launch {
+            val result = authRepository.register(request)
+            if (result is Resource.Success) {
+                result.data?.token?.let { tokenManager.saveToken(it) }
+                result.data?.role?.let { tokenManager.saveUserRole(it.lowercase()) }
+            }
+            _registerState.value = result
+        }
     }
     
     fun resetState() {

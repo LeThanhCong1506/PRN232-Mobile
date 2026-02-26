@@ -102,6 +102,15 @@ sealed class Screen(val route: String) {
     object PaymentQR : Screen("payment_qr/{orderId}") {
         fun createRoute(orderId: String) = "payment_qr/$orderId"
     }
+
+    // ==========================================
+    // WARRANTY SCREENS
+    // ==========================================
+    object WarrantyList : Screen("warranty_list")
+    object WarrantyClaim : Screen("warranty_claim/{warrantyId}") {
+        fun createRoute(warrantyId: Int) = "warranty_claim/$warrantyId"
+    }
+    object AdminWarrantyClaims : Screen("admin_warranty_claims")
 }
 
 /**

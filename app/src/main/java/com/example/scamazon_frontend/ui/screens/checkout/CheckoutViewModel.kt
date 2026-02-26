@@ -1,14 +1,19 @@
 package com.example.scamazon_frontend.ui.screens.checkout
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.order.CreateOrderDataDto
 import com.example.scamazon_frontend.data.models.order.CreateOrderRequest
+import com.example.scamazon_frontend.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class CheckoutViewModel : ViewModel() {
+class CheckoutViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     // Form fields
     private val _shippingName = MutableStateFlow("")
@@ -38,6 +43,26 @@ class CheckoutViewModel : ViewModel() {
     private val _orderState = MutableStateFlow<Resource<CreateOrderDataDto>?>(null)
     val orderState: StateFlow<Resource<CreateOrderDataDto>?> = _orderState.asStateFlow()
 
+    init {
+        loadProfileForShipping()
+    }
+
+    private fun loadProfileForShipping() {
+        viewModelScope.launch {
+            val result = authRepository.getProfile()
+            if (result is Resource.Success) {
+                result.data?.let { profile ->
+                    _shippingName.value = profile.fullName ?: ""
+                    _shippingPhone.value = profile.phone ?: ""
+                    _shippingAddress.value = profile.address ?: ""
+                    _shippingCity.value = profile.city ?: ""
+                    _shippingDistrict.value = profile.district ?: ""
+                    _shippingWard.value = profile.ward ?: ""
+                }
+            }
+        }
+    }
+
     fun onShippingNameChange(value: String) { _shippingName.value = value }
     fun onShippingPhoneChange(value: String) { _shippingPhone.value = value }
     fun onShippingAddressChange(value: String) { _shippingAddress.value = value }
@@ -54,7 +79,7 @@ class CheckoutViewModel : ViewModel() {
         }
 
         _orderState.value = Resource.Loading()
-        // Simulate order creation
+        // Simulate order creation (will be replaced with real API in Milestone 3)
         _orderState.value = Resource.Success(
             CreateOrderDataDto(
                 orderId = 99,

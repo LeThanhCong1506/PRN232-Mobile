@@ -1,15 +1,19 @@
 package com.example.scamazon_frontend.ui.screens.home
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.category.CategoryDto
 import com.example.scamazon_frontend.data.models.product.ProductPaginationResponse
-import com.example.scamazon_frontend.data.mock.MockData
+import com.example.scamazon_frontend.data.repository.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val productRepository: ProductRepository
+) : ViewModel() {
 
     private val _categoriesState = MutableStateFlow<Resource<List<CategoryDto>>>(Resource.Loading())
     val categoriesState: StateFlow<Resource<List<CategoryDto>>> = _categoriesState.asStateFlow()
@@ -19,7 +23,7 @@ class HomeViewModel : ViewModel() {
 
     private val _megaSaleState = MutableStateFlow<Resource<ProductPaginationResponse>>(Resource.Loading())
     val megaSaleState: StateFlow<Resource<ProductPaginationResponse>> = _megaSaleState.asStateFlow()
-    
+
     private val _recommendedState = MutableStateFlow<Resource<ProductPaginationResponse>>(Resource.Loading())
     val recommendedState: StateFlow<Resource<ProductPaginationResponse>> = _recommendedState.asStateFlow()
 
@@ -28,9 +32,21 @@ class HomeViewModel : ViewModel() {
     }
 
     fun fetchHomeData() {
-        _categoriesState.value = Resource.Success(MockData.categories)
-        _flashSaleState.value = Resource.Success(MockData.getProductsPaginated(limit = 5, sort = "newest"))
-        _megaSaleState.value = Resource.Success(MockData.getProductsPaginated(limit = 5, sort = "price_asc"))
-        _recommendedState.value = Resource.Success(MockData.getProductsPaginated(limit = 10, sort = "popular"))
+        viewModelScope.launch {
+            _categoriesState.value = Resource.Loading()
+            _categoriesState.value = productRepository.getCategories()
+        }
+        viewModelScope.launch {
+            _flashSaleState.value = Resource.Loading()
+            _flashSaleState.value = productRepository.getProducts(pageNumber = 1, pageSize = 5)
+        }
+        viewModelScope.launch {
+            _megaSaleState.value = Resource.Loading()
+            _megaSaleState.value = productRepository.getProducts(pageNumber = 1, pageSize = 5)
+        }
+        viewModelScope.launch {
+            _recommendedState.value = Resource.Loading()
+            _recommendedState.value = productRepository.getProducts(pageNumber = 1, pageSize = 10)
+        }
     }
 }

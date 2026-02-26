@@ -39,7 +39,8 @@ fun AccountScreen(
     onNavigateToSettings: () -> Unit = {},
     onNavigateToChat: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
-    onNavigateToLogin: () -> Unit = {}
+    onNavigateToLogin: () -> Unit = {},
+    onNavigateToWarranty: () -> Unit = {}
 ) {
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -105,6 +106,13 @@ fun AccountScreen(
                 title = "My Orders",
                 subtitle = "View your order history",
                 onClick = onNavigateToOrders
+            )
+
+            AccountMenuItem(
+                icon = Icons.Outlined.Shield,
+                title = "My Warranties",
+                subtitle = "View and manage product warranties",
+                onClick = onNavigateToWarranty
             )
 
             AccountMenuItem(
@@ -207,39 +215,6 @@ private fun ProfileHeader(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Avatar
-        if (!avatarUrl.isNullOrEmpty()) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(avatarUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Avatar",
-                modifier = Modifier
-                    .size(Dimens.AvatarSizeLarge)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(Dimens.AvatarSizeLarge)
-                    .clip(CircleShape)
-                    .background(PrimaryBlueSoft),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = name.take(1).uppercase(),
-                    fontFamily = Poppins,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                    color = PrimaryBlue
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
         // User Info
         Column(modifier = Modifier.weight(1f)) {
             Text(

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Text
@@ -35,12 +36,14 @@ fun RegisterScreen(
     onNavigateToHome: () -> Unit = {}
 ) {
     var fullName by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
     var fullNameError by remember { mutableStateOf<String?>(null) }
+    var usernameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var phoneError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
@@ -56,7 +59,16 @@ fun RegisterScreen(
                 onNavigateToHome()
             }
             is Resource.Error -> {
-                emailError = registerState?.message // Basic error mapping
+                val msg = registerState?.message ?: "Registration failed"
+                val msgLower = msg.lowercase()
+                when {
+                    msgLower.contains("phone") -> phoneError = msg
+                    msgLower.contains("email") -> emailError = msg
+                    msgLower.contains("password") -> passwordError = msg
+                    msgLower.contains("username") -> usernameError = msg
+                    msgLower.contains("name") -> fullNameError = msg
+                    else -> emailError = msg // fallback
+                }
             }
             else -> {}
         }
@@ -124,6 +136,22 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Username Field
+            LafyuuTextField(
+                value = username,
+                onValueChange = {
+                    username = it
+                    usernameError = null
+                },
+                placeholder = "Username",
+                leadingIcon = Icons.Default.AccountCircle,
+                isError = usernameError != null,
+                errorMessage = usernameError,
+                imeAction = ImeAction.Next
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
             // Email Field
             LafyuuEmailField(
                 value = email,
@@ -146,7 +174,7 @@ fun RegisterScreen(
                     phone = it
                     phoneError = null
                 },
-                placeholder = "Phone Number (Optional)",
+                placeholder = "Phone Number",
                 leadingIcon = Icons.Default.Phone,
                 isError = phoneError != null,
                 errorMessage = phoneError,
@@ -186,11 +214,13 @@ fun RegisterScreen(
                     if (!isLoading) {
                         performRegistrationValidation(
                             fullName = fullName,
+                            username = username,
                             email = email,
                             phone = phone,
                             password = password,
                             confirmPassword = confirmPassword,
                             onFullNameError = { fullNameError = it },
+                            onUsernameError = { usernameError = it },
                             onEmailError = { emailError = it },
                             onPhoneError = { phoneError = it },
                             onPasswordError = { passwordError = it },
@@ -198,11 +228,13 @@ fun RegisterScreen(
                             onValid = {
                                 viewModel.register(
                                     RegisterRequest(
-                                        username = email.substringBefore("@").replace(".", "_"), // basic strategy for username
+                                        username = username,
                                         email = email,
                                         password = password,
+                                        confirmPassword = confirmPassword,
                                         fullName = fullName,
-                                        phone = phone.ifBlank { null }
+                                        phone = phone,
+                                        address = "Vietnam"
                                     )
                                 )
                             }
@@ -219,11 +251,13 @@ fun RegisterScreen(
                 onClick = {
                     performRegistrationValidation(
                         fullName = fullName,
+                        username = username,
                         email = email,
                         phone = phone,
                         password = password,
                         confirmPassword = confirmPassword,
                         onFullNameError = { fullNameError = it },
+                        onUsernameError = { usernameError = it },
                         onEmailError = { emailError = it },
                         onPhoneError = { phoneError = it },
                         onPasswordError = { passwordError = it },
@@ -231,11 +265,13 @@ fun RegisterScreen(
                         onValid = {
                             viewModel.register(
                                 RegisterRequest(
-                                    username = email.substringBefore("@").replace(".", "_"),
+                                    username = username,
                                     email = email,
                                     password = password,
+                                    confirmPassword = confirmPassword,
                                     fullName = fullName,
-                                    phone = phone.ifBlank { null }
+                                    phone = phone.ifBlank { null },
+                                    address = "Vietnam"
                                 )
                             )
                         }
@@ -299,11 +335,13 @@ fun RegisterScreen(
 
 private fun performRegistrationValidation(
     fullName: String,
+    username: String,
     email: String,
     phone: String,
     password: String,
     confirmPassword: String,
     onFullNameError: (String?) -> Unit,
+    onUsernameError: (String?) -> Unit,
     onEmailError: (String?) -> Unit,
     onPhoneError: (String?) -> Unit,
     onPasswordError: (String?) -> Unit,
@@ -323,6 +361,20 @@ private fun performRegistrationValidation(
         onFullNameError(null)
     }
 
+    // Validate username
+    if (username.isBlank()) {
+        onUsernameError("Username is required")
+        isValid = false
+    } else if (username.length < 3) {
+        onUsernameError("Username must be at least 3 characters")
+        isValid = false
+    } else if (!username.matches(Regex("^[a-zA-Z0-9_]+$"))) {
+        onUsernameError("Username can only contain letters, numbers and underscores")
+        isValid = false
+    } else {
+        onUsernameError(null)
+    }
+
     // Validate email
     if (email.isBlank()) {
         onEmailError("Email is required")
@@ -334,8 +386,11 @@ private fun performRegistrationValidation(
         onEmailError(null)
     }
 
-    // Validate phone (optional but if provided, must be valid)
-    if (phone.isNotBlank() && phone.length < 10) {
+    // Validate phone (required)
+    if (phone.isBlank()) {
+        onPhoneError("Phone number is required")
+        isValid = false
+    } else if (phone.length < 10) {
         onPhoneError("Please enter a valid phone number")
         isValid = false
     } else {

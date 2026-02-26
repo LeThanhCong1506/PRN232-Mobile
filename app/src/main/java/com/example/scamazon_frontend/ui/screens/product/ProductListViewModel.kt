@@ -1,14 +1,18 @@
 package com.example.scamazon_frontend.ui.screens.product
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.product.ProductDto
-import com.example.scamazon_frontend.data.mock.MockData
+import com.example.scamazon_frontend.data.repository.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class ProductListViewModel : ViewModel() {
+class ProductListViewModel(
+    private val productRepository: ProductRepository
+) : ViewModel() {
 
     private val _productsState = MutableStateFlow<Resource<List<ProductDto>>>(Resource.Loading())
     val productsState: StateFlow<Resource<List<ProductDto>>> = _productsState.asStateFlow()
@@ -23,10 +27,12 @@ class ProductListViewModel : ViewModel() {
     val totalPages: StateFlow<Int> = _totalPages.asStateFlow()
 
     private var categoryId: Int? = null
+    private var searchTerm: String? = null
     private val allProducts = mutableListOf<ProductDto>()
 
-    fun init(categoryId: Int?) {
+    fun init(categoryId: Int?, searchTerm: String? = null) {
         this.categoryId = categoryId
+        this.searchTerm = searchTerm
         fetchProducts(reset = true)
     }
 
@@ -55,14 +61,27 @@ class ProductListViewModel : ViewModel() {
             _productsState.value = Resource.Loading()
         }
 
-        val result = MockData.getProductsPaginated(
-            page = _currentPage.value,
-            limit = 20,
-            categoryId = categoryId
-        )
-        _totalPages.value = result.pagination.totalPages
-        allProducts.addAll(result.items)
-        applySortAndEmit()
+        viewModelScope.launch {
+            val result = productRepository.getProducts(
+                pageNumber = _currentPage.value,
+                pageSize = 20,
+                categoryId = categoryId,
+                searchTerm = searchTerm
+            )
+            when (result) {
+                is Resource.Success -> {
+                    result.data?.let { paginationResponse ->
+                        _totalPages.value = paginationResponse.pagination.totalPages
+                        allProducts.addAll(paginationResponse.items)
+                        applySortAndEmit()
+                    }
+                }
+                is Resource.Error -> {
+                    _productsState.value = Resource.Error(result.message ?: "Failed to load products")
+                }
+                is Resource.Loading -> {}
+            }
+        }
     }
 
     private fun applySortAndEmit() {

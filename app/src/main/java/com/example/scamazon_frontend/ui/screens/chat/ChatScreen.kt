@@ -1,8 +1,5 @@
 package com.example.scamazon_frontend.ui.screens.chat
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,14 +8,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,17 +30,7 @@ fun ChatScreen(
     val messagesState by viewModel.messagesState.collectAsState()
     val isSending by viewModel.isSending.collectAsState()
     var messageText by remember { mutableStateOf("") }
-    val context = LocalContext.current
     val listState = rememberLazyListState()
-
-    // Image picker → upload + send
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            viewModel.sendImageMessage(context, uri)
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.startOrLoadChat()
@@ -76,7 +61,6 @@ fun ChatScreen(
                         messageText = ""
                     }
                 },
-                onImageClick = { imagePickerLauncher.launch("image/*") },
                 isSending = isSending
             )
         }
@@ -202,7 +186,6 @@ private fun ChatInputBar(
     text: String,
     onTextChange: (String) -> Unit,
     onSend: () -> Unit,
-    onImageClick: () -> Unit,
     isSending: Boolean = false
 ) {
     Surface(
@@ -217,16 +200,6 @@ private fun ChatInputBar(
                 .navigationBarsPadding(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onImageClick, enabled = !isSending) {
-                if (isSending) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = PrimaryBlue)
-                } else {
-                    Icon(Icons.Default.Image, contentDescription = "Attach Image", tint = TextSecondary)
-                }
-            }
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
             OutlinedTextField(
                 value = text,
                 onValueChange = onTextChange,

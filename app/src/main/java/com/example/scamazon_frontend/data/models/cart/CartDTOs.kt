@@ -6,7 +6,10 @@ data class CartDataDto(
     @SerializedName("cartId") val cartId: Int,
     @SerializedName("items") val items: List<CartItemDto>,
     @SerializedName("subtotal") val subtotal: Double,
-    @SerializedName("totalItems") val totalItems: Int
+    @SerializedName("totalItems") val totalItems: Int,
+    @SerializedName("shippingFee") val shippingFee: Double = 0.0,
+    @SerializedName("discount") val discount: Double = 0.0,
+    @SerializedName("total") val total: Double = 0.0
 )
 
 data class CartItemDto(

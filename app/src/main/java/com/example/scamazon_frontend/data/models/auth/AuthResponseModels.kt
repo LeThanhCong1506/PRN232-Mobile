@@ -16,8 +16,11 @@ data class UserDto(
     @SerializedName("ward") val ward: String?,
     @SerializedName("created_at") val createdAt: String?
 )
-
 data class AuthResponse(
-    @SerializedName("user") val user: UserDto,
-    @SerializedName("token") val token: String
+    @SerializedName("userId") val userId: Int,
+    @SerializedName("username") val username: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("role") val role: String,
+    @SerializedName("accessToken") val token: String,
+    @SerializedName("expiresIn") val expiresIn: Int? = null
 )

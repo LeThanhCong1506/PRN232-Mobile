@@ -35,7 +35,8 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToWishlist: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
-    onNavigateToChat: () -> Unit = {}
+    onNavigateToChat: () -> Unit = {},
+    onNavigateToExplore: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
@@ -84,7 +85,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 SectionHeader(
                     title = "Category",
-                    onSeeAllClick = { /* Navigate to categories */ }
+                    onSeeAllClick = onNavigateToExplore
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 when (categoriesState) {
@@ -99,7 +100,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 SectionHeader(
                     title = "Flash Sale",
-                    onSeeAllClick = { /* Navigate to flash sale */ }
+                    onSeeAllClick = onNavigateToExplore
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 when (flashSaleState) {
@@ -119,7 +120,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 SectionHeader(
                     title = "Mega Sale",
-                    onSeeAllClick = { /* Navigate to mega sale */ }
+                    onSeeAllClick = onNavigateToExplore
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 when (megaSaleState) {
@@ -225,7 +226,7 @@ private fun ProductsRow(
                 rating = product.avgRating ?: 0f,
                 isFavorite = favoriteIds.contains(product.id),
                 onFavoriteClick = { onToggleFavorite(product.id) },
-                onClick = { onProductClick(product.slug) }
+                onClick = { onProductClick(product.id.toString()) }
             )
         }
     }
@@ -256,7 +257,7 @@ private fun ProductsGrid(
                         rating = product.avgRating ?: 0f,
                         isFavorite = favoriteIds.contains(product.id),
                         onFavoriteClick = { onToggleFavorite(product.id) },
-                        onClick = { onProductClick(product.slug) },
+                        onClick = { onProductClick(product.id.toString()) },
                         modifier = Modifier.weight(1f)
                     )
                 }

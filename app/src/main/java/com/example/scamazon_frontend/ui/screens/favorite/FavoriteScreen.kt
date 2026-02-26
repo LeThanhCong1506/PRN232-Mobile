@@ -97,7 +97,7 @@ fun FavoriteScreen(
                                 item = item,
                                 isFavorited = favoriteIds.contains(item.productId),
                                 onToggleFavorite = { viewModel.toggleFavorite(item.productId) },
-                                onClick = { onNavigateToProductDetail(item.productSlug) }
+                                onClick = { onNavigateToProductDetail(item.productId.toString()) }
                             )
                         }
                     }

@@ -146,6 +146,9 @@ fun CartScreen(
                         // Bottom Section - Total & Checkout
                         CartBottomSection(
                             subtotal = cart.subtotal,
+                            shippingFee = cart.shippingFee,
+                            discount = cart.discount,
+                            total = cart.total,
                             itemCount = cart.totalItems,
                             onCheckout = onNavigateToCheckout
                         )
@@ -260,6 +263,9 @@ private fun CartItemCard(
 @Composable
 private fun CartBottomSection(
     subtotal: Double,
+    shippingFee: Double,
+    discount: Double,
+    total: Double,
     itemCount: Int,
     onCheckout: () -> Unit
 ) {
@@ -302,10 +308,30 @@ private fun CartBottomSection(
                     color = TextSecondary
                 )
                 Text(
-                    text = "$40.00",
+                    text = "${formatPrice(shippingFee)}đ",
                     style = Typography.bodyLarge,
                     color = TextPrimary
                 )
+            }
+
+            if (discount > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Discount",
+                        style = Typography.bodyLarge,
+                        color = TextSecondary
+                    )
+                    Text(
+                        text = "-${formatPrice(discount)}đ",
+                        style = Typography.bodyLarge,
+                        color = StatusSuccess
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -324,7 +350,7 @@ private fun CartBottomSection(
                     color = TextPrimary
                 )
                 Text(
-                    text = "${formatPrice(subtotal + 40.0)}đ",
+                    text = "${formatPrice(total)}đ",
                     style = Typography.titleLarge,
                     color = PrimaryBlue
                 )

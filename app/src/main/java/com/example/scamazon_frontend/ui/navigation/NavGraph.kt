@@ -22,6 +22,9 @@ import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderDetailScre
 import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderListScreen
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductFormScreen
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductListScreen
+import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyClaimsScreen
+import com.example.scamazon_frontend.ui.screens.warranty.WarrantyClaimScreen
+import com.example.scamazon_frontend.ui.screens.warranty.WarrantyListScreen
 import com.example.scamazon_frontend.ui.screens.auth.LoginScreen
 import com.example.scamazon_frontend.ui.screens.auth.RegisterScreen
 import com.example.scamazon_frontend.ui.screens.cart.CartScreen
@@ -115,6 +118,9 @@ fun NavGraph(
                 },
                 onNavigateToChat = {
                     navController.navigate(Screen.Chat.route)
+                },
+                onNavigateToExplore = {
+                    navController.navigate(Screen.Explore.route)
                 }
             )
         }
@@ -157,6 +163,9 @@ fun NavGraph(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onNavigateToWarranty = {
+                    navController.navigate(Screen.WarrantyList.route)
                 }
             )
         }
@@ -397,7 +406,10 @@ fun NavGraph(
         }
 
         composable(route = Screen.Map.route) {
+            val context = LocalContext.current
+            val mapViewModel: com.example.scamazon_frontend.ui.screens.map.MapViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
             com.example.scamazon_frontend.ui.screens.map.MapScreen(
+                viewModel = mapViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -605,10 +617,50 @@ fun NavGraph(
 
         composable(route = Screen.AdminAccount.route) {
             AdminAccountScreen(
+                onNavigateToWarrantyClaims = {
+                    navController.navigate(Screen.AdminWarrantyClaims.route)
+                },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        // ==========================================
+        // WARRANTY SCREENS
+        // ==========================================
+        composable(route = Screen.WarrantyList.route) {
+            WarrantyListScreen(
+                onWarrantyClick = { warranty ->
+                    navController.navigate(Screen.WarrantyClaim.createRoute(warranty.warrantyId))
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.WarrantyClaim.route,
+            arguments = listOf(
+                navArgument("warrantyId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val warrantyId = backStackEntry.arguments?.getInt("warrantyId") ?: 0
+            WarrantyClaimScreen(
+                warrantyId = warrantyId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Screen.AdminWarrantyClaims.route) {
+            AdminWarrantyClaimsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

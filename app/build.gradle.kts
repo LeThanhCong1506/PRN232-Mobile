@@ -44,6 +44,7 @@ dependencies {
     // Core Android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation(libs.androidx.activity.compose)
 
     // Compose
@@ -72,6 +73,16 @@ dependencies {
 
     // Gson (kept for data model annotations)
     implementation(libs.gson)
+
+    // Network (Retrofit & OkHttp)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.retrofit2:converter-scalars:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // SignalR (real-time chat)
+    implementation("com.microsoft.signalr:signalr:8.0.0")
 
     // Testing
     testImplementation(libs.junit)

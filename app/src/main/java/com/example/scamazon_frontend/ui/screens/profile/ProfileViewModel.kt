@@ -4,12 +4,17 @@ import androidx.lifecycle.ViewModel
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.profile.ProfileDataDto
 import com.example.scamazon_frontend.data.models.profile.UpdateProfileRequest
-import com.example.scamazon_frontend.data.mock.MockData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class ProfileViewModel : ViewModel() {
+import androidx.lifecycle.viewModelScope
+import com.example.scamazon_frontend.data.repository.AuthRepository
+import kotlinx.coroutines.launch
+
+class ProfileViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _profileState = MutableStateFlow<Resource<ProfileDataDto>>(Resource.Loading())
     val profileState: StateFlow<Resource<ProfileDataDto>> = _profileState.asStateFlow()
@@ -17,30 +22,27 @@ class ProfileViewModel : ViewModel() {
     private val _updateState = MutableStateFlow<Resource<ProfileDataDto>?>(null)
     val updateState: StateFlow<Resource<ProfileDataDto>?> = _updateState.asStateFlow()
 
-    private var currentProfile = MockData.profileData
-
     init {
         fetchProfile()
     }
 
     fun fetchProfile() {
-        _profileState.value = Resource.Success(currentProfile)
+        _profileState.value = Resource.Loading()
+        viewModelScope.launch {
+            _profileState.value = authRepository.getProfile()
+        }
     }
 
     fun updateProfile(request: UpdateProfileRequest) {
         _updateState.value = Resource.Loading()
-        currentProfile = currentProfile.copy(
-            email = request.email ?: currentProfile.email,
-            phone = request.phone ?: currentProfile.phone,
-            fullName = request.fullName ?: currentProfile.fullName,
-            avatarUrl = request.avatarUrl ?: currentProfile.avatarUrl,
-            address = request.address ?: currentProfile.address,
-            city = request.city ?: currentProfile.city,
-            district = request.district ?: currentProfile.district,
-            ward = request.ward ?: currentProfile.ward
-        )
-        _profileState.value = Resource.Success(currentProfile)
-        _updateState.value = Resource.Success(currentProfile)
+        viewModelScope.launch {
+            val result = authRepository.updateProfile(request)
+            _updateState.value = result
+            if (result is Resource.Success) {
+                // Refresh profile data after successful update
+                _profileState.value = result
+            }
+        }
     }
 
     fun resetUpdateState() {

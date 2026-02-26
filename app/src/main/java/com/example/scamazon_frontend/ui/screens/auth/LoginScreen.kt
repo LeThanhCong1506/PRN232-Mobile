@@ -43,9 +43,9 @@ fun LoginScreen(
     LaunchedEffect(loginState) {
         when (loginState) {
             is Resource.Success -> {
-                val role = (loginState as? Resource.Success)?.data?.user?.role
+                val role = (loginState as? Resource.Success)?.data?.role?.lowercase()
                 viewModel.resetState()
-                if (role == "admin") {
+                if (role == "admin" || role == "staff") {
                     onNavigateToAdminDashboard()
                 } else {
                     onNavigateToHome()

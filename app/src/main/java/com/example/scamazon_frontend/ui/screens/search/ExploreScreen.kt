@@ -144,7 +144,7 @@ fun ExploreScreen(
                         items(products) { product ->
                             SearchProductCard(
                                 product = product,
-                                onClick = { onProductClick(product.slug) }
+                                onClick = { onProductClick(product.id.toString()) }
                             )
                         }
                     }

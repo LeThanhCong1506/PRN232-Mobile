@@ -1,14 +1,18 @@
 package com.example.scamazon_frontend.ui.screens.admin.dashboard
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.DashboardStatsDto
-import com.example.scamazon_frontend.data.mock.MockData
+import com.example.scamazon_frontend.data.repository.AdminOrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class AdminDashboardViewModel : ViewModel() {
+class AdminDashboardViewModel(
+    private val adminOrderRepo: AdminOrderRepository
+) : ViewModel() {
 
     private val _statsState = MutableStateFlow<Resource<DashboardStatsDto>>(Resource.Loading())
     val statsState: StateFlow<Resource<DashboardStatsDto>> = _statsState.asStateFlow()
@@ -21,6 +25,9 @@ class AdminDashboardViewModel : ViewModel() {
     }
 
     fun loadStats() {
-        _statsState.value = Resource.Success(MockData.dashboardStats)
+        viewModelScope.launch {
+            _statsState.value = Resource.Loading()
+            _statsState.value = adminOrderRepo.getDashboard()
+        }
     }
 }

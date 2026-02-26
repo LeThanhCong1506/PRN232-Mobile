@@ -210,7 +210,7 @@ fun ProductDetailScreen(
                                 Text(
                                     text = "Stock: $status",
                                     style = Typography.bodyMedium,
-                                    color = if (status == "in_stock") StatusSuccess else StatusError
+                                    color = if (status == "In Stock") StatusSuccess else StatusError
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
