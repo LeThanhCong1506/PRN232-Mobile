@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,9 +21,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.warranty.MyWarrantyDto
 import com.example.scamazon_frontend.di.ViewModelFactory
+import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WarrantyListScreen(
     viewModel: WarrantyViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
@@ -33,63 +32,48 @@ fun WarrantyListScreen(
 ) {
     val warrantiesState by viewModel.warrantiesState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "My Warranties",
-                        fontFamily = Poppins,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Navy)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundWhite)
-            )
-        }
-    ) { innerPadding ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundWhite)
+    ) {
+        LafyuuTopAppBar(title = "My Warranties", onBackClick = onNavigateBack)
+
         when (warrantiesState) {
             is Resource.Loading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) { CircularProgressIndicator(color = PrimaryBlue) }
             }
             is Resource.Error -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(warrantiesState.message ?: "Error", color = StatusError, fontFamily = Poppins)
-                        Button(
-                            onClick = { viewModel.loadMyWarranties() },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
-                        ) { Text("Retry", color = White, fontFamily = Poppins) }
-                    }
+                    ErrorState(
+                        message = warrantiesState.message ?: "Error loading warranties",
+                        onRetry = { viewModel.loadMyWarranties() }
+                    )
                 }
             }
             is Resource.Success -> {
                 val warranties = warrantiesState.data ?: emptyList()
                 if (warranties.isEmpty()) {
                     Box(
-                        modifier = Modifier.fillMaxSize().padding(innerPadding),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.Shield, contentDescription = null, tint = TextHint, modifier = Modifier.size(64.dp))
-                            Text("No warranties found", fontFamily = Poppins, color = TextSecondary, fontSize = 16.sp)
-                            Text("Warranties are created when orders are delivered", fontFamily = Poppins, color = TextHint, fontSize = 12.sp)
-                        }
+                        EmptyState(
+                            title = "No Warranties",
+                            message = "Warranties are created when orders are delivered"
+                        )
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(innerPadding).background(BackgroundLight),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(BackgroundLight),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {

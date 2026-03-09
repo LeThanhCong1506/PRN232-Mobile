@@ -24,8 +24,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
-import com.example.scamazon_frontend.data.models.review.ReviewDto
-import com.example.scamazon_frontend.data.models.review.ReviewListDataDto
+import com.example.scamazon_frontend.data.models.review.ReviewResponse
+import com.example.scamazon_frontend.data.models.review.ProductReviewSummaryResponse
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
@@ -103,7 +103,8 @@ fun ReviewScreen(
                         isSubmitting = createReviewState is Resource.Loading,
                         onRatingChange = { viewModel.setRating(it) },
                         onCommentChange = { viewModel.setComment(it) },
-                        onSubmit = { viewModel.submitReview(productId) }
+                        onSubmit = { viewModel.submitReview(productId) },
+                        onDeleteReview = { reviewId -> viewModel.deleteReview(productId, reviewId) }
                     )
                 }
                 null -> {
@@ -121,14 +122,15 @@ fun ReviewScreen(
 
 @Composable
 private fun ReviewContent(
-    data: ReviewListDataDto,
+    data: ProductReviewSummaryResponse,
     canWrite: Boolean,
     selectedRating: Int,
     comment: String,
     isSubmitting: Boolean,
     onRatingChange: (Int) -> Unit,
     onCommentChange: (String) -> Unit,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    onDeleteReview: (Int) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -157,7 +159,7 @@ private fun ReviewContent(
         // Reviews Header
         item {
             Text(
-                text = "Tất cả đánh giá (${data.pagination.totalItems})",
+                text = "Tất cả đánh giá (${data.totalReviews})",
                 fontFamily = Poppins,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
@@ -166,7 +168,8 @@ private fun ReviewContent(
         }
 
         // Review List
-        if (data.reviews.isEmpty()) {
+        val reviewList = data.reviews.orEmpty()
+        if (reviewList.isEmpty()) {
             item {
                 EmptyState(
                     title = "Chưa có đánh giá",
@@ -174,8 +177,11 @@ private fun ReviewContent(
                 )
             }
         } else {
-            items(data.reviews) { review ->
-                ReviewCard(review = review)
+            items(reviewList) { review ->
+                ReviewCard(
+                    review = review,
+                    onDelete = { onDeleteReview(review.reviewId) }
+                )
             }
         }
 
@@ -184,14 +190,9 @@ private fun ReviewContent(
 }
 
 @Composable
-private fun RatingSummarySection(data: ReviewListDataDto) {
-    val totalReviews = data.pagination.totalItems
-    val reviews = data.reviews
-
-    // Calculate average from all reviews if available
-    val avgRating = if (reviews.isNotEmpty()) {
-        reviews.map { it.rating }.average().toFloat()
-    } else 0f
+private fun RatingSummarySection(data: ProductReviewSummaryResponse) {
+    val totalReviews = data.totalReviews
+    val avgRating = data.averageRating.toFloat()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -348,7 +349,30 @@ private fun WriteReviewSection(
 }
 
 @Composable
-private fun ReviewCard(review: ReviewDto) {
+private fun ReviewCard(review: ReviewResponse, onDelete: () -> Unit = {}) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Xoá đánh giá", fontFamily = Poppins, fontWeight = FontWeight.Bold) },
+            text = { Text("Bạn có chắc muốn xoá đánh giá này?", fontFamily = Poppins) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    onDelete()
+                }) {
+                    Text("Xoá", color = StatusError, fontFamily = Poppins, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Huỷ", color = TextSecondary, fontFamily = Poppins)
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
@@ -363,39 +387,24 @@ private fun ReviewCard(review: ReviewDto) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Avatar
-                if (!review.user.avatarUrl.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(review.user.avatarUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Avatar",
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(BackgroundLight),
-                        contentScale = ContentScale.Crop
+                // Avatar placeholder (backend doesn't provide avatar)
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(PrimaryBlueSoft, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = PrimaryBlue,
+                        modifier = Modifier.size(20.dp)
                     )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(PrimaryBlueSoft, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = PrimaryBlue,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = review.user.fullName ?: review.user.username,
+                        text = review.reviewer ?: "Anonymous",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp,
@@ -403,13 +412,23 @@ private fun ReviewCard(review: ReviewDto) {
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    review.createdAt?.let { date ->
-                        Text(
-                            text = date.take(10),
-                            style = Typography.bodySmall,
-                            color = TextHint
-                        )
-                    }
+                    Text(
+                        text = review.createdAt?.take(10) ?: "",
+                        style = Typography.bodySmall,
+                        color = TextHint
+                    )
+                }
+
+                IconButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Xoá đánh giá",
+                        tint = TextHint,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 

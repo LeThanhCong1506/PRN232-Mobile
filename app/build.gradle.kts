@@ -81,6 +81,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
+    // QR Code generation (ZXing Core - pure Java, no camera)
+    implementation("com.google.zxing:core:3.5.3")
+
     // SignalR (real-time chat)
     implementation("com.microsoft.signalr:signalr:8.0.0")
 

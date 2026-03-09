@@ -45,9 +45,11 @@ sealed class Screen(val route: String) {
     object Checkout : Screen("checkout")
     object ShippingAddress : Screen("shipping_address")
     object PaymentMethod : Screen("payment_method")
-    object OrderSuccess : Screen("order_success/{orderId}/{orderCode}/{total}/{paymentMethod}") {
-        fun createRoute(orderId: String, orderCode: String = "", total: String = "0", paymentMethod: String = "cod") =
-            "order_success/$orderId/$orderCode/$total/$paymentMethod"
+    object OrderSuccess : Screen("order_success/{orderId}?orderCode={orderCode}&total={total}&paymentMethod={paymentMethod}") {
+        fun createRoute(orderId: String, orderCode: String = "", total: String = "0", paymentMethod: String = "cod"): String {
+            val encodedOrderCode = android.net.Uri.encode(orderCode) ?: ""
+            return "order_success/$orderId?orderCode=$encodedOrderCode&total=$total&paymentMethod=$paymentMethod"
+        }
     }
 
     // ==========================================
@@ -101,6 +103,23 @@ sealed class Screen(val route: String) {
     }
     object PaymentQR : Screen("payment_qr/{orderId}") {
         fun createRoute(orderId: String) = "payment_qr/$orderId"
+    }
+    object PaymentResult : Screen("payment_result/{resultType}") {
+        fun createRoute(
+            resultType: String,
+            status: String? = null,
+            orderId: String? = null,
+            orderNumber: String? = null,
+            message: String? = null
+        ): String {
+            return "payment_result/$resultType?" +
+                   listOfNotNull(
+                       status?.let { "status=$it" },
+                       orderId?.let { "orderId=$it" },
+                       orderNumber?.let { "orderNumber=$it" },
+                       message?.let { "message=$it" }
+                   ).joinToString("&")
+        }
     }
 
     // ==========================================

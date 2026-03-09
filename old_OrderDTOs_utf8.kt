@@ -1,6 +1,19 @@
-package com.example.scamazon_frontend.data.models.order
+﻿package com.example.scamazon_frontend.data.models.order
 
 import com.google.gson.annotations.SerializedName
+
+// ==================== Request ====================
+
+data class CreateOrderRequest(
+    @SerializedName("shippingName") val shippingName: String,
+    @SerializedName("shippingPhone") val shippingPhone: String,
+    @SerializedName("shippingAddress") val shippingAddress: String,
+    @SerializedName("shippingCity") val shippingCity: String? = null,
+    @SerializedName("shippingDistrict") val shippingDistrict: String? = null,
+    @SerializedName("shippingWard") val shippingWard: String? = null,
+    @SerializedName("paymentMethod") val paymentMethod: String = "cod",
+    @SerializedName("note") val note: String? = null
+)
 
 // ==================== Response ====================
 

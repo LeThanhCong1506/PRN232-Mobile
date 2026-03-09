@@ -191,13 +191,18 @@ object MockData {
     )
 
     // ==================== REVIEWS ====================
-    val reviews = ReviewListDataDto(
+    val reviews = ProductReviewSummaryResponse(
+        averageRating = 4.6,
+        totalReviews = 3,
+        ratingDistribution = mapOf("5" to 2, "4" to 1, "3" to 0, "2" to 0, "1" to 0),
         reviews = listOf(
-            ReviewDto(1, 5, "Sản phẩm rất tốt!", ReviewUserDto(1, "user1", "Nguyễn A", null), "2025-02-18"),
-            ReviewDto(2, 4, "Giao hàng nhanh, đóng gói cẩn thận", ReviewUserDto(2, "user2", "Trần B", null), "2025-02-17"),
-            ReviewDto(3, 5, "Chất lượng xứng đáng với giá tiền", ReviewUserDto(3, "user3", "Lê C", null), "2025-02-15"),
+            ReviewResponse(1, 5, "Sản phẩm rất tốt!", "user1", "2025-02-18"),
+            ReviewResponse(2, 4, "Giao hàng nhanh, đóng gói cẩn thận", "user2", "2025-02-17"),
+            ReviewResponse(3, 5, "Chất lượng xứng đáng với giá tiền", "user3", "2025-02-15")
         ),
-        pagination = ReviewPaginationDto(1, 1, 3, 10, false, false)
+        page = 1,
+        pageSize = 10,
+        totalPages = 1
     )
 
     // ==================== FAVORITES ====================

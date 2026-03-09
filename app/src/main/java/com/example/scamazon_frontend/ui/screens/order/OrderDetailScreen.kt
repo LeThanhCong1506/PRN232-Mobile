@@ -24,8 +24,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.core.utils.formatPrice
-import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
-import com.example.scamazon_frontend.data.models.order.OrderItemDto
+import com.example.scamazon_frontend.data.models.order.OrderDetailResponse
+import com.example.scamazon_frontend.data.models.order.OrderItemResponse
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
@@ -72,10 +72,28 @@ fun OrderDetailScreen(
             }
             is Resource.Success -> {
                 val order = state.data!!
-                OrderDetailContent(
-                    order = order,
-                    onNavigateToReview = onNavigateToReview
-                )
+                val scaffoldState = remember { SnackbarHostState() }
+                
+                Scaffold(
+                    snackbarHost = { SnackbarHost(scaffoldState) },
+                    topBar = { },
+                    containerColor = Color.Transparent
+                ) { padding ->
+                    Box(modifier = Modifier.padding(padding)) {
+                        OrderDetailContent(
+                            order = order,
+                            onNavigateToReview = onNavigateToReview,
+                            onCancelOrder = { reason ->
+                                viewModel.cancelOrder(
+                                    id = orderId,
+                                    reason = reason,
+                                    onSuccess = {},
+                                    onError = {}
+                                )
+                            }
+                        )
+                    }
+                }
             }
             null -> {
                 Box(
@@ -91,10 +109,13 @@ fun OrderDetailScreen(
 
 @Composable
 private fun OrderDetailContent(
-    order: OrderDetailDataDto,
-    onNavigateToReview: (Int) -> Unit = {}
+    order: OrderDetailResponse,
+    onNavigateToReview: (Int) -> Unit = {},
+    onCancelOrder: (String) -> Unit = {}
 ) {
-    val isDelivered = order.status?.lowercase() == "delivered"
+    val isDelivered = order.status.lowercase() == "delivered"
+    val canCancel = order.status.lowercase() == "pending" || order.status.lowercase() == "confirmed"
+    var showCancelDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -157,18 +178,96 @@ private fun OrderDetailContent(
         }
 
         // Note
-        if (!order.note.isNullOrBlank()) {
+        if (!order.notes.isNullOrBlank()) {
             item {
-                NoteSection(order.note)
+                NoteSection(order.notes)
+            }
+        }
+
+        if (canCancel) {
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                if (order.payment?.status?.lowercase() == "pending" && order.payment.paymentMethod.lowercase() == "sepay") {
+                    val context = LocalContext.current
+                    LafyuuPrimaryButton(
+                        text = "Pay Now",
+                        onClick = {
+                            try {
+                                val url = "https://10.0.2.2:7295/api/Payment/${order.orderId}/checkout?successUrl=myapp://payment/success&errorUrl=myapp://payment/error"
+                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                // Browser cannot handle the URL; silently ignore
+                                e.printStackTrace()
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                OutlinedButton(
+                    onClick = { showCancelDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusError),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, StatusError)
+                ) {
+                    Text(
+                        text = "Cancel Order",
+                        fontFamily = Poppins,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
+
+    if (showCancelDialog) {
+        var cancelReason by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showCancelDialog = false },
+            title = { Text("Cancel Order") },
+            text = {
+                Column {
+                    Text("Are you sure you want to cancel this order? This action cannot be undone.")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = cancelReason,
+                        onValueChange = { cancelReason = it },
+                        label = { Text("Reason (Optional)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showCancelDialog = false
+                        onCancelOrder(cancelReason.ifBlank { "User requested cancellation" })
+                    }
+                ) {
+                    Text("Confirm", color = StatusError)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun OrderHeaderSection(order: OrderDetailDataDto) {
+private fun OrderHeaderSection(order: OrderDetailResponse) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -182,13 +281,13 @@ private fun OrderHeaderSection(order: OrderDetailDataDto) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = order.orderCode,
+                    text = order.orderNumber,
                     fontFamily = Poppins,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = PrimaryBlue
                 )
-                OrderStatusBadge(status = order.status ?: "pending")
+                OrderStatusBadge(status = order.status)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -318,7 +417,7 @@ private fun OrderStatusSection(currentStatus: String) {
 }
 
 @Composable
-private fun ShippingInfoSection(order: OrderDetailDataDto) {
+private fun ShippingInfoSection(order: OrderDetailResponse) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -336,14 +435,9 @@ private fun ShippingInfoSection(order: OrderDetailDataDto) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            ShippingRow(icon = Icons.Default.Person, value = order.shippingName)
-            ShippingRow(icon = Icons.Default.Phone, value = order.shippingPhone)
-            ShippingRow(icon = Icons.Default.LocationOn, value = buildString {
-                append(order.shippingAddress)
-                order.shippingWard?.let { append(", $it") }
-                order.shippingDistrict?.let { append(", $it") }
-                order.shippingCity?.let { append(", $it") }
-            })
+            ShippingRow(icon = Icons.Default.Person, value = order.customerName ?: "")
+            ShippingRow(icon = Icons.Default.Phone, value = order.customerPhone ?: "")
+            ShippingRow(icon = Icons.Default.LocationOn, value = order.shippingAddress)
         }
     }
 }
@@ -376,7 +470,7 @@ private fun ShippingRow(
 
 @Composable
 private fun OrderItemCard(
-    item: OrderItemDto,
+    item: OrderItemResponse,
     showReviewButton: Boolean = false,
     onReviewClick: () -> Unit = {}
 ) {
@@ -394,13 +488,13 @@ private fun OrderItemCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Product Image
-                if (!item.productImage.isNullOrEmpty()) {
+                if (!item.productImageUrl.isNullOrEmpty()) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(item.productImage)
+                            .data(item.productImageUrl)
                             .crossfade(true)
                             .build(),
-                        contentDescription = item.productName,
+                        contentDescription = item.productName ?: "Product Image",
                         modifier = Modifier
                             .size(56.dp)
                             .clip(RoundedCornerShape(8.dp))
@@ -425,7 +519,7 @@ private fun OrderItemCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = item.productName,
+                        text = item.productName ?: "",
                         style = Typography.titleSmall,
                         color = TextPrimary,
                         maxLines = 2
@@ -436,7 +530,7 @@ private fun OrderItemCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "${formatPrice(item.price)}đ × ${item.quantity}",
+                            text = "${formatPrice(item.unitPrice)}đ × ${item.quantity}",
                             style = Typography.bodySmall,
                             color = TextSecondary
                         )
@@ -490,7 +584,7 @@ private fun OrderItemCard(
 
 @Composable
 private fun ReviewPromptSection(
-    items: List<OrderItemDto>,
+    items: List<OrderItemResponse>,
     onReviewClick: (Int) -> Unit
 ) {
     Card(
@@ -529,7 +623,7 @@ private fun ReviewPromptSection(
 }
 
 @Composable
-private fun PaymentSummarySection(order: OrderDetailDataDto) {
+private fun PaymentSummarySection(order: OrderDetailResponse) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -547,10 +641,10 @@ private fun PaymentSummarySection(order: OrderDetailDataDto) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            SummaryRow("Subtotal", formatPrice(order.subtotal) + "đ")
-            SummaryRow("Shipping Fee", formatPrice(order.shippingFee) + "đ")
-            if (order.discount > 0) {
-                SummaryRow("Discount", "-${formatPrice(order.discount)}đ", StatusSuccess)
+            SummaryRow("Subtotal", formatPrice(order.subtotalAmount) + "đ")
+            SummaryRow("Shipping Fee", formatPrice(order.shippingFee ?: 0.0) + "đ")
+            if (order.discountAmount != null && order.discountAmount > 0) {
+                SummaryRow("Discount", "-${formatPrice(order.discountAmount)}đ", StatusSuccess)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -569,7 +663,7 @@ private fun PaymentSummarySection(order: OrderDetailDataDto) {
                     color = TextPrimary
                 )
                 Text(
-                    text = "${formatPrice(order.total)}đ",
+                    text = "${formatPrice(order.totalAmount)}đ",
                     fontFamily = Poppins,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
@@ -603,7 +697,7 @@ private fun SummaryRow(label: String, value: String, valueColor: Color = TextPri
 }
 
 @Composable
-private fun PaymentInfoSection(order: OrderDetailDataDto) {
+private fun PaymentInfoSection(order: OrderDetailResponse) {
     val payment = order.payment ?: return
 
     Card(
@@ -628,7 +722,10 @@ private fun PaymentInfoSection(order: OrderDetailDataDto) {
                 when (payment.paymentMethod.lowercase()) {
                     "vnpay" -> "VNPay"
                     "zalopay" -> "ZaloPay"
-                    else -> "Cash on Delivery"
+                    "sepay" -> "SePay"
+                    "bank_transfer" -> "Bank Transfer"
+                    "cod" -> "Cash on Delivery"
+                    else -> payment.paymentMethod.replaceFirstChar { it.uppercase() }
                 }
             )
             SummaryRow(
@@ -638,7 +735,7 @@ private fun PaymentInfoSection(order: OrderDetailDataDto) {
             payment.transactionId?.let {
                 SummaryRow("Transaction ID", it)
             }
-            payment.paidAt?.let {
+            payment.paymentDate?.let {
                 SummaryRow("Paid At", it.take(19).replace("T", " "))
             }
         }
