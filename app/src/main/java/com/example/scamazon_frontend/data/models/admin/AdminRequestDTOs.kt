@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName
 
 data class CreateProductRequest(
     @SerializedName("name") val name: String,
+    @SerializedName("sku") val sku: String,
     @SerializedName("description") val description: String? = null,
     @SerializedName("detailDescription") val detailDescription: String? = null,
     @SerializedName("specifications") val specifications: String? = null,
