@@ -80,7 +80,12 @@ class AdminProductViewModel(
 
     fun loadBrands() {
         viewModelScope.launch {
-            _brandsState.value = Resource.Success(emptyList())
+            val result = productRepo.getBrands()
+            when (result) {
+                is Resource.Success -> _brandsState.value = Resource.Success(result.data ?: emptyList())
+                is Resource.Error -> _brandsState.value = Resource.Error(result.message ?: "Error loading brands")
+                is Resource.Loading -> _brandsState.value = Resource.Loading()
+            }
         }
     }
 

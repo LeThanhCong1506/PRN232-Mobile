@@ -96,6 +96,35 @@ class ProductRepository(private val api: ProductApi) {
         }
     }
 
+    suspend fun getBrands(): Resource<List<com.example.scamazon_frontend.data.models.admin.BrandDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getBrands()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        val brands = body.data.map {
+                            com.example.scamazon_frontend.data.models.admin.BrandDto(
+                                id = it.brandId,
+                                name = it.name,
+                                slug = "",
+                                description = null,
+                                logoUrl = it.logoUrl
+                            )
+                        }
+                        Resource.Success(brands)
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to load brands")
+                    }
+                } else {
+                    Resource.Error("Error ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
     // === Mapping functions ===
 
     private fun BackendProductDto.toProductDto(): ProductDto {

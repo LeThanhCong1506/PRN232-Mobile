@@ -54,6 +54,7 @@ fun AdminProductFormScreen(
 
     // Form fields
     var name by remember { mutableStateOf("") }
+    var sku by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var salePrice by remember { mutableStateOf("") }
     var stockQuantity by remember { mutableStateOf("") }
@@ -164,6 +165,17 @@ fun AdminProductFormScreen(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Product Name *", fontFamily = Poppins) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
+            )
+
+            // SKU
+            OutlinedTextField(
+                value = sku,
+                onValueChange = { sku = it },
+                label = { Text("SKU *", fontFamily = Poppins) },
+                placeholder = { Text("e.g. ARD-UNO-R3", fontFamily = Poppins) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true
@@ -394,8 +406,8 @@ fun AdminProductFormScreen(
             // Save Button
             Button(
                 onClick = {
-                    if (name.isBlank() || price.isBlank()) {
-                        Toast.makeText(context, "Name and Price are required", Toast.LENGTH_SHORT).show()
+                    if (name.isBlank() || sku.isBlank() || price.isBlank()) {
+                        Toast.makeText(context, "Name, SKU and Price are required", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
                     
@@ -426,6 +438,7 @@ fun AdminProductFormScreen(
                         viewModel.createProduct(
                             CreateProductRequest(
                                 name = name,
+                                sku = sku,
                                 price = price.toDoubleOrNull() ?: 0.0,
                                 salePrice = salePrice.toDoubleOrNull(),
                                 stockQuantity = stockQuantity.toIntOrNull() ?: 0,
