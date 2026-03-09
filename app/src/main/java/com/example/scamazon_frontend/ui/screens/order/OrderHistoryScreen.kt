@@ -2,9 +2,11 @@ package com.example.scamazon_frontend.ui.screens.order
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -25,7 +27,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.core.utils.formatPrice
-import com.example.scamazon_frontend.data.models.order.OrderSummaryDto
+import com.example.scamazon_frontend.data.models.order.OrderResponse
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
@@ -37,6 +39,16 @@ fun OrderHistoryScreen(
     onOrderClick: (String) -> Unit = {}
 ) {
     val ordersState by viewModel.ordersState.collectAsStateWithLifecycle()
+    val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
+
+    val filterOptions = listOf(
+        null to "All",
+        "pending" to "Pending",
+        "confirmed" to "Confirmed",
+        "shipping" to "Shipping",
+        "delivered" to "Delivered",
+        "cancelled" to "Cancelled"
+    )
 
     Column(
         modifier = Modifier
@@ -44,6 +56,42 @@ fun OrderHistoryScreen(
             .background(BackgroundWhite)
     ) {
         LafyuuTopAppBar(title = "My Orders", onBackClick = onNavigateBack)
+
+        // Filter Chips
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            filterOptions.forEach { (value, label) ->
+                FilterChip(
+                    selected = selectedFilter == value,
+                    onClick = { viewModel.onFilterChange(value) },
+                    label = {
+                        Text(
+                            text = label,
+                            fontFamily = Poppins,
+                            fontWeight = if (selectedFilter == value) FontWeight.SemiBold else FontWeight.Normal,
+                            fontSize = 13.sp
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = PrimaryBlue,
+                        selectedLabelColor = White,
+                        containerColor = BackgroundLight,
+                        labelColor = TextSecondary
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        borderColor = BorderLight,
+                        selectedBorderColor = PrimaryBlue,
+                        enabled = true,
+                        selected = selectedFilter == value
+                    )
+                )
+            }
+        }
 
         when (ordersState) {
             is Resource.Loading -> {
@@ -97,10 +145,10 @@ fun OrderHistoryScreen(
                         contentPadding = PaddingValues(Dimens.ScreenPadding),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(orders, key = { it.id }) { order ->
+                        items(orders, key = { it.orderId }) { order ->
                             OrderCard(
                                 order = order,
-                                onClick = { onOrderClick(order.id.toString()) }
+                                onClick = { onOrderClick(order.orderId.toString()) }
                             )
                         }
                     }
@@ -112,7 +160,7 @@ fun OrderHistoryScreen(
 
 @Composable
 private fun OrderCard(
-    order: OrderSummaryDto,
+    order: OrderResponse,
     onClick: () -> Unit
 ) {
     Card(
@@ -131,7 +179,7 @@ private fun OrderCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = order.orderCode,
+                    text = order.orderNumber,
                     style = Typography.titleMedium,
                     color = TextPrimary
                 )
@@ -146,22 +194,7 @@ private fun OrderCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Product Image
-                if (!order.firstProductImage.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(order.firstProductImage)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Order Product",
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(BackgroundLight),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
+                // Product Image removed as backend OrderResponse doesn't supply it yet
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -173,7 +206,7 @@ private fun OrderCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "${formatPrice(order.total)}đ",
+                        text = "${formatPrice(order.totalAmount)}đ",
                         fontFamily = Poppins,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,

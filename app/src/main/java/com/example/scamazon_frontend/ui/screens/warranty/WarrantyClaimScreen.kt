@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,9 +18,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.di.ViewModelFactory
+import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WarrantyClaimScreen(
     warrantyId: Int,
@@ -51,25 +49,16 @@ fun WarrantyClaimScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Submit Warranty Claim", fontFamily = Poppins, fontWeight = FontWeight.Bold, color = TextPrimary)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Navy)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundWhite)
-            )
-        }
-    ) { innerPadding ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundWhite)
+    ) {
+        LafyuuTopAppBar(title = "Submit Warranty Claim", onBackClick = onNavigateBack)
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .background(BackgroundLight)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
@@ -134,19 +123,12 @@ fun WarrantyClaimScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
+            LafyuuPrimaryButton(
+                text = if (isSubmitting) "Submitting..." else "Submit Claim",
                 onClick = { viewModel.submitClaim(warrantyId) },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
                 enabled = issueDescription.length >= 10 && !isSubmitting,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, disabledContainerColor = TextHint)
-            ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = White, strokeWidth = 2.dp)
-                } else {
-                    Text("Submit Claim", fontFamily = Poppins, fontWeight = FontWeight.SemiBold, color = White, fontSize = 16.sp)
-                }
-            }
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

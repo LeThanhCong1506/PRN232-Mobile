@@ -42,9 +42,9 @@ class AdminWarrantyViewModel(
             val request = ResolveWarrantyClaimRequest(resolution = resolution.uppercase(), resolutionNote = note)
             val result = warrantyRepo.resolveWarrantyClaim(claimId, request)
             _resolveState.value = when (result) {
-                is Resource.Success -> Resource.Success(Unit)
-                is Resource.Error -> Resource.Error(result.message ?: "Failed to resolve claim")
-                is Resource.Loading -> Resource.Loading()
+                is Resource.Success<*> -> Resource.Success(Unit)
+                is Resource.Error<*> -> Resource.Error(result.message ?: "Failed to resolve claim")
+                is Resource.Loading<*> -> Resource.Loading()
             }
         }
     }

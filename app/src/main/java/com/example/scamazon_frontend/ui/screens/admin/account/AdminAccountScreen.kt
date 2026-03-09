@@ -1,6 +1,7 @@
 package com.example.scamazon_frontend.ui.screens.admin.account
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -214,6 +215,7 @@ private fun AdminMenuItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -239,12 +241,11 @@ private fun AdminMenuItem(
                 color = TextSecondary
             )
         }
-        IconButton(onClick = onClick) {
-            Icon(
-                Icons.Filled.ChevronRight,
-                contentDescription = "Go",
-                tint = TextSecondary
-            )
-        }
+        Icon(
+            Icons.Filled.ChevronRight,
+            contentDescription = "Go",
+            tint = TextSecondary,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }

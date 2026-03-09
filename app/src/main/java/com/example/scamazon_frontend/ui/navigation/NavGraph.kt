@@ -31,6 +31,7 @@ import com.example.scamazon_frontend.ui.screens.cart.CartScreen
 import com.example.scamazon_frontend.ui.screens.checkout.CheckoutScreen
 import com.example.scamazon_frontend.ui.screens.checkout.OrderSuccessScreen
 import com.example.scamazon_frontend.ui.screens.checkout.PaymentQRScreen
+import com.example.scamazon_frontend.ui.screens.checkout.PaymentResultScreen
 import com.example.scamazon_frontend.ui.screens.home.HomeScreen
 import com.example.scamazon_frontend.ui.screens.order.OrderDetailScreen
 import com.example.scamazon_frontend.ui.screens.order.OrderHistoryScreen
@@ -260,17 +261,22 @@ fun NavGraph(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onOrderSuccess = { orderId, orderCode, total, paymentMethod ->
-                    if (paymentMethod == "vnpay") {
-                        // Navigate to Payment QR screen for bank transfer
+                onOrderSuccess = { orderId, orderCode, total, paymentMethod, _, _ ->
+                    if (paymentMethod.equals("SEPAY", ignoreCase = true)) {
+                        // SEPAY: Navigate to PaymentQR screen which shows QR code and polls for payment
                         navController.navigate(Screen.PaymentQR.createRoute(orderId)) {
                             popUpTo(Screen.Cart.route) { inclusive = true }
                         }
-                    } else {
+                    } else if (paymentMethod.equals("COD", ignoreCase = true)) {
                         // COD: go directly to success
                         navController.navigate(
                             Screen.OrderSuccess.createRoute(orderId, orderCode, total, paymentMethod)
                         ) {
+                            popUpTo(Screen.Cart.route) { inclusive = true }
+                        }
+                    } else {
+                        // Other payment methods: navigate to PaymentQR screen
+                        navController.navigate(Screen.PaymentQR.createRoute(orderId)) {
                             popUpTo(Screen.Cart.route) { inclusive = true }
                         }
                     }
@@ -290,11 +296,52 @@ fun NavGraph(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onPaymentSuccess = {
-                    navController.navigate(
-                        Screen.OrderSuccess.createRoute(orderId.toString())
-                    ) {
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onNavigateToOrders = {
+                    navController.navigate(Screen.OrderHistory.route) {
                         popUpTo(Screen.Home.route)
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Screen.PaymentResult.route + "?status={status}&orderId={orderId}&orderNumber={orderNumber}&message={message}",
+            deepLinks = listOf(
+                androidx.navigation.navDeepLink { uriPattern = "myapp://payment/{resultType}" }
+            ),
+            arguments = listOf(
+                navArgument("resultType") { type = NavType.StringType },
+                navArgument("status") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("orderId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("orderNumber") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("message") { type = NavType.StringType; nullable = true; defaultValue = null }
+            )
+        ) { backStackEntry -> 
+            val resultType = backStackEntry.arguments?.getString("resultType") ?: "unknown"
+            val status = backStackEntry.arguments?.getString("status")
+            val orderId = backStackEntry.arguments?.getString("orderId")
+            val orderNumber = backStackEntry.arguments?.getString("orderNumber")
+            val message = backStackEntry.arguments?.getString("message")
+
+            PaymentResultScreen(
+                resultType = resultType,
+                status = status,
+                orderId = orderId,
+                orderNumber = orderNumber,
+                message = message,
+                onNavigateHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateOrders = {
+                    navController.navigate(Screen.OrderHistory.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
@@ -304,9 +351,9 @@ fun NavGraph(
             route = Screen.OrderSuccess.route,
             arguments = listOf(
                 navArgument(NavArgs.ORDER_ID) { type = NavType.StringType },
-                navArgument("orderCode") { type = NavType.StringType; defaultValue = "" },
-                navArgument("total") { type = NavType.StringType; defaultValue = "0" },
-                navArgument("paymentMethod") { type = NavType.StringType; defaultValue = "cod" }
+                navArgument("orderCode") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                navArgument("total") { type = NavType.StringType; nullable = true; defaultValue = "0" },
+                navArgument("paymentMethod") { type = NavType.StringType; nullable = true; defaultValue = "cod" }
             )
         ) { backStackEntry ->
             val orderCode = backStackEntry.arguments?.getString("orderCode") ?: ""

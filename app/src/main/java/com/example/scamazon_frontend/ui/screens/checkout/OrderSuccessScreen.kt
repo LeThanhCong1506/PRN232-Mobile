@@ -123,7 +123,10 @@ fun OrderSuccessScreen(
                     value = when (paymentMethod.lowercase()) {
                         "vnpay" -> "VNPay"
                         "zalopay" -> "ZaloPay"
-                        else -> "Cash on Delivery"
+                        "sepay" -> "SePay"
+                        "bank_transfer" -> "Bank Transfer"
+                        "cod" -> "Cash on Delivery"
+                        else -> paymentMethod.replaceFirstChar { it.uppercase() }
                     }
                 )
                 InfoRow(label = "Status", value = "Pending")

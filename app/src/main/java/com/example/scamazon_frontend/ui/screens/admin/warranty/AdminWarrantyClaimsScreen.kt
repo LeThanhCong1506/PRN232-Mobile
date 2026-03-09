@@ -8,8 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,9 +21,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimDto
 import com.example.scamazon_frontend.di.ViewModelFactory
+import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminWarrantyClaimsScreen(
     viewModel: AdminWarrantyViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
@@ -55,85 +53,86 @@ fun AdminWarrantyClaimsScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Warranty Claims", fontFamily = Poppins, fontWeight = FontWeight.Bold, color = TextPrimary)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Navy)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundWhite)
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(BackgroundLight)
-        ) {
-            // Filter Chips
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BackgroundWhite)
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                listOf("all" to "All", "submitted" to "Submitted", "approved" to "Approved", "rejected" to "Rejected", "resolved" to "Resolved").forEach { (value, label) ->
-                    val isSelected = selectedFilter == value
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.onFilterChange(value) },
-                        label = { Text(label, fontFamily = Poppins, fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = PrimaryBlue,
-                            selectedLabelColor = White
-                        )
-                    )
-                }
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundWhite)
+    ) {
+        LafyuuTopAppBar(title = "Warranty Claims", onBackClick = onNavigateBack)
 
-            when (claimsState) {
-                is Resource.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = PrimaryBlue)
-                }
-                is Resource.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(claimsState.message ?: "Error", color = StatusError, fontFamily = Poppins)
-                        Button(onClick = { viewModel.loadClaims() }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)) {
-                            Text("Retry", color = White, fontFamily = Poppins)
-                        }
+        // Filter Chips
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(BackgroundWhite)
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("all" to "All", "submitted" to "Submitted", "approved" to "Approved", "rejected" to "Rejected", "resolved" to "Resolved").forEach { (value, label) ->
+                val isSelected = selectedFilter == value
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { viewModel.onFilterChange(value) },
+                    label = {
+                        Text(
+                            label,
+                            fontFamily = Poppins,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            fontSize = 13.sp
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = PrimaryBlue,
+                        selectedLabelColor = White,
+                        containerColor = BackgroundLight,
+                        labelColor = TextSecondary
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        borderColor = BorderLight,
+                        selectedBorderColor = PrimaryBlue,
+                        enabled = true,
+                        selected = isSelected
+                    )
+                )
+            }
+        }
+
+        when (claimsState) {
+            is Resource.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = PrimaryBlue)
+            }
+            is Resource.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                ErrorState(
+                    message = claimsState.message ?: "Error loading claims",
+                    onRetry = { viewModel.loadClaims() }
+                )
+            }
+            is Resource.Success -> {
+                val claims = claimsState.data ?: emptyList()
+                if (claims.isEmpty()) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        EmptyState(
+                            title = "No Claims",
+                            message = "No warranty claims found"
+                        )
                     }
-                }
-                is Resource.Success -> {
-                    val claims = claimsState.data ?: emptyList()
-                    if (claims.isEmpty()) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("No warranty claims found", fontFamily = Poppins, color = TextSecondary)
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(claims, key = { it.claimId }) { claim ->
+                            AdminClaimCard(
+                                claim = claim,
+                                onResolve = {
+                                    showResolveDialog = claim
+                                    selectedResolution = "APPROVED"
+                                    resolutionNote = ""
+                                }
+                            )
                         }
-                    } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(claims, key = { it.claimId }) { claim ->
-                                AdminClaimCard(
-                                    claim = claim,
-                                    onResolve = {
-                                        showResolveDialog = claim
-                                        selectedResolution = "APPROVED"
-                                        resolutionNote = ""
-                                    }
-                                )
-                            }
-                            item { Spacer(modifier = Modifier.height(16.dp)) }
-                        }
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
                     }
                 }
             }
@@ -153,7 +152,11 @@ fun AdminWarrantyClaimsScreen(
                     Text("Resolution:", fontFamily = Poppins, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                     listOf("APPROVED", "REJECTED", "RESOLVED").forEach { res ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = selectedResolution == res, onClick = { selectedResolution = res })
+                            RadioButton(
+                                selected = selectedResolution == res,
+                                onClick = { selectedResolution = res },
+                                colors = RadioButtonDefaults.colors(selectedColor = PrimaryBlue)
+                            )
                             Text(res, fontFamily = Poppins, fontSize = 13.sp)
                         }
                     }
@@ -164,20 +167,25 @@ fun AdminWarrantyClaimsScreen(
                         label = { Text("Note (optional)", fontFamily = Poppins) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
-                        maxLines = 3
+                        maxLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderDefault,
+                            cursorColor = PrimaryBlue,
+                            focusedLabelColor = PrimaryBlue
+                        )
                     )
                 }
             },
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = { viewModel.resolveClaim(claim.claimId, selectedResolution, resolutionNote.ifBlank { null }) },
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                     enabled = resolveState !is Resource.Loading
                 ) {
                     if (resolveState is Resource.Loading) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = White, strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = PrimaryBlue, strokeWidth = 2.dp)
                     } else {
-                        Text("Confirm", fontFamily = Poppins, color = White)
+                        Text("Confirm", fontFamily = Poppins, fontWeight = FontWeight.SemiBold, color = PrimaryBlue)
                     }
                 }
             },
@@ -210,7 +218,7 @@ private fun AdminClaimCard(claim: AdminWarrantyClaimDto, onResolve: () -> Unit) 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Claim #${claim.claimId}", fontFamily = Poppins, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
                 Surface(shape = RoundedCornerShape(20.dp), color = statusColor.copy(alpha = 0.15f)) {
-                    Text(statusLabel, fontFamily = Poppins, fontSize = 11.sp, color = statusColor, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
+                    Text(statusLabel, fontFamily = Poppins, fontSize = 11.sp, color = statusColor, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
                 }
             }
 
@@ -240,14 +248,10 @@ private fun AdminClaimCard(claim: AdminWarrantyClaimDto, onResolve: () -> Unit) 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(claim.submittedAt.take(10), fontFamily = Poppins, fontSize = 11.sp, color = TextHint)
                 if (claim.status.uppercase() == "SUBMITTED") {
-                    Button(
-                        onClick = onResolve,
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text("Resolve", fontFamily = Poppins, fontSize = 13.sp, color = White)
-                    }
+                    LafyuuSmallButton(
+                        text = "Resolve",
+                        onClick = onResolve
+                    )
                 }
             }
         }

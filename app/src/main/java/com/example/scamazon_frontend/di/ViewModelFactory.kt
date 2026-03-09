@@ -32,6 +32,12 @@ import com.example.scamazon_frontend.data.repository.CartRepository
 import com.example.scamazon_frontend.data.repository.ProductRepository
 import com.example.scamazon_frontend.data.repository.ReviewRepository
 import com.example.scamazon_frontend.data.repository.WarrantyRepository
+import com.example.scamazon_frontend.data.network.api.CheckoutApi
+import com.example.scamazon_frontend.data.network.api.OrderApi
+import com.example.scamazon_frontend.data.network.api.PaymentApi
+import com.example.scamazon_frontend.data.repository.CheckoutRepository
+import com.example.scamazon_frontend.data.repository.OrderRepository
+import com.example.scamazon_frontend.data.repository.PaymentRepository
 import com.example.scamazon_frontend.ui.screens.cart.CartViewModel
 import com.example.scamazon_frontend.ui.screens.chat.ChatViewModel
 import com.example.scamazon_frontend.ui.screens.checkout.CheckoutViewModel
@@ -94,14 +100,26 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(SearchViewModel::class.java) -> SearchViewModel(productRepo)
             modelClass.isAssignableFrom(CheckoutViewModel::class.java) -> {
                 val authApi = retrofit.create(AuthApi::class.java)
-                CheckoutViewModel(AuthRepository(authApi))
+                val checkoutApi = retrofit.create(CheckoutApi::class.java)
+                val orderApi = retrofit.create(OrderApi::class.java)
+                CheckoutViewModel(
+                    AuthRepository(authApi),
+                    CheckoutRepository(checkoutApi),
+                    OrderRepository(orderApi)
+                )
             }
-            modelClass.isAssignableFrom(OrderHistoryViewModel::class.java) -> OrderHistoryViewModel()
+            modelClass.isAssignableFrom(OrderHistoryViewModel::class.java) -> {
+                val orderApi = retrofit.create(OrderApi::class.java)
+                OrderHistoryViewModel(OrderRepository(orderApi))
+            }
             modelClass.isAssignableFrom(AdminDashboardViewModel::class.java) -> AdminDashboardViewModel(adminOrderRepo)
             modelClass.isAssignableFrom(AdminProductViewModel::class.java) -> AdminProductViewModel(adminProductRepo, productRepo)
             modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) -> AdminCategoryViewModel()
             modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> AdminOrderViewModel(adminOrderRepo)
-            modelClass.isAssignableFrom(PaymentQRViewModel::class.java) -> PaymentQRViewModel()
+            modelClass.isAssignableFrom(PaymentQRViewModel::class.java) -> {
+                val paymentApi = retrofit.create(PaymentApi::class.java)
+                PaymentQRViewModel(PaymentRepository(paymentApi))
+            }
             modelClass.isAssignableFrom(ReviewViewModel::class.java) -> ReviewViewModel(reviewRepo)
             modelClass.isAssignableFrom(FavoriteViewModel::class.java) -> FavoriteViewModel(context, productRepo)
             modelClass.isAssignableFrom(MapViewModel::class.java) -> MapViewModel(storeRepo)

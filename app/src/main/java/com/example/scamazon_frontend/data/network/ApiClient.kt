@@ -23,6 +23,29 @@ object ApiClient {
 
     private var retrofit: Retrofit? = null
 
+    /**
+     * Returns an OkHttpClient that trusts all SSL certs (for dev/emulator use).
+     * Used by both Retrofit (API calls) and Coil (image loading) to avoid SSL issues.
+     */
+    fun getUnsafeOkHttpClient(): OkHttpClient {
+        val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        })
+
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+
+        return OkHttpClient.Builder()
+            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
     fun getClient(tokenManager: TokenManager): Retrofit {
         if (retrofit == null) {
             val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -32,33 +55,18 @@ object ApiClient {
             val authInterceptor = Interceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
                 val token = tokenManager.getToken()
-                
+
                 if (!token.isNullOrEmpty()) {
                     requestBuilder.addHeader("Authorization", "Bearer $token")
                 }
-                
+
                 chain.proceed(requestBuilder.build())
             }
 
-            // Bỏ qua kiểm tra chứng chỉ SSL khi dev local
-            val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-            })
-
-            val sslContext = SSLContext.getInstance("SSL")
-            sslContext.init(null, trustAllCerts, java.security.SecureRandom())
-            val sslSocketFactory = sslContext.socketFactory
-
-            val okHttpClient = OkHttpClient.Builder()
-                .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
-                .hostnameVerifier { _, _ -> true }
+            // Use the shared unsafe OkHttpClient as base, then add interceptors
+            val okHttpClient = getUnsafeOkHttpClient().newBuilder()
                 .addInterceptor(loggingInterceptor)
                 .addInterceptor(authInterceptor)
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
                 .build()
 
             val gson = GsonBuilder().setLenient().create()

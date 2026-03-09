@@ -26,9 +26,10 @@ import com.example.scamazon_frontend.ui.theme.*
 fun CheckoutScreen(
     viewModel: CheckoutViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
-    onOrderSuccess: (orderId: String, orderCode: String, total: String, paymentMethod: String) -> Unit = { _, _, _, _ -> }
+    onOrderSuccess: (orderId: String, orderCode: String, total: String, paymentMethod: String, checkoutUrl: String?, qrCodeUrl: String?) -> Unit = { _, _, _, _, _, _ -> }
 ) {
     val shippingName by viewModel.shippingName.collectAsStateWithLifecycle()
+    val shippingEmail by viewModel.shippingEmail.collectAsStateWithLifecycle()
     val shippingPhone by viewModel.shippingPhone.collectAsStateWithLifecycle()
     val shippingAddress by viewModel.shippingAddress.collectAsStateWithLifecycle()
     val shippingCity by viewModel.shippingCity.collectAsStateWithLifecycle()
@@ -36,7 +37,9 @@ fun CheckoutScreen(
     val shippingWard by viewModel.shippingWard.collectAsStateWithLifecycle()
     val paymentMethod by viewModel.paymentMethod.collectAsStateWithLifecycle()
     val note by viewModel.note.collectAsStateWithLifecycle()
+    val couponCode by viewModel.couponCode.collectAsStateWithLifecycle()
     val orderState by viewModel.orderState.collectAsStateWithLifecycle()
+    val paymentMethodsList by viewModel.paymentMethodsList.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -46,11 +49,13 @@ fun CheckoutScreen(
             is Resource.Success -> {
                 val data = orderState?.data
                 val orderId = data?.orderId?.toString() ?: ""
-                val orderCode = data?.orderCode ?: ""
-                val total = data?.total?.toString() ?: "0"
-                val pm = data?.paymentMethod ?: "cod"
+                val orderCode = data?.orderNumber ?: ""
+                val total = data?.totalAmount?.toString() ?: "0"
+                val pm = data?.paymentMethod ?: "COD"
+                val checkoutUrl = data?.checkoutUrl
+                val qrCodeUrl = data?.qrCodeUrl
                 viewModel.resetOrderState()
-                onOrderSuccess(orderId, orderCode, total, pm)
+                onOrderSuccess(orderId, orderCode, total, pm, checkoutUrl, qrCodeUrl)
             }
             is Resource.Error -> {
                 snackbarHostState.showSnackbar(orderState?.message ?: "Order failed")
@@ -93,6 +98,14 @@ fun CheckoutScreen(
                 )
 
                 LafyuuTextField(
+                    value = shippingEmail,
+                    onValueChange = { viewModel.onShippingEmailChange(it) },
+                    placeholder = "Email *",
+                    leadingIcon = Icons.Default.Email,
+                    keyboardType = KeyboardType.Email
+                )
+
+                LafyuuTextField(
                     value = shippingPhone,
                     onValueChange = { viewModel.onShippingPhoneChange(it) },
                     placeholder = "Phone Number *",
@@ -103,7 +116,7 @@ fun CheckoutScreen(
                 LafyuuTextField(
                     value = shippingAddress,
                     onValueChange = { viewModel.onShippingAddressChange(it) },
-                    placeholder = "Shipping Address *",
+                    placeholder = "Street Address *",
                     leadingIcon = Icons.Default.LocationOn
                 )
 
@@ -114,13 +127,13 @@ fun CheckoutScreen(
                     LafyuuTextField(
                         value = shippingCity,
                         onValueChange = { viewModel.onShippingCityChange(it) },
-                        placeholder = "City",
+                        placeholder = "City/Province *",
                         modifier = Modifier.weight(1f)
                     )
                     LafyuuTextField(
                         value = shippingDistrict,
                         onValueChange = { viewModel.onShippingDistrictChange(it) },
-                        placeholder = "District",
+                        placeholder = "District *",
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -128,7 +141,7 @@ fun CheckoutScreen(
                 LafyuuTextField(
                     value = shippingWard,
                     onValueChange = { viewModel.onShippingWardChange(it) },
-                    placeholder = "Ward"
+                    placeholder = "Ward *"
                 )
 
                 HorizontalDivider(color = BorderLight)
@@ -140,10 +153,11 @@ fun CheckoutScreen(
                     color = TextPrimary
                 )
 
-                val paymentOptions = listOf(
-                    "cod" to "Cash on Delivery (COD)",
-                    "vnpay" to "Bank Transfer (QR)"
-                )
+                val paymentOptions = if (paymentMethodsList is Resource.Success && paymentMethodsList.data != null) {
+                    paymentMethodsList.data!!.map { it.code to it.name }
+                } else {
+                    listOf("COD" to "Cash on Delivery (COD)")
+                }
 
                 paymentOptions.forEach { (value, label) ->
                     Row(
@@ -162,6 +176,22 @@ fun CheckoutScreen(
                         Text(text = label, style = Typography.bodyLarge, color = TextPrimary)
                     }
                 }
+
+                HorizontalDivider(color = BorderLight)
+
+                // Coupon Code Section
+                Text(
+                    text = "Coupon Code",
+                    style = Typography.titleMedium,
+                    color = TextPrimary
+                )
+
+                LafyuuTextField(
+                    value = couponCode,
+                    onValueChange = { viewModel.onCouponCodeChange(it) },
+                    placeholder = "Enter coupon code (optional)",
+                    leadingIcon = Icons.Default.LocalOffer
+                )
 
                 HorizontalDivider(color = BorderLight)
 

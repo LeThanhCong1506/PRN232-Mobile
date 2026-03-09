@@ -173,9 +173,9 @@ class AdminOrderRepository(private val api: AdminOrderApi) {
                                 today = d.orders.totalOrders
                             ),
                             revenue = RevenueStatsDto(
-                                today = if (d.orders.monthlyRevenue > 0) d.orders.monthlyRevenue / 30 else 0.0,
-                                week = if (d.orders.monthlyRevenue > 0) d.orders.monthlyRevenue / 4 else 0.0,
-                                month = d.orders.monthlyRevenue
+                                today = d.orders.monthlyRevenue,
+                                week = d.orders.monthlyRevenue,
+                                month = d.orders.totalRevenue
                             ),
                             chats = ChatStatsDto(active = 0)
                         )

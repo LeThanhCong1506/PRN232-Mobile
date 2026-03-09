@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.DashboardStatsDto
 import com.example.scamazon_frontend.di.ViewModelFactory
+import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
 import java.text.NumberFormat
 import java.util.Locale
@@ -81,20 +82,10 @@ fun AdminDashboardScreen(
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = (statsState as Resource.Error).message ?: "Error loading stats",
-                            color = StatusError,
-                            fontFamily = Poppins
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { viewModel.loadStats() },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue, contentColor = White)
-                        ) {
-                            Text("Retry", fontFamily = Poppins, color = White)
-                        }
-                    }
+                    ErrorState(
+                        message = (statsState as Resource.Error).message ?: "Error loading stats",
+                        onRetry = { viewModel.loadStats() }
+                    )
                 }
             }
 
@@ -150,7 +141,7 @@ private fun DashboardContent(
         // Orders Card
         item {
             StatsCard(
-                title = "Orders Today",
+                title = "Total Orders",
                 mainValue = stats.orders.today.toString(),
                 subtitle = "${stats.orders.pending} pending",
                 icon = Icons.Filled.ShoppingBag,
@@ -162,9 +153,9 @@ private fun DashboardContent(
         // Revenue Card
         item {
             StatsCard(
-                title = "Revenue Today",
+                title = "Monthly Revenue",
                 mainValue = formatCurrency(stats.revenue.today),
-                subtitle = "Week: ${formatCurrency(stats.revenue.week)}",
+                subtitle = "Total: ${formatCurrency(stats.revenue.month)}",
                 icon = Icons.Filled.AttachMoney,
                 iconColor = StatusSuccess,
                 iconBgColor = Color(0xFFE8F8F5)
@@ -334,17 +325,15 @@ private fun RevenueSummaryCard(stats: DashboardStatsDto) {
             
             // Bar Chart
             val chartData = listOf(
-                "Today" to stats.revenue.today.toFloat(),
-                "Week" to stats.revenue.week.toFloat(),
-                "Month" to stats.revenue.month.toFloat()
+                "Monthly" to stats.revenue.today.toFloat(),
+                "Total" to stats.revenue.month.toFloat()
             )
             SimpleBarChart(data = chartData, color = StatusSuccess)
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
-            RevenueRow("Today", stats.revenue.today)
-            RevenueRow("This Week", stats.revenue.week)
-            RevenueRow("This Month", stats.revenue.month)
+
+            RevenueRow("Monthly Revenue", stats.revenue.today)
+            RevenueRow("Total Revenue", stats.revenue.month)
         }
     }
 }
@@ -414,5 +403,5 @@ private fun RevenueRow(label: String, amount: Double) {
 
 private fun formatCurrency(amount: Double): String {
     val formatter = NumberFormat.getInstance(Locale("vi", "VN"))
-    return "${formatter.format(amount)}d"
+    return "${formatter.format(amount)}đ"
 }

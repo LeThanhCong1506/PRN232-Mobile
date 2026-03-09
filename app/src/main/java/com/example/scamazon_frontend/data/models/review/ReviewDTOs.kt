@@ -4,38 +4,37 @@ import com.google.gson.annotations.SerializedName
 
 // ==================== Response ====================
 
-data class ReviewDto(
-    @SerializedName("id") val id: Int,
+/**
+ * Maps to backend ReviewItemResponse:
+ *   reviewId, rating, comment, reviewer, createdAt
+ * Extra fields are nullable to handle gracefully.
+ */
+data class ReviewResponse(
+    @SerializedName("reviewId") val reviewId: Int,
     @SerializedName("rating") val rating: Int,
     @SerializedName("comment") val comment: String?,
-    @SerializedName("user") val user: ReviewUserDto,
+    @SerializedName("reviewer") val reviewer: String?,
     @SerializedName("createdAt") val createdAt: String?
 )
 
-data class ReviewUserDto(
-    @SerializedName("id") val id: Int,
-    @SerializedName("username") val username: String,
-    @SerializedName("fullName") val fullName: String?,
-    @SerializedName("avatarUrl") val avatarUrl: String?
-)
-
-data class ReviewListDataDto(
-    @SerializedName("reviews") val reviews: List<ReviewDto> = emptyList(),
-    @SerializedName("pagination") val pagination: ReviewPaginationDto
-)
-
-data class ReviewPaginationDto(
-    @SerializedName("currentPage") val currentPage: Int,
-    @SerializedName("totalPages") val totalPages: Int,
-    @SerializedName("totalItems") val totalItems: Int,
-    @SerializedName("limit") val limit: Int,
-    @SerializedName("hasNext") val hasNext: Boolean,
-    @SerializedName("hasPrev") val hasPrev: Boolean
+/**
+ * Maps to backend ProductReviewsResponse:
+ *   averageRating, totalReviews, ratingDistribution, reviews (flat list), page, pageSize, totalPages
+ * Backend puts reviews/page/pageSize/totalPages at the TOP level (not nested).
+ */
+data class ProductReviewSummaryResponse(
+    @SerializedName("averageRating") val averageRating: Double,
+    @SerializedName("totalReviews") val totalReviews: Int,
+    @SerializedName("ratingDistribution") val ratingDistribution: Map<String, Int>?,
+    @SerializedName("reviews") val reviews: List<ReviewResponse>?,
+    @SerializedName("page") val page: Int,
+    @SerializedName("pageSize") val pageSize: Int,
+    @SerializedName("totalPages") val totalPages: Int
 )
 
 // ==================== Request ====================
 
-data class ReviewRequestDto(
+data class CreateReviewRequest(
     @SerializedName("rating") val rating: Int,
     @SerializedName("comment") val comment: String?
 )
