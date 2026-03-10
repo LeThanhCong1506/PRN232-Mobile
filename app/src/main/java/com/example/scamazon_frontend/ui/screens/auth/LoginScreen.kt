@@ -173,7 +173,7 @@ fun LoginScreen(
                         .background(BorderLight)
                 )
                 Text(
-                    text = "New to Scamazon?",
+                    text = "New to STEM?",
                     fontFamily = Poppins,
                     fontSize = 12.sp,
                     color = TextSecondary,

@@ -36,8 +36,15 @@ import com.example.scamazon_frontend.ui.theme.*
 fun ExploreScreen(
     viewModel: SearchViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onProductClick: (String) -> Unit = {},
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    initialQuery: String? = null
 ) {
+    LaunchedEffect(initialQuery) {
+        if (!initialQuery.isNullOrBlank()) {
+            viewModel.onSearchQueryChange(initialQuery)
+        }
+    }
+
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val productsState by viewModel.products.collectAsStateWithLifecycle()
     val sortBy by viewModel.sortBy.collectAsStateWithLifecycle()

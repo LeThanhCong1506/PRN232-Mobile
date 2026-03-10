@@ -1,12 +1,11 @@
 package com.example.scamazon_frontend.data.network.api
 
 import com.example.scamazon_frontend.data.models.admin.BackendAdminOrderDetailDto
-import com.example.scamazon_frontend.data.models.admin.BackendAdminOrderDto
+import com.example.scamazon_frontend.data.models.admin.BackendAdminOrderListDto
 import com.example.scamazon_frontend.data.models.admin.BackendDashboardDto
 import com.example.scamazon_frontend.data.models.admin.BackendUpdateOrderStatusRequest
 import com.example.scamazon_frontend.data.models.admin.BackendUpdatePaymentStatusRequest
 import com.example.scamazon_frontend.data.models.common.BackendApiResponse
-import com.example.scamazon_frontend.data.models.common.BackendPagedResponse
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -19,7 +18,7 @@ interface AdminOrderApi {
         @Query("status") status: String? = null,
         @Query("paymentStatus") paymentStatus: String? = null,
         @Query("search") search: String? = null
-    ): Response<BackendApiResponse<BackendPagedResponse<BackendAdminOrderDto>>>
+    ): Response<BackendApiResponse<BackendAdminOrderListDto>>
 
     @GET("admin/orders/{id}")
     suspend fun getAdminOrderDetail(

@@ -31,7 +31,6 @@ fun MainScreen(
         Screen.Home.route,
         Screen.Explore.route,
         Screen.Cart.route,
-        Screen.Offer.route,
         Screen.Account.route
     )
 
@@ -99,7 +98,6 @@ fun getBottomNavItem(route: String?): BottomNavItem? {
         Screen.Home.route -> BottomNavItem.Home
         Screen.Explore.route -> BottomNavItem.Explore
         Screen.Cart.route -> BottomNavItem.Cart
-        Screen.Offer.route -> BottomNavItem.Offer
         Screen.Account.route -> BottomNavItem.Account
         else -> null
     }

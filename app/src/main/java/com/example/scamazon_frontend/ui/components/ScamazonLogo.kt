@@ -172,13 +172,13 @@ fun ScamazonLogo(
                         fontWeight = FontWeight.Light,
                         color = PrimaryBlue
                     )) {
-                        append("Scam")
+                        append("ST")
                     }
                     withStyle(style = SpanStyle(
                         fontWeight = FontWeight.Bold,
                         color = AccentGold
                     )) {
-                        append("azon")
+                        append("EM")
                     }
                 },
                 fontFamily = Poppins,

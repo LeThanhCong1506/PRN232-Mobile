@@ -44,13 +44,6 @@ open class BottomNavItem(
         unselectedIcon = Icons.Outlined.ShoppingCart
     )
 
-    object Offer : BottomNavItem(
-        route = "offer",
-        title = "Offer",
-        selectedIcon = Icons.Filled.LocalOffer,
-        unselectedIcon = Icons.Outlined.LocalOffer
-    )
-
     object Account : BottomNavItem(
         route = "account",
         title = "Account",
@@ -68,7 +61,6 @@ fun LafyuuBottomNavBar(
         BottomNavItem.Home,
         BottomNavItem.Explore,
         BottomNavItem.Cart,
-        BottomNavItem.Offer,
         BottomNavItem.Account
     ),
     currentRoute: String,

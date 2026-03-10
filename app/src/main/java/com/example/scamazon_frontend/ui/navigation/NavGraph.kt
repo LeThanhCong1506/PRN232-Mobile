@@ -122,6 +122,9 @@ fun NavGraph(
                 },
                 onNavigateToExplore = {
                     navController.navigate(Screen.Explore.route)
+                },
+                onNavigateToCategory = { categoryName ->
+                    navController.navigate(Screen.Explore.createRoute(categoryName))
                 }
             )
         }
@@ -144,6 +147,9 @@ fun NavGraph(
             AccountScreen(
                 onNavigateToProfile = {
                     navController.navigate(Screen.EditProfile.route)
+                },
+                onNavigateToNotifications = {
+                    navController.navigate(Screen.Notifications.route)
                 },
                 onNavigateToOrders = {
                     navController.navigate(Screen.OrderHistory.route)
@@ -217,8 +223,15 @@ fun NavGraph(
         // ==========================================
         // SEARCH & EXPLORE
         // ==========================================
-        composable(route = Screen.Explore.route) {
+        composable(
+            route = Screen.Explore.route + "?query={query}",
+            arguments = listOf(
+                navArgument("query") { type = NavType.StringType; nullable = true; defaultValue = null }
+            )
+        ) { backStackEntry ->
+            val query = backStackEntry.arguments?.getString("query")
             ExploreScreen(
+                initialQuery = query,
                 onProductClick = { slug ->
                     navController.navigate(Screen.ProductDetail.createRoute(slug))
                 },
@@ -226,10 +239,6 @@ fun NavGraph(
                     navController.popBackStack()
                 }
             )
-        }
-
-        composable(route = Screen.Offer.route) {
-            PlaceholderScreen(screenName = "Offers")
         }
 
         composable(route = Screen.Search.route) {
@@ -664,6 +673,9 @@ fun NavGraph(
 
         composable(route = Screen.AdminAccount.route) {
             AdminAccountScreen(
+                onNavigateToProfile = {
+                    navController.navigate(Screen.EditProfile.route)
+                },
                 onNavigateToWarrantyClaims = {
                     navController.navigate(Screen.AdminWarrantyClaims.route)
                 },

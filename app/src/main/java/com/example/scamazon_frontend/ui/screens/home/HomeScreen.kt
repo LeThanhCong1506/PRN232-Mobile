@@ -36,7 +36,8 @@ fun HomeScreen(
     onNavigateToWishlist: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
     onNavigateToChat: () -> Unit = {},
-    onNavigateToExplore: () -> Unit = {}
+    onNavigateToExplore: () -> Unit = {},
+    onNavigateToCategory: (String) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
@@ -90,7 +91,10 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 when (categoriesState) {
                     is Resource.Loading -> CircularProgressIndicator(modifier = Modifier.padding(Dimens.ScreenPadding))
-                    is Resource.Success -> CategoriesRow(categoriesState.data ?: emptyList())
+                    is Resource.Success -> CategoriesRow(
+                        categories = categoriesState.data ?: emptyList(),
+                        onCategoryClick = onNavigateToCategory
+                    )
                     is Resource.Error -> Text("Error loading categories", modifier = Modifier.padding(Dimens.ScreenPadding))
                 }
             }
@@ -190,7 +194,10 @@ private fun SectionHeader(
 }
 
 @Composable
-private fun CategoriesRow(categories: List<CategoryDto>) {
+private fun CategoriesRow(
+    categories: List<CategoryDto>,
+    onCategoryClick: (String) -> Unit
+) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -199,7 +206,10 @@ private fun CategoriesRow(categories: List<CategoryDto>) {
             CategoryCard(
                 name = category.name,
                 icon = Icons.Default.Category,
-                onClick = { /* Navigate to category */ }
+                onClick = { 
+                    val searchKeyword = category.name.trim().removeSuffix("s").removeSuffix("S")
+                    onCategoryClick(searchKeyword) 
+                }
             )
         }
     }
