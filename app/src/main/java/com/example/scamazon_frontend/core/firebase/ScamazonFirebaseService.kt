@@ -17,7 +17,7 @@ class ScamazonFirebaseService : FirebaseMessagingService() {
     companion object {
         private const val TAG = "ScamazonFCM"
         private const val CHANNEL_ID = "scamazon_notifications"
-        private const val CHANNEL_NAME = "Scamazon Notifications"
+        private const val CHANNEL_NAME = "STEM Notifications"
     }
 
     override fun onNewToken(token: String) {
@@ -30,7 +30,7 @@ class ScamazonFirebaseService : FirebaseMessagingService() {
         super.onMessageReceived(message)
         Log.d(TAG, "Message received: ${message.data}")
 
-        val title = message.notification?.title ?: message.data["title"] ?: "Scamazon"
+        val title = message.notification?.title ?: message.data["title"] ?: "STEM"
         val body = message.notification?.body ?: message.data["body"] ?: ""
 
         if (body.isNotBlank()) {
@@ -48,7 +48,7 @@ class ScamazonFirebaseService : FirebaseMessagingService() {
                 CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Thông báo từ Scamazon"
+                description = "Thông báo từ STEM"
                 enableVibration(true)
             }
             notificationManager.createNotificationChannel(channel)

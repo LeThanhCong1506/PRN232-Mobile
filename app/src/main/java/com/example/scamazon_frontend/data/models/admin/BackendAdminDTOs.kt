@@ -95,6 +95,20 @@ data class BackendAdminOrderItemDto(
     @SerializedName("subtotal") val subtotal: Double
 )
 
+data class BackendAdminOrderListDto(
+    @SerializedName("orders") val orders: List<BackendAdminOrderDto>,
+    @SerializedName("statusCounts") val statusCounts: BackendAdminOrderStatusCountsDto?,
+    @SerializedName("pagination") val pagination: com.example.scamazon_frontend.data.models.common.BackendPagination?
+)
+
+data class BackendAdminOrderStatusCountsDto(
+    @SerializedName("pending") val pending: Int = 0,
+    @SerializedName("confirmed") val confirmed: Int = 0,
+    @SerializedName("shipped") val shipped: Int = 0,
+    @SerializedName("delivered") val delivered: Int = 0,
+    @SerializedName("cancelled") val cancelled: Int = 0
+)
+
 data class BackendUpdateOrderStatusRequest(
     @SerializedName("newStatus") val newStatus: String,
     @SerializedName("note") val note: String? = null

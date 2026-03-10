@@ -3,6 +3,7 @@ package com.example.scamazon_frontend.ui.screens.admin.dashboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -119,7 +121,7 @@ private fun DashboardContent(
             StatsCard(
                 title = "Customers",
                 mainValue = stats.customers.total.toString(),
-                subtitle = "+${stats.customers.new7Days} this week",
+                subtitle = "+${stats.customers.new7Days} this month",
                 icon = Icons.Filled.People,
                 iconColor = PrimaryBlue,
                 iconBgColor = PrimaryBlueSoft
@@ -163,12 +165,12 @@ private fun DashboardContent(
         }
 
         // Orders Summary Card (full width)
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             OrdersSummaryCard(stats)
         }
 
         // Revenue Summary Card (full width)
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             RevenueSummaryCard(stats)
         }
     }
@@ -344,33 +346,55 @@ private fun SimpleBarChart(
     color: Color
 ) {
     val max = data.maxOfOrNull { it.second } ?: 1f
+    val barHeight = 90.dp
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
             .padding(top = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.Bottom
+        horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         data.forEach { (label, value) ->
             val heightRatio = if (max == 0f) 0f else value / max
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Bottom,
                 modifier = Modifier.weight(1f)
             ) {
+                // Value count above bar
+                Text(
+                    text = value.toInt().toString(),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = color,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                // Fixed-height bar container, bar grows from bottom
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.4f)
-                        .fillMaxHeight(heightRatio.coerceAtLeast(0.05f))
-                        .background(color, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+                        .height(barHeight)
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(heightRatio.coerceAtLeast(0.04f))
+                            .background(color, RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp))
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                // Label below bar – allow 2 lines so "Confirmed" fits
                 Text(
                     text = label,
                     fontSize = 10.sp,
                     color = TextSecondary,
-                    maxLines = 1
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    lineHeight = 13.sp,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -403,5 +427,5 @@ private fun RevenueRow(label: String, amount: Double) {
 
 private fun formatCurrency(amount: Double): String {
     val formatter = NumberFormat.getInstance(Locale("vi", "VN"))
-    return "${formatter.format(amount)}đ"
+    return "${formatter.format(amount.toLong())}₫"
 }

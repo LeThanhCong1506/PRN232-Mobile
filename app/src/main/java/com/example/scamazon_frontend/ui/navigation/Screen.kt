@@ -18,9 +18,10 @@ sealed class Screen(val route: String) {
     // MAIN SCREENS (Bottom Navigation)
     // ==========================================
     object Home : Screen("home")
-    object Explore : Screen("explore")
+    object Explore : Screen("explore") {
+        fun createRoute(query: String) = "explore?query=${android.net.Uri.encode(query)}"
+    }
     object Cart : Screen("cart")
-    object Offer : Screen("offer")
     object Account : Screen("account")
 
     // ==========================================

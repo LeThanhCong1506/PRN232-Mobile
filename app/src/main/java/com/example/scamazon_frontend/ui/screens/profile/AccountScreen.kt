@@ -37,6 +37,7 @@ fun AccountScreen(
     onNavigateToOrders: () -> Unit = {},
     onNavigateToWishlist: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
     onNavigateToChat: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {},
@@ -122,20 +123,6 @@ fun AccountScreen(
                 onClick = onNavigateToWishlist
             )
 
-            AccountMenuItem(
-                icon = Icons.Outlined.LocationOn,
-                title = "Address",
-                subtitle = "Manage delivery addresses",
-                onClick = { /* Navigate to address */ }
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.CreditCard,
-                title = "Payment Methods",
-                subtitle = "Manage payment options",
-                onClick = { /* Navigate to payment */ }
-            )
-
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 16.dp),
                 color = BorderLight
@@ -164,7 +151,7 @@ fun AccountScreen(
                 icon = Icons.Outlined.Notifications,
                 title = "Notifications",
                 subtitle = "Manage notifications",
-                onClick = { /* Navigate to notifications */ }
+                onClick = onNavigateToNotifications
             )
 
             AccountMenuItem(
@@ -172,13 +159,6 @@ fun AccountScreen(
                 title = "Settings",
                 subtitle = "App settings and preferences",
                 onClick = onNavigateToSettings
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.Help,
-                title = "Help Center",
-                subtitle = "Get help and support",
-                onClick = { /* Navigate to help */ }
             )
 
             AccountMenuItem(

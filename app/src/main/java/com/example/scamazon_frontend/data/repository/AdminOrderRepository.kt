@@ -9,7 +9,6 @@ import com.example.scamazon_frontend.data.models.admin.OrderStatsDto
 import com.example.scamazon_frontend.data.models.admin.ProductStatsDto
 import com.example.scamazon_frontend.data.models.admin.RevenueStatsDto
 import com.example.scamazon_frontend.data.models.admin.ChatStatsDto
-import com.example.scamazon_frontend.data.models.order.AdminOrderListDataDto
 import com.example.scamazon_frontend.data.models.order.AdminOrderSummaryDto
 import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
 import com.example.scamazon_frontend.data.models.order.OrderItemDto
@@ -33,7 +32,7 @@ class AdminOrderRepository(private val api: AdminOrderApi) {
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.success == true && body.data != null) {
-                        val orders = body.data.items.map { backend ->
+                        val orders = (body.data.orders ?: emptyList()).map { backend ->
                             AdminOrderSummaryDto(
                                 id = backend.orderId,
                                 orderCode = backend.orderNumber,

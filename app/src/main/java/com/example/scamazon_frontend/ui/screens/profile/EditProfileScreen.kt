@@ -149,25 +149,33 @@ fun EditProfileScreen(
                             leadingIcon = Icons.Default.LocationOn
                         )
 
-                        // City, District, Ward
+                        // City / District
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            LafyuuTextField(
-                                value = city,
-                                onValueChange = { city = it },
-                                placeholder = "City",
-                                modifier = Modifier.weight(1f)
-                            )
-                            LafyuuTextField(
-                                value = district,
-                                onValueChange = { district = it },
-                                placeholder = "District",
-                                modifier = Modifier.weight(1f)
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = "City", style = Typography.titleSmall, color = TextPrimary)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LafyuuTextField(
+                                    value = city,
+                                    onValueChange = { city = it },
+                                    placeholder = "City"
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = "District", style = Typography.titleSmall, color = TextPrimary)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LafyuuTextField(
+                                    value = district,
+                                    onValueChange = { district = it },
+                                    placeholder = "District"
+                                )
+                            }
                         }
 
+                        // Ward
+                        Text(text = "Ward", style = Typography.titleSmall, color = TextPrimary)
                         LafyuuTextField(
                             value = ward,
                             onValueChange = { ward = it },

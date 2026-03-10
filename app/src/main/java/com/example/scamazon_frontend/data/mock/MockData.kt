@@ -221,7 +221,7 @@ object MockData {
 
     // ==================== CHAT ====================
     val chatRooms = listOf(
-        ChatRoomSummaryDto(1, 1, "Nguyễn Văn A", null, null, "Scamazon Store", "active", "Cảm ơn bạn!", "2025-02-24T10:30:00", 0, "2025-02-20"),
+        ChatRoomSummaryDto(1, 1, "Nguyễn Văn A", null, null, "STEM Store", "active", "Cảm ơn bạn!", "2025-02-24T10:30:00", 0, "2025-02-20"),
     )
 
     val chatMessages = listOf(

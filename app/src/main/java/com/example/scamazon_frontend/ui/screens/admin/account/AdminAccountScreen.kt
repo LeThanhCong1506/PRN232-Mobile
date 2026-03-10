@@ -28,6 +28,7 @@ import com.example.scamazon_frontend.ui.theme.*
 @Composable
 fun AdminAccountScreen(
     viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
+    onNavigateToProfile: () -> Unit = {},
     onNavigateToWarrantyClaims: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
@@ -138,7 +139,8 @@ fun AdminAccountScreen(
                     AdminMenuItem(
                         icon = Icons.Filled.Person,
                         title = "Profile",
-                        subtitle = "View your profile information"
+                        subtitle = "View your profile information",
+                        onClick = onNavigateToProfile
                     )
                     HorizontalDivider(color = BorderLight)
                     AdminMenuItem(
