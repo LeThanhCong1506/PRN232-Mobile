@@ -1,5 +1,6 @@
 package com.example.scamazon_frontend.ui.screens.product
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,30 +16,42 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.scamazon_frontend.core.utils.CartBadgeManager
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.core.utils.formatPrice
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
+import com.example.scamazon_frontend.ui.screens.cart.CartViewModel
 import com.example.scamazon_frontend.ui.screens.favorite.FavoriteViewModel
 import com.example.scamazon_frontend.ui.theme.*
+import kotlinx.coroutines.delay
 
 @Composable
 fun ProductDetailScreen(
     productId: String,
     viewModel: ProductDetailViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     favoriteViewModel: FavoriteViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
+    cartViewModel: CartViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
     onNavigateToCart: () -> Unit = {},
     onNavigateToReview: (Int) -> Unit = {}
@@ -48,6 +61,27 @@ fun ProductDetailScreen(
     val productState by viewModel.productState.collectAsStateWithLifecycle()
     val addToCartState by viewModel.addToCartState.collectAsStateWithLifecycle()
     val favoriteIds by favoriteViewModel.favoriteIds.collectAsStateWithLifecycle()
+    val cartState by cartViewModel.cartState.collectAsStateWithLifecycle()
+
+    // Cart item count from CartViewModel
+    val cartItemCount = remember(cartState) {
+        when (cartState) {
+            is Resource.Success -> (cartState as Resource.Success).data?.items?.sumOf { it.quantity } ?: 0
+            else -> CartBadgeManager.getCount()
+        }
+    }
+
+    // Update CartBadgeManager when cart loads
+    LaunchedEffect(cartState) {
+        if (cartState is Resource.Success) {
+            val count = (cartState as Resource.Success).data?.items?.sumOf { it.quantity } ?: 0
+            CartBadgeManager.updateCount(count)
+        }
+    }
+
+    // Animation states
+    var showFlyAnimation by remember { mutableStateOf(false) }
+    var animateBadge by remember { mutableStateOf(false) }
 
     // Load product on first composition
     LaunchedEffect(productId) {
@@ -59,8 +93,22 @@ fun ProductDetailScreen(
     LaunchedEffect(addToCartState) {
         when (addToCartState) {
             is Resource.Success -> {
+                // Trigger fly animation
+                showFlyAnimation = true
+                delay(400) // Wait for fly animation
+                showFlyAnimation = false
+
+                // Update cart count and trigger badge animation
+                CartBadgeManager.incrementCount(quantity)
+                animateBadge = true
+                delay(300)
+                animateBadge = false
+
                 snackbarHostState.showSnackbar("Đã thêm vào giỏ hàng!")
                 viewModel.resetAddToCartState()
+
+                // Refresh cart
+                cartViewModel.fetchCart()
             }
             is Resource.Error -> {
                 snackbarHostState.showSnackbar(addToCartState?.message ?: "Lỗi thêm giỏ hàng")
@@ -70,16 +118,29 @@ fun ProductDetailScreen(
         }
     }
 
+    // Fly to cart animation
+    val flyProgress = remember { Animatable(0f) }
+    LaunchedEffect(showFlyAnimation) {
+        if (showFlyAnimation) {
+            flyProgress.snapTo(0f)
+            flyProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(400, easing = FastOutSlowInEasing)
+            )
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(BackgroundWhite)
-        ) {
-            when (productState) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(BackgroundWhite)
+            ) {
+                when (productState) {
                 is Resource.Loading -> {
                     LafyuuTopAppBar(title = "Product Detail", onBackClick = onNavigateBack)
                     Box(
@@ -113,12 +174,13 @@ fun ProductDetailScreen(
                 is Resource.Success -> {
                     val product = productState.data!!
 
-                    // Top App Bar
+                    // Top App Bar with cart badge
                     LafyuuCartAppBar(
                         title = product.name,
                         onBackClick = onNavigateBack,
-                        cartItemCount = 0,
-                        onCartClick = onNavigateToCart
+                        cartItemCount = cartItemCount,
+                        onCartClick = onNavigateToCart,
+                        animateBadge = animateBadge
                     )
 
                     // Content
@@ -308,6 +370,48 @@ fun ProductDetailScreen(
                             modifier = Modifier.padding(Dimens.ScreenPadding)
                         )
                     }
+                }
+            }
+        }
+
+            // Fly animation overlay
+            if (showFlyAnimation && productState is Resource.Success) {
+                val product = (productState as Resource.Success).data!!
+                val primaryImage = product.images.firstOrNull { it.isPrimary == true } 
+                    ?: product.images.firstOrNull()
+
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .align(Alignment.TopStart)
+                        .graphicsLayer {
+                            // Start from center-left, fly to top-right
+                            val startX = 100f
+                            val startY = 400f
+                            val endX = 800f
+                            val endY = 50f
+
+                            translationX = startX + (endX - startX) * flyProgress.value
+                            translationY = startY + (endY - startY) * flyProgress.value
+                            scaleX = 1f - (0.6f * flyProgress.value)
+                            scaleY = 1f - (0.6f * flyProgress.value)
+                            alpha = 1f - (0.3f * flyProgress.value)
+                        }
+                        .clip(CircleShape)
+                        .background(PrimaryBlue)
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(primaryImage?.imageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Flying product",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
                 }
             }
         }
