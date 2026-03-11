@@ -8,12 +8,14 @@ import com.example.scamazon_frontend.data.models.chat.ChatMessageDto
 import com.example.scamazon_frontend.data.network.SignalRChatClient
 import com.example.scamazon_frontend.data.repository.ChatRepository
 import com.example.scamazon_frontend.data.repository.ChatRepository.Companion.toUiDto
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ChatViewModel(
     private val chatRepo: ChatRepository,
@@ -26,6 +28,10 @@ class ChatViewModel(
 
     private val _isSending = MutableStateFlow(false)
     val isSending = _isSending.asStateFlow()
+
+    // Error message for toast (null = no error)
+    private val _sendError = MutableStateFlow<String?>(null)
+    val sendError = _sendError.asStateFlow()
 
     private val localMessages = mutableListOf<ChatMessageDto>()
 
@@ -43,13 +49,23 @@ class ChatViewModel(
                 _messagesState.value = result
             }
 
-            // Connect SignalR for real-time messages
+            // Connect SignalR on IO thread to avoid blocking main thread
             val token = tokenManager.getToken()
             if (token != null) {
-                signalR.connect(token)
+                withContext(Dispatchers.IO) {
+                    signalR.connect(token)
+                }
                 signalR.onReceiveMessage { backendMsg ->
                     val uiMsg = backendMsg.toUiDto()
-                    localMessages.add(uiMsg)
+                    // Replace matching optimistic message (same content, negative ID) to avoid duplicate
+                    val optimisticIdx = localMessages.indexOfFirst {
+                        it.id < 0 && it.content == uiMsg.content && it.isFromStore == uiMsg.isFromStore
+                    }
+                    if (optimisticIdx >= 0) {
+                        localMessages[optimisticIdx] = uiMsg
+                    } else {
+                        localMessages.add(uiMsg)
+                    }
                     _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
                 }
                 signalR.onMessageRead { messageId ->
@@ -66,6 +82,7 @@ class ChatViewModel(
     fun sendMessage(content: String) {
         viewModelScope.launch {
             _isSending.value = true
+
             // Optimistic update: show message immediately before server confirms
             val optimisticMsg = ChatMessageDto(
                 id = -(localMessages.size + 1), // negative temp ID
@@ -84,20 +101,35 @@ class ChatViewModel(
             )
             localMessages.add(optimisticMsg)
             _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
-            // Customer sends to admin: receiverId = null
-            // We use standard REST API instead of SignalR to bypass SSL Handshake blocks on self-signed local certs
+
             val response = chatRepo.sendMessage(null, content)
-            
-            // If the REST call succeeds, the optimistic update stays.
-            // If it fails, we should ideally remove the optimistic update or show an error state.
-            if (response is Resource.Error) {
-                localMessages.remove(optimisticMsg)
-                _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
-                // TODO: Show toast or error message to user
+
+            when (response) {
+                is Resource.Success -> {
+                    // Replace optimistic with real server message (correct ID)
+                    val realMsg = response.data
+                    if (realMsg != null) {
+                        val idx = localMessages.indexOf(optimisticMsg)
+                        if (idx >= 0) {
+                            localMessages[idx] = realMsg
+                        }
+                        _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
+                    }
+                }
+                is Resource.Error -> {
+                    // Keep optimistic message visible so user sees their message
+                    // Show error toast to notify failure
+                    _sendError.value = response.message ?: "Không thể gửi tin nhắn. Vui lòng thử lại."
+                }
+                else -> { /* Loading - no-op */ }
             }
-            
+
             _isSending.value = false
         }
+    }
+
+    fun clearSendError() {
+        _sendError.value = null
     }
 
     override fun onCleared() {

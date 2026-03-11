@@ -72,14 +72,19 @@ class AdminProductRepository(private val api: AdminProductApi) {
         }
     }
 
-    suspend fun createProduct(request: CreateProductRequest): Resource<Unit> {
+    suspend fun createProduct(request: CreateProductRequest): Resource<Int> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = api.createProduct(request)
-                if (response.isSuccessful && response.body()?.success == true) {
-                    Resource.Success(Unit)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        Resource.Success(body.data.productId)
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to create product")
+                    }
                 } else {
-                    Resource.Error(response.body()?.message ?: "Failed to create product")
+                    Resource.Error("Error ${response.code()}: ${response.message()}")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")
