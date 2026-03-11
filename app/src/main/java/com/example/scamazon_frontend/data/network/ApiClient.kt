@@ -16,10 +16,8 @@ import javax.net.ssl.X509TrustManager
 import javax.net.ssl.HostnameVerifier
 
 object ApiClient {
-    // Thay đổi BASE_URL ở đây tuỳ thuộc vào host của backend
-    // Sử dụng 10.0.2.2 cho Android Emulator khi backend chạy trên localhost
-    // Dựa vào Swagger của backend là https://localhost:7295, ta dùng 10.0.2.2:7295
-    private const val BASE_URL = "https://10.0.2.2:7295/api/"
+    // Backend deployed on Render
+    private const val BASE_URL = "https://prn232-backend-e01v.onrender.com/api/"
 
     private var retrofit: Retrofit? = null
 

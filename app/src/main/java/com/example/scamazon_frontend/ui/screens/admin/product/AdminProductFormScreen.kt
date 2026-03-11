@@ -232,7 +232,7 @@ fun AdminProductFormScreen(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(),
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
                     shape = RoundedCornerShape(12.dp)
                 )
                 ExposedDropdownMenu(
@@ -266,7 +266,7 @@ fun AdminProductFormScreen(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = brandExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(),
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
                     shape = RoundedCornerShape(12.dp)
                 )
                 ExposedDropdownMenu(
