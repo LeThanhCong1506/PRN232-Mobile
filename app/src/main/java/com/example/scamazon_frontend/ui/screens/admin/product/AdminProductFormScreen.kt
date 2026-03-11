@@ -47,7 +47,6 @@ fun AdminProductFormScreen(
     val categoriesState by viewModel.categoriesState.collectAsStateWithLifecycle()
     val brandsState by viewModel.brandsState.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
-    val uploadState by viewModel.uploadState.collectAsStateWithLifecycle()
     val productDetailState by viewModel.productDetailState.collectAsStateWithLifecycle()
 
     var formProductId by remember { mutableStateOf<Int?>(null) }
@@ -63,15 +62,18 @@ fun AdminProductFormScreen(
     var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
     var selectedBrandId by remember { mutableStateOf<Int?>(null) }
     var isFeatured by remember { mutableStateOf(false) }
+    // Already-uploaded Cloudinary URLs (used in edit mode)
     var imageUrls by remember { mutableStateOf(listOf<ProductImageRequest>()) }
+    // Locally-selected URIs pending upload (used in create mode)
+    var pendingImageUris by remember { mutableStateOf(listOf<Uri>()) }
     var categoryExpanded by remember { mutableStateOf(false) }
     var brandExpanded by remember { mutableStateOf(false) }
 
-    // Image picker
+    // Image picker: just collect the URI locally, no fake upload
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { viewModel.uploadImage(context, it) }
+        uri?.let { pendingImageUris = pendingImageUris + it }
     }
 
     // Load product detail for editing
@@ -107,20 +109,7 @@ fun AdminProductFormScreen(
         }
     }
 
-    // Handle upload success
-    LaunchedEffect(uploadState) {
-        if (uploadState is Resource.Success) {
-            val uploadData = (uploadState as Resource.Success).data!!
-            imageUrls = imageUrls + ProductImageRequest(
-                url = uploadData.url,
-                isPrimary = imageUrls.isEmpty(),
-                sortOrder = imageUrls.size
-            )
-            viewModel.resetUploadState()
-        }
-    }
-
-    // Handle save success
+    // Handle save success/error
     LaunchedEffect(saveState) {
         if (saveState is Resource.Success) {
             Toast.makeText(context, if (isEdit) "Product updated!" else "Product created!", Toast.LENGTH_SHORT).show()
@@ -338,10 +327,9 @@ fun AdminProductFormScreen(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Already-uploaded images (edit mode)
                 items(imageUrls) { image ->
-                    Box(
-                        modifier = Modifier.size(80.dp)
-                    ) {
+                    Box(modifier = Modifier.size(80.dp)) {
                         AsyncImage(
                             model = image.url,
                             contentDescription = "Product image",
@@ -356,9 +344,35 @@ fun AdminProductFormScreen(
                             contentScale = ContentScale.Crop
                         )
                         IconButton(
-                            onClick = {
-                                imageUrls = imageUrls.filter { it != image }
-                            },
+                            onClick = { imageUrls = imageUrls.filter { it != image } },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Remove",
+                                tint = StatusError,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Pending local URIs (create mode — shown as preview before upload)
+                items(pendingImageUris) { uri ->
+                    Box(modifier = Modifier.size(80.dp)) {
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = "Pending image",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(8.dp))
+                                .border(1.dp, PrimaryBlue, RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        IconButton(
+                            onClick = { pendingImageUris = pendingImageUris.filter { it != uri } },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .size(24.dp)
@@ -384,19 +398,12 @@ fun AdminProductFormScreen(
                             .clickable { imagePicker.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (uploadState is Resource.Loading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = PrimaryBlue
-                            )
-                        } else {
-                            Icon(
-                                Icons.Filled.AddPhotoAlternate,
-                                contentDescription = "Add Image",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
+                        Icon(
+                            Icons.Filled.AddPhotoAlternate,
+                            contentDescription = "Add Image",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
                 }
             }
@@ -410,12 +417,9 @@ fun AdminProductFormScreen(
                         Toast.makeText(context, "Name, SKU and Price are required", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-                    
+
                     val finalImages = imageUrls.mapIndexed { index, img ->
-                        img.copy(
-                            isPrimary = index == 0,
-                            sortOrder = index
-                        )
+                        img.copy(isPrimary = index == 0, sortOrder = index)
                     }
 
                     if (isEdit && formProductId != null) {
@@ -431,12 +435,14 @@ fun AdminProductFormScreen(
                                 categoryId = selectedCategoryId,
                                 brandId = selectedBrandId,
                                 isFeatured = isFeatured,
-                                images = finalImages // always pass list to override backend state
+                                images = finalImages
                             )
                         )
                     } else {
-                        viewModel.createProduct(
-                            CreateProductRequest(
+                        // Create product then upload images to Cloudinary in one go
+                        viewModel.createProductWithImages(
+                            context = context,
+                            request = CreateProductRequest(
                                 name = name,
                                 sku = sku,
                                 price = price.toDoubleOrNull() ?: 0.0,
@@ -447,8 +453,9 @@ fun AdminProductFormScreen(
                                 categoryId = selectedCategoryId,
                                 brandId = selectedBrandId,
                                 isFeatured = isFeatured,
-                                images = finalImages.ifEmpty { null }
-                            )
+                                images = null // images uploaded separately via multipart
+                            ),
+                            imageUris = pendingImageUris
                         )
                     }
                 },

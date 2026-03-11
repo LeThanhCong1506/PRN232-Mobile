@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class AdminProductViewModel(
     private val adminProductRepo: AdminProductRepository,
@@ -98,6 +100,28 @@ class AdminProductViewModel(
                 is Resource.Error -> Resource.Error(result.message ?: "Failed to create product")
                 is Resource.Loading -> Resource.Loading()
             }
+        }
+    }
+
+    fun createProductWithImages(context: Context, request: CreateProductRequest, imageUris: List<Uri>) {
+        viewModelScope.launch {
+            _saveState.value = Resource.Loading()
+            val createResult = adminProductRepo.createProduct(request)
+            if (createResult is Resource.Error) {
+                _saveState.value = Resource.Error(createResult.message ?: "Failed to create product")
+                return@launch
+            }
+            val productId = (createResult as Resource.Success).data!!
+            if (imageUris.isNotEmpty()) {
+                val uploadResult = withContext(Dispatchers.IO) {
+                    adminProductRepo.uploadImages(context, productId, imageUris)
+                }
+                if (uploadResult is Resource.Error) {
+                    _saveState.value = Resource.Error("Product created but image upload failed: ${uploadResult.message}")
+                    return@launch
+                }
+            }
+            _saveState.value = Resource.Success(Unit)
         }
     }
 

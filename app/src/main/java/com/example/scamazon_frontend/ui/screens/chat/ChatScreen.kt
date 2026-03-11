@@ -17,6 +17,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import com.example.scamazon_frontend.data.models.chat.ChatMessageDto
 import com.example.scamazon_frontend.ui.components.LafyuuTopAppBar
@@ -27,13 +29,23 @@ fun ChatScreen(
     viewModel: ChatViewModel,
     onNavigateBack: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val messagesState by viewModel.messagesState.collectAsState()
     val isSending by viewModel.isSending.collectAsState()
+    val sendError by viewModel.sendError.collectAsState()
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
         viewModel.startOrLoadChat()
+    }
+
+    // Show toast when send fails
+    LaunchedEffect(sendError) {
+        sendError?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+            viewModel.clearSendError()
+        }
     }
 
     // Auto scroll to bottom on new messages
