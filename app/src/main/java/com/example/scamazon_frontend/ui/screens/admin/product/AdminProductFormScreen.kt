@@ -207,69 +207,95 @@ fun AdminProductFormScreen(
             )
 
             // Category Dropdown
-            ExposedDropdownMenuBox(
-                expanded = categoryExpanded,
-                onExpandedChange = { categoryExpanded = !categoryExpanded }
-            ) {
-                val categories = (categoriesState as? Resource.Success)?.data ?: emptyList()
-                val selectedCategory = categories.find { it.id == selectedCategoryId }
+            val categories = (categoriesState as? Resource.Success)?.data ?: emptyList()
+            val selectedCategory = categories.find { it.id == selectedCategoryId }
+
+            Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = selectedCategory?.name ?: "Select Category",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Category", fontFamily = Poppins) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                    trailingIcon = {
+                        IconButton(onClick = { categoryExpanded = !categoryExpanded }) {
+                            Icon(
+                                imageVector = if (categoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Toggle dropdown"
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
+                        .clickable { categoryExpanded = !categoryExpanded },
                     shape = RoundedCornerShape(12.dp)
                 )
-                ExposedDropdownMenu(
+                DropdownMenu(
                     expanded = categoryExpanded,
-                    onDismissRequest = { categoryExpanded = false }
+                    onDismissRequest = { categoryExpanded = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
                 ) {
-                    categories.forEach { category ->
+                    if (categories.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text(category.name, fontFamily = Poppins) },
-                            onClick = {
-                                selectedCategoryId = category.id
-                                categoryExpanded = false
-                            }
+                            text = { Text("Loading...", fontFamily = Poppins) },
+                            onClick = { }
                         )
+                    } else {
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category.name, fontFamily = Poppins) },
+                                onClick = {
+                                    selectedCategoryId = category.id
+                                    categoryExpanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }
 
             // Brand Dropdown
-            ExposedDropdownMenuBox(
-                expanded = brandExpanded,
-                onExpandedChange = { brandExpanded = !brandExpanded }
-            ) {
-                val brands = (brandsState as? Resource.Success)?.data ?: emptyList()
-                val selectedBrand = brands.find { it.id == selectedBrandId }
+            val brands = (brandsState as? Resource.Success)?.data ?: emptyList()
+            val selectedBrand = brands.find { it.id == selectedBrandId }
+
+            Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = selectedBrand?.name ?: "Select Brand",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Brand", fontFamily = Poppins) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = brandExpanded) },
+                    trailingIcon = {
+                        IconButton(onClick = { brandExpanded = !brandExpanded }) {
+                            Icon(
+                                imageVector = if (brandExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Toggle dropdown"
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
+                        .clickable { brandExpanded = !brandExpanded },
                     shape = RoundedCornerShape(12.dp)
                 )
-                ExposedDropdownMenu(
+                DropdownMenu(
                     expanded = brandExpanded,
-                    onDismissRequest = { brandExpanded = false }
+                    onDismissRequest = { brandExpanded = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
                 ) {
-                    brands.forEach { brand ->
+                    if (brands.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text(brand.name, fontFamily = Poppins) },
-                            onClick = {
-                                selectedBrandId = brand.id
-                                brandExpanded = false
-                            }
+                            text = { Text("Loading...", fontFamily = Poppins) },
+                            onClick = { }
                         )
+                    } else {
+                        brands.forEach { brand ->
+                            DropdownMenuItem(
+                                text = { Text(brand.name, fontFamily = Poppins) },
+                                onClick = {
+                                    selectedBrandId = brand.id
+                                    brandExpanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }
