@@ -22,7 +22,7 @@ class SignalRChatClient {
         if (hubConnection?.connectionState == HubConnectionState.CONNECTED) return
 
         hubConnection = HubConnectionBuilder
-            .create("https://prn232-backend-e01v.onrender.com/hubs/chat?access_token=$token")
+            .create("https://10.0.2.2:7295/hubs/chat?access_token=$token")
             .build()
 
         try {

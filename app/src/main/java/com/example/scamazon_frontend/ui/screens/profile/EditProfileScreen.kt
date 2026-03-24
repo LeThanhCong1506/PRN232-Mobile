@@ -40,7 +40,7 @@ fun EditProfileScreen(
     var ward by remember { mutableStateOf("") }
     var initialized by remember { mutableStateOf(false) }
 
-    // Populate form when profile loads
+    // Populate form when profile loads (only once per screen entry)
     LaunchedEffect(profileState) {
         if (profileState is Resource.Success && !initialized) {
             val profile = profileState.data!!
@@ -62,6 +62,7 @@ fun EditProfileScreen(
             is Resource.Success -> {
                 snackbarHostState.showSnackbar("Profile updated successfully!")
                 viewModel.resetUpdateState()
+                onNavigateBack()
             }
             is Resource.Error -> {
                 snackbarHostState.showSnackbar(updateState?.message ?: "Update failed")

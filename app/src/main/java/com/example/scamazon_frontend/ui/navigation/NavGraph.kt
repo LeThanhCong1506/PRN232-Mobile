@@ -42,8 +42,14 @@ import com.example.scamazon_frontend.ui.screens.profile.EditProfileScreen
 import com.example.scamazon_frontend.ui.screens.review.ReviewScreen
 import com.example.scamazon_frontend.ui.screens.favorite.FavoriteScreen
 import com.example.scamazon_frontend.ui.screens.search.ExploreScreen
+import com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel
+import com.example.scamazon_frontend.ui.screens.notification.NotificationScreen
+import com.example.scamazon_frontend.ui.screens.profile.ProfileViewModel
+import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.theme.TextSecondary
 import com.example.scamazon_frontend.ui.theme.Typography
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Main Navigation Graph
@@ -55,6 +61,11 @@ fun NavGraph(
     startDestination: String = Screen.Login.route,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val notificationViewModel: NotificationViewModel = viewModel(factory = ViewModelFactory(context))
+    val unreadCount by notificationViewModel.unreadCount.collectAsStateWithLifecycle()
+    val profileViewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(context))
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -111,6 +122,7 @@ fun NavGraph(
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications.route)
                 },
+                notificationBadge = unreadCount,
                 onNavigateToWishlist = {
                     navController.navigate(Screen.Wishlist.route)
                 },
@@ -145,20 +157,15 @@ fun NavGraph(
 
         composable(route = Screen.Account.route) {
             AccountScreen(
+                viewModel = profileViewModel,
                 onNavigateToProfile = {
                     navController.navigate(Screen.EditProfile.route)
-                },
-                onNavigateToNotifications = {
-                    navController.navigate(Screen.Notifications.route)
                 },
                 onNavigateToOrders = {
                     navController.navigate(Screen.OrderHistory.route)
                 },
                 onNavigateToWishlist = {
                     navController.navigate(Screen.Wishlist.route)
-                },
-                onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
                 },
                 onNavigateToChat = {
                     navController.navigate(Screen.Chat.route)
@@ -391,6 +398,7 @@ fun NavGraph(
         // ==========================================
         composable(route = Screen.Profile.route) {
             EditProfileScreen(
+                viewModel = profileViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
                 }
@@ -399,6 +407,7 @@ fun NavGraph(
 
         composable(route = Screen.EditProfile.route) {
             EditProfileScreen(
+                viewModel = profileViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
                 }
@@ -449,10 +458,8 @@ fun NavGraph(
         }
 
         composable(route = Screen.Notifications.route) {
-            val context = LocalContext.current
-            val viewModel: com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
-            com.example.scamazon_frontend.ui.screens.notification.NotificationScreen(
-                viewModel = viewModel,
+            NotificationScreen(
+                viewModel = notificationViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

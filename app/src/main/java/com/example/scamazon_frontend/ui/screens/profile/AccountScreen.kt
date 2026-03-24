@@ -36,8 +36,6 @@ fun AccountScreen(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToOrders: () -> Unit = {},
     onNavigateToWishlist: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {},
     onNavigateToChat: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {},
@@ -140,32 +138,6 @@ fun AccountScreen(
                 title = "Store Location",
                 subtitle = "Visit our flagship store",
                 onClick = onNavigateToMap
-            )
-
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 16.dp),
-                color = BorderLight
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.Notifications,
-                title = "Notifications",
-                subtitle = "Manage notifications",
-                onClick = onNavigateToNotifications
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.Settings,
-                title = "Settings",
-                subtitle = "App settings and preferences",
-                onClick = onNavigateToSettings
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.Info,
-                title = "About",
-                subtitle = "App version and info",
-                onClick = { /* Navigate to about */ }
             )
 
             Spacer(modifier = Modifier.height(24.dp))

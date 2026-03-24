@@ -59,7 +59,7 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             LafyuuTopAppBar(
-                title = "Scamazon Support",
+                title = "STEM Support",
                 onBackClick = onNavigateBack
             )
         },

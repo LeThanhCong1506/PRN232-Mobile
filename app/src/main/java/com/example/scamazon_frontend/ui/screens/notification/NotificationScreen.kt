@@ -1,6 +1,7 @@
 package com.example.scamazon_frontend.ui.screens.notification
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -71,7 +72,10 @@ fun NotificationScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(notifications) { notif ->
-                            NotificationItem(notif)
+                            NotificationItem(
+                                notif = notif,
+                                onMarkAsRead = { viewModel.markAsRead(notif.id) }
+                            )
                         }
                     }
                 }
@@ -81,10 +85,12 @@ fun NotificationScreen(
 }
 
 @Composable
-private fun NotificationItem(notif: NotificationDto) {
+private fun NotificationItem(notif: NotificationDto, onMarkAsRead: () -> Unit) {
     val unread = notif.isRead == false
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = unread) { onMarkAsRead() },
         colors = CardDefaults.cardColors(
             containerColor = if (unread) PrimaryBlueSoft else White
         ),

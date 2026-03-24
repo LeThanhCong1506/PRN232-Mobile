@@ -16,8 +16,8 @@ import javax.net.ssl.X509TrustManager
 import javax.net.ssl.HostnameVerifier
 
 object ApiClient {
-    // Backend deployed on Render
-    private const val BASE_URL = "https://prn232-backend-e01v.onrender.com/api/"
+    // Backend running locally (use 10.0.2.2 for Android emulator to reach host machine)
+    private const val BASE_URL = "https://10.0.2.2:7295/api/"
 
     private var retrofit: Retrofit? = null
 
