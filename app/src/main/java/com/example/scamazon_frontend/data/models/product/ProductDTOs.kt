@@ -46,6 +46,7 @@ data class ProductDetailDto(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
     @SerializedName("slug") val slug: String,
+    @SerializedName("sku") val sku: String?,
     @SerializedName("description") val description: String?,
     @SerializedName("detailDescription") val detailDescription: String?,
     @SerializedName("specifications") val specifications: Map<String, String>?,

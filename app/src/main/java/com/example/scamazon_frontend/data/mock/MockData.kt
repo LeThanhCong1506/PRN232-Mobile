@@ -83,7 +83,7 @@ object MockData {
     fun getProductDetail(slug: String): ProductDetailDto {
         val p = products.find { it.slug == slug } ?: products.first()
         return ProductDetailDto(
-            id = p.id, name = p.name, slug = p.slug,
+            id = p.id, name = p.name, slug = p.slug, sku = null,
             description = p.description, detailDescription = p.detailDescription,
             specifications = mapOf("Bảo hành" to "12 tháng", "Xuất xứ" to "Chính hãng"),
             price = p.price, salePrice = p.salePrice,

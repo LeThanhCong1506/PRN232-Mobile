@@ -13,6 +13,7 @@ import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductViewMo
 import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyViewModel
 import com.example.scamazon_frontend.ui.screens.auth.AuthViewModel
 import com.example.scamazon_frontend.data.network.ApiClient
+import com.example.scamazon_frontend.data.network.api.AdminCategoryApi
 import com.example.scamazon_frontend.data.network.api.AdminOrderApi
 import com.example.scamazon_frontend.data.network.api.AdminProductApi
 import com.example.scamazon_frontend.data.network.api.AuthApi
@@ -23,6 +24,7 @@ import com.example.scamazon_frontend.data.network.api.ReviewApi
 import com.example.scamazon_frontend.data.network.api.StoreApi
 import com.example.scamazon_frontend.data.network.api.WarrantyApi
 import com.example.scamazon_frontend.data.network.SignalRChatClient
+import com.example.scamazon_frontend.data.repository.AdminCategoryRepository
 import com.example.scamazon_frontend.data.repository.AdminOrderRepository
 import com.example.scamazon_frontend.data.repository.ChatRepository
 import com.example.scamazon_frontend.data.repository.StoreRepository
@@ -71,6 +73,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         val productApi = retrofit.create(ProductApi::class.java)
         val cartApi = retrofit.create(CartApi::class.java)
         val adminProductApi = retrofit.create(AdminProductApi::class.java)
+        val adminCategoryApi = retrofit.create(AdminCategoryApi::class.java)
         val adminOrderApi = retrofit.create(AdminOrderApi::class.java)
         val warrantyApi = retrofit.create(WarrantyApi::class.java)
         val reviewApi = retrofit.create(ReviewApi::class.java)
@@ -80,6 +83,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         val productRepo = ProductRepository(productApi)
         val cartRepo = CartRepository(cartApi)
         val adminProductRepo = AdminProductRepository(adminProductApi)
+        val adminCategoryRepo = AdminCategoryRepository(adminCategoryApi, productRepo)
         val adminOrderRepo = AdminOrderRepository(adminOrderApi)
         val warrantyRepo = WarrantyRepository(warrantyApi)
         val reviewRepo = ReviewRepository(reviewApi)
@@ -114,7 +118,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             }
             modelClass.isAssignableFrom(AdminDashboardViewModel::class.java) -> AdminDashboardViewModel(adminOrderRepo)
             modelClass.isAssignableFrom(AdminProductViewModel::class.java) -> AdminProductViewModel(adminProductRepo, productRepo)
-            modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) -> AdminCategoryViewModel()
+            modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) -> AdminCategoryViewModel(adminCategoryRepo)
             modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> AdminOrderViewModel(adminOrderRepo)
             modelClass.isAssignableFrom(PaymentQRViewModel::class.java) -> {
                 val paymentApi = retrofit.create(PaymentApi::class.java)

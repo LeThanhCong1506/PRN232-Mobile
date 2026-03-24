@@ -154,6 +154,7 @@ class ProductRepository(private val api: ProductApi) {
             id = productId,
             name = name,
             slug = "",
+            sku = sku,
             description = description,
             detailDescription = null,
             specifications = null,

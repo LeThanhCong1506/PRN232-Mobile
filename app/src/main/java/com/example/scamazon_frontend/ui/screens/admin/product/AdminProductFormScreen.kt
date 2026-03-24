@@ -89,6 +89,7 @@ fun AdminProductFormScreen(
             val product = (productDetailState as Resource.Success).data!!
             formProductId = product.id
             name = product.name
+            sku = product.sku ?: ""
             price = product.price.toString()
             salePrice = product.salePrice?.toString() ?: ""
             stockQuantity = product.stockQuantity?.toString() ?: ""
@@ -159,15 +160,17 @@ fun AdminProductFormScreen(
                 singleLine = true
             )
 
-            // SKU
+            // SKU — editable only when creating; read-only when editing
             OutlinedTextField(
                 value = sku,
-                onValueChange = { sku = it },
-                label = { Text("SKU *", fontFamily = Poppins) },
+                onValueChange = { if (!isEdit) sku = it },
+                label = { Text(if (isEdit) "SKU (read-only)" else "SKU *", fontFamily = Poppins) },
                 placeholder = { Text("e.g. ARD-UNO-R3", fontFamily = Poppins) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                singleLine = true
+                singleLine = true,
+                readOnly = isEdit,
+                enabled = !isEdit
             )
 
             // Price Row
@@ -439,8 +442,13 @@ fun AdminProductFormScreen(
             // Save Button
             Button(
                 onClick = {
-                    if (name.isBlank() || sku.isBlank() || price.isBlank()) {
-                        Toast.makeText(context, "Name, SKU and Price are required", Toast.LENGTH_SHORT).show()
+                    val skuMissing = !isEdit && sku.isBlank()
+                    if (name.isBlank() || skuMissing || price.isBlank()) {
+                        Toast.makeText(context,
+                            if (skuMissing) "Name, SKU and Price are required"
+                            else "Name and Price are required",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         return@Button
                     }
 
