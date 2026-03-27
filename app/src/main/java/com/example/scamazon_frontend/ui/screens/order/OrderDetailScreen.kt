@@ -114,7 +114,7 @@ private fun OrderDetailContent(
     onCancelOrder: (String) -> Unit = {}
 ) {
     val isDelivered = order.status.lowercase() == "delivered"
-    val canCancel = order.status.lowercase() == "pending" || order.status.lowercase() == "confirmed"
+    val canCancel = order.status.lowercase() == "pending"
     var showCancelDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -193,7 +193,7 @@ private fun OrderDetailContent(
                         text = "Pay Now",
                         onClick = {
                             try {
-                                val url = "https://prn232-backend-e01v.onrender.com/api/Payment/${order.orderId}/checkout?successUrl=myapp://payment/success&errorUrl=myapp://payment/error"
+                                val url = "https://prn232-backend-production.up.railway.app/api/Payment/${order.orderId}/checkout?successUrl=myapp://payment/success&errorUrl=myapp://payment/error"
                                 val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
                                 context.startActivity(intent)
                             } catch (e: Exception) {

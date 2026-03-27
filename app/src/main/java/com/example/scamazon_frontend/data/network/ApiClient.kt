@@ -17,7 +17,7 @@ import javax.net.ssl.HostnameVerifier
 
 object ApiClient {
     // Backend deployed on Render
-    private const val BASE_URL = "https://prn232-backend-e01v.onrender.com/api/"
+    private const val BASE_URL = "https://prn232-backend-production.up.railway.app/api/"
 
     private var retrofit: Retrofit? = null
 
