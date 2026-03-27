@@ -173,9 +173,9 @@ class PaymentQRViewModel(
     companion object {
         private const val TAG = "PaymentQR"
         private const val POLL_INTERVAL_MS = 3000L // Poll every 3 seconds for faster detection
-        private const val DEFAULT_TIMEOUT_SECONDS = 1800 // 30 minutes (matches backend)
-        private const val BANK_BIN = "970415"              // VietinBank (ICB) BIN
-        private const val ACCOUNT_NUMBER = "102876493175"  // SePay VietinBank account
+        private const val DEFAULT_TIMEOUT_SECONDS = 600  // 10 phút - phải khớp với backend (AddMinutes(10))
+        private const val BANK_BIN = "970415"              // VietinBank BIN
+        private const val ACCOUNT_NUMBER = "102876493175"  // VietinBank account number
         private const val QR_BITMAP_SIZE = 800            // QR image size in pixels
     }
 }
