@@ -31,7 +31,7 @@ class SignalRChatClient {
         val hubUrl = "https://prn232-backend-production.up.railway.app/hubs/chat?access_token=$token"
 
         hubConnection = HubConnectionBuilder
-            .create(hubUrl)
+            .create("https://prn232-backend-production.up.railway.app/hubs/chat?access_token=$token")
             .build()
 
         try {

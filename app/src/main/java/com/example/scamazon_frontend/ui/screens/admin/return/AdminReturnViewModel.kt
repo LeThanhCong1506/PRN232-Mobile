@@ -50,12 +50,14 @@ class AdminReturnViewModel(
             // Reload list if successful
             if (result is Resource.Success) {
                 if (_returnListState.value is Resource.Success) {
-                    val currentData = (_returnListState.value as Resource.Success).data
+                    val currentData = _returnListState.value.data
                     if (currentData != null) {
                         // Optimistically update the list
-                        val updatedItems = currentData.items.map { if (it.returnRequestId == id) result.data else it }
+                        val updatedItems: List<ReturnRequestResponse> = currentData.items.map {
+                             if (it.returnRequestId == id) result.data!! else it 
+                        }
                         _returnListState.value = Resource.Success(
-                            BackendPagedResponse(updatedItems, currentData.totalItems, currentData.pageNumber, currentData.pageSize, currentData.totalPages)
+                            currentData.copy(items = updatedItems)
                         )
                     }
                 }

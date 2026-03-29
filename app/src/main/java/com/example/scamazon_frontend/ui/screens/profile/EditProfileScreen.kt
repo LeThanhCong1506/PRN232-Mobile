@@ -67,7 +67,8 @@ fun EditProfileScreen(
             val bytes = inputStream?.readBytes()
             inputStream?.close()
             if (bytes != null) {
-                val requestFile = okhttp3.RequestBody.create(okhttp3.MediaType.parse("image/*"), bytes)
+                val mediaType = okhttp3.MediaType.parse("image/*")
+                val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
                 val body = okhttp3.MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile)
                 viewModel.uploadAvatar(body)
             }

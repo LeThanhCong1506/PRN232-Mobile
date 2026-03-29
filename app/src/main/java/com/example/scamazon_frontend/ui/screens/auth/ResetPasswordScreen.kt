@@ -18,7 +18,7 @@ import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.LafyuuPasswordField
 import com.example.scamazon_frontend.ui.components.LafyuuPrimaryButton
 import com.example.scamazon_frontend.ui.components.LafyuuTextField
-import com.example.scamazon_frontend.ui.components.MainTopAppBar
+import com.example.scamazon_frontend.ui.components.LafyuuTopAppBar
 import com.example.scamazon_frontend.ui.theme.BackgroundWhite
 import com.example.scamazon_frontend.ui.theme.Poppins
 import com.example.scamazon_frontend.ui.theme.TextPrimary
@@ -59,9 +59,9 @@ fun ResetPasswordScreen(
 
     Scaffold(
         topBar = {
-            MainTopAppBar(
+            LafyuuTopAppBar(
                 title = "Reset Password",
-                onNavigationClick = onNavigateBack
+                onBackClick = onNavigateBack
             )
         }
     ) { paddingValues ->

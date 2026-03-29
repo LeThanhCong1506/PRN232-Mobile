@@ -17,7 +17,7 @@ import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.LafyuuEmailField
 import com.example.scamazon_frontend.ui.components.LafyuuPrimaryButton
-import com.example.scamazon_frontend.ui.components.MainTopAppBar
+import com.example.scamazon_frontend.ui.components.LafyuuTopAppBar
 import com.example.scamazon_frontend.ui.theme.BackgroundWhite
 import com.example.scamazon_frontend.ui.theme.Poppins
 import com.example.scamazon_frontend.ui.theme.TextPrimary
@@ -51,9 +51,9 @@ fun ForgotPasswordScreen(
 
     Scaffold(
         topBar = {
-            MainTopAppBar(
+            LafyuuTopAppBar(
                 title = "Forgot Password",
-                onNavigationClick = onNavigateBack
+                onBackClick = onNavigateBack
             )
         }
     ) { paddingValues ->
