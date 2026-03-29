@@ -4,13 +4,18 @@ import com.example.scamazon_frontend.data.models.auth.AuthResponse
 import com.example.scamazon_frontend.data.models.auth.LoginRequest
 import com.example.scamazon_frontend.data.models.auth.RegisterRequest
 import com.example.scamazon_frontend.data.models.auth.SocialLoginRequest
+import com.example.scamazon_frontend.data.models.auth.ForgotPasswordRequest
+import com.example.scamazon_frontend.data.models.auth.ResetPasswordRequest
 import com.example.scamazon_frontend.data.models.profile.ProfileDataDto
 import com.example.scamazon_frontend.data.models.profile.UpdateProfileRequest
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 
 interface AuthApi {
     @POST("users/login")
@@ -30,6 +35,16 @@ interface AuthApi {
 
     @POST("auth/github")
     suspend fun githubLogin(@Body request: SocialLoginRequest): Response<AuthResponse>
+
+    @POST("auth/forgot-password")
+    suspend fun forgotPassword(@Body request: ForgotPasswordRequest): Response<ApiResponse<String>>
+
+    @POST("auth/reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<ApiResponse<String>>
+
+    @Multipart
+    @POST("users/me/avatar")
+    suspend fun uploadAvatar(@Part file: MultipartBody.Part): Response<ProfileDataDto>
 }
 
 // Wrapper cho response base từ backend

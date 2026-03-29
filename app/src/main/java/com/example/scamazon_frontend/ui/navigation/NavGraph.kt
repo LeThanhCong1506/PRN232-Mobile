@@ -50,6 +50,11 @@ import com.example.scamazon_frontend.ui.theme.TextSecondary
 import com.example.scamazon_frontend.ui.theme.Typography
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.scamazon_frontend.ui.screens.admin.user.AdminUserListScreen
+import com.example.scamazon_frontend.ui.screens.warranty.MyClaimsScreen
+import com.example.scamazon_frontend.ui.screens.`return`.ReturnListScreen
+import com.example.scamazon_frontend.ui.screens.`return`.ReturnCreateScreen
+import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnScreen
 
 /**
  * Main Navigation Graph
@@ -180,6 +185,12 @@ fun NavGraph(
                 },
                 onNavigateToWarranty = {
                     navController.navigate(Screen.WarrantyList.route)
+                },
+                onNavigateToReturns = {
+                    navController.navigate(Screen.ReturnList.route)
+                },
+                onNavigateToClaims = {
+                    navController.navigate(Screen.MyClaims.route)
                 }
             )
         }
@@ -442,6 +453,9 @@ fun NavGraph(
                 },
                 onNavigateToReview = { productId ->
                     navController.navigate(Screen.Review.createRoute(productId, canWrite = true))
+                },
+                onNavigateToReturn = { orderIdParam ->
+                    navController.navigate(Screen.ReturnCreate.createRoute(orderIdParam))
                 }
             )
         }
@@ -487,7 +501,30 @@ fun NavGraph(
         }
 
         composable(route = Screen.ForgotPassword.route) {
-            PlaceholderScreen(screenName = "Forgot Password")
+            com.example.scamazon_frontend.ui.screens.auth.ForgotPasswordScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToResetPassword = { email ->
+                    navController.navigate(Screen.ResetPassword.createRoute(email))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ResetPassword.route,
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            com.example.scamazon_frontend.ui.screens.auth.ResetPasswordScreen(
+                email = email,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(
@@ -515,6 +552,9 @@ fun NavGraph(
             com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardScreen(
                 onNavigateToChat = {
                     navController.navigate(Screen.AdminChatList.route)
+                },
+                onNavigateToUsers = {
+                    navController.navigate(Screen.AdminUserList.route)
                 }
             )
         }
@@ -686,6 +726,12 @@ fun NavGraph(
                 onNavigateToWarrantyClaims = {
                     navController.navigate(Screen.AdminWarrantyClaims.route)
                 },
+                onNavigateToReturnRequests = {
+                    navController.navigate(Screen.AdminReturns.route)
+                },
+                onNavigateToUserManagement = {
+                    navController.navigate(Screen.AdminUserList.route)
+                },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -723,11 +769,55 @@ fun NavGraph(
             )
         }
 
+        composable(route = Screen.MyClaims.route) {
+            MyClaimsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(route = Screen.AdminWarrantyClaims.route) {
             AdminWarrantyClaimsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        // ==========================================
+        // RETURN REQUEST SCREENS
+        // ==========================================
+        composable(route = Screen.ReturnList.route) {
+            ReturnListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onReturnClick = { /* Maybe navigate to detail later */ }
+            )
+        }
+
+        composable(
+            route = Screen.ReturnCreate.route,
+            arguments = listOf(
+                navArgument("orderId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getInt("orderId") ?: 0
+            ReturnCreateScreen(
+                orderId = orderId,
+                onNavigateBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.AdminReturns.route) {
+            AdminReturnScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.AdminUserList.route) {
+            AdminUserListScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

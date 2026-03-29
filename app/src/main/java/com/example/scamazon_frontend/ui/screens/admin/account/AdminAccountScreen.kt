@@ -30,6 +30,8 @@ fun AdminAccountScreen(
     viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToProfile: () -> Unit = {},
     onNavigateToWarrantyClaims: () -> Unit = {},
+    onNavigateToReturnRequests: () -> Unit = {},
+    onNavigateToUserManagement: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -148,6 +150,20 @@ fun AdminAccountScreen(
                         title = "Warranty Claims",
                         subtitle = "Manage customer warranty claims",
                         onClick = onNavigateToWarrantyClaims
+                    )
+                    HorizontalDivider(color = BorderLight)
+                    AdminMenuItem(
+                        icon = Icons.Filled.Refresh,
+                        title = "Return Requests",
+                        subtitle = "Manage customer returns and exchanges",
+                        onClick = onNavigateToReturnRequests
+                    )
+                    HorizontalDivider(color = BorderLight)
+                    AdminMenuItem(
+                        icon = Icons.Filled.People,
+                        title = "User Management",
+                        subtitle = "View and manage registered users",
+                        onClick = onNavigateToUserManagement
                     )
                     HorizontalDivider(color = BorderLight)
                     AdminMenuItem(

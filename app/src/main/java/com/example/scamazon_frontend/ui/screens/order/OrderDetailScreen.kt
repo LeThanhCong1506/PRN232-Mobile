@@ -35,7 +35,8 @@ fun OrderDetailScreen(
     orderId: Int,
     viewModel: OrderHistoryViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
-    onNavigateToReview: (Int) -> Unit = {}
+    onNavigateToReview: (Int) -> Unit = {},
+    onNavigateToReturn: (Int) -> Unit = {}
 ) {
     val orderDetailState by viewModel.orderDetailState.collectAsStateWithLifecycle()
 
@@ -83,6 +84,7 @@ fun OrderDetailScreen(
                         OrderDetailContent(
                             order = order,
                             onNavigateToReview = onNavigateToReview,
+                            onNavigateToReturn = { onNavigateToReturn(orderId) },
                             onCancelOrder = { reason ->
                                 viewModel.cancelOrder(
                                     id = orderId,
@@ -111,6 +113,7 @@ fun OrderDetailScreen(
 private fun OrderDetailContent(
     order: OrderDetailResponse,
     onNavigateToReview: (Int) -> Unit = {},
+    onNavigateToReturn: () -> Unit = {},
     onCancelOrder: (String) -> Unit = {}
 ) {
     val isDelivered = order.status.lowercase() == "delivered"
@@ -162,6 +165,27 @@ private fun OrderDetailContent(
                     items = order.items,
                     onReviewClick = onNavigateToReview
                 )
+            }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { onNavigateToReturn(orderId) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlue),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue)
+                ) {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Request Return / Exchange",
+                        fontFamily = Poppins,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
 

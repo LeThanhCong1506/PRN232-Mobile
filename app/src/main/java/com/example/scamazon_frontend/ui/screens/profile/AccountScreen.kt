@@ -39,7 +39,9 @@ fun AccountScreen(
     onNavigateToChat: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {},
-    onNavigateToWarranty: () -> Unit = {}
+    onNavigateToWarranty: () -> Unit = {},
+    onNavigateToReturns: () -> Unit = {},
+    onNavigateToClaims: () -> Unit = {}
 ) {
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -117,10 +119,24 @@ fun AccountScreen(
             )
 
             AccountMenuItem(
+                icon = Icons.Outlined.Refresh,
+                title = "My Returns",
+                subtitle = "Manage your return requests",
+                onClick = onNavigateToReturns
+            )
+
+            AccountMenuItem(
                 icon = Icons.Outlined.Shield,
                 title = "My Warranties",
                 subtitle = "View and manage product warranties",
                 onClick = onNavigateToWarranty
+            )
+
+            AccountMenuItem(
+                icon = Icons.Outlined.History,
+                title = "My Claims",
+                subtitle = "View your warranty claim history",
+                onClick = onNavigateToClaims
             )
 
             AccountMenuItem(

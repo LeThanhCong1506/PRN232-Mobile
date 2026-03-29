@@ -97,7 +97,8 @@ object MockData {
             ),
             ratingSummary = RatingSummaryDto(p.avgRating ?: 4.5f, 25, RatingBreakdownDto(15, 5, 3, 1, 1)),
             viewCount = 1200, soldCount = p.soldCount, isFeatured = p.isFeatured,
-            createdAt = p.createdAt, updatedAt = p.createdAt
+            createdAt = p.createdAt, updatedAt = p.createdAt,
+            productType = "SIMPLE", bundleComponents = null
         )
     }
 

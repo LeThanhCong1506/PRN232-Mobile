@@ -63,7 +63,18 @@ data class ProductDetailDto(
     @SerializedName("soldCount") val soldCount: Int?,
     @SerializedName("isFeatured") val isFeatured: Boolean?,
     @SerializedName("createdAt") val createdAt: String?,
-    @SerializedName("updatedAt") val updatedAt: String?
+    @SerializedName("updatedAt") val updatedAt: String?,
+    @SerializedName("productType") val productType: String?,
+    @SerializedName("bundleComponents") val bundleComponents: List<BundleComponentDto>?
+)
+
+data class BundleComponentDto(
+    @SerializedName("bundleId") val bundleId: Int,
+    @SerializedName("childProductId") val childProductId: Int,
+    @SerializedName("childProductName") val childProductName: String,
+    @SerializedName("childProductSku") val childProductSku: String,
+    @SerializedName("childProductPrice") val childProductPrice: Double,
+    @SerializedName("quantity") val quantity: Int
 )
 
 data class CategoryInfoDto(

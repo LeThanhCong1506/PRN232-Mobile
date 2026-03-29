@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +39,7 @@ fun EditProfileScreen(
     var city by remember { mutableStateOf("") }
     var district by remember { mutableStateOf("") }
     var ward by remember { mutableStateOf("") }
+    var avatarUrl by remember { mutableStateOf<String?>(null) }
     var initialized by remember { mutableStateOf(false) }
 
     // Populate form when profile loads (only once per screen entry)
@@ -51,7 +53,24 @@ fun EditProfileScreen(
             city = profile.city ?: ""
             district = profile.district ?: ""
             ward = profile.ward ?: ""
+            avatarUrl = profile.avatarUrl
             initialized = true
+        }
+    }
+
+    val context = LocalContext.current
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            val inputStream = context.contentResolver.openInputStream(it)
+            val bytes = inputStream?.readBytes()
+            inputStream?.close()
+            if (bytes != null) {
+                val requestFile = okhttp3.RequestBody.create(okhttp3.MediaType.parse("image/*"), bytes)
+                val body = okhttp3.MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile)
+                viewModel.uploadAvatar(body)
+            }
         }
     }
 
@@ -112,6 +131,27 @@ fun EditProfileScreen(
                             .padding(Dimens.ScreenPadding),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // Avatar
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                coil.compose.AsyncImage(
+                                    model = avatarUrl ?: "https://via.placeholder.com/150",
+                                    contentDescription = "Avatar",
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TextButton(onClick = { launcher.launch("image/*") }) {
+                                    Text("Change Picture", color = PrimaryBlue)
+                                }
+                            }
+                        }
+
                         // Full Name
                         Text(text = "Full Name", style = Typography.titleSmall, color = TextPrimary)
                         LafyuuTextField(

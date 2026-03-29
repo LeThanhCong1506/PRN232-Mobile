@@ -189,7 +189,18 @@ class ProductRepository(private val api: ProductApi) {
             soldCount = null,
             isFeatured = null,
             createdAt = createdAt,
-            updatedAt = null
+            updatedAt = null,
+            productType = productType,
+            bundleComponents = bundleComponents?.map {
+                BundleComponentDto(
+                    bundleId = it.bundleId,
+                    childProductId = it.childProductId,
+                    childProductName = it.childProductName,
+                    childProductSku = it.childProductSku,
+                    childProductPrice = it.childProductPrice,
+                    quantity = it.quantity
+                )
+            }
         )
     }
 }

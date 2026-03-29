@@ -22,3 +22,13 @@ data class SocialLoginRequest(
     @SerializedName("code") val code: String,
     @SerializedName("redirectUri") val redirectUri: String
 )
+
+data class ForgotPasswordRequest(
+    @SerializedName("email") val email: String
+)
+
+data class ResetPasswordRequest(
+    @SerializedName("email") val email: String,
+    @SerializedName("token") val token: String,
+    @SerializedName("newPassword") val newPassword: String
+)

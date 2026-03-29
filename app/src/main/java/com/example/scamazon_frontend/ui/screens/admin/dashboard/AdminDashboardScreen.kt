@@ -34,7 +34,8 @@ import java.util.Locale
 @Composable
 fun AdminDashboardScreen(
     viewModel: AdminDashboardViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
-    onNavigateToChat: () -> Unit = {}
+    onNavigateToChat: () -> Unit = {},
+    onNavigateToUsers: () -> Unit = {}
 ) {
     val statsState by viewModel.statsState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -95,7 +96,8 @@ fun AdminDashboardScreen(
                 val stats = (statsState as Resource.Success<DashboardStatsDto>).data!!
                 DashboardContent(
                     stats = stats,
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(innerPadding),
+                    onNavigateToUsers = { onNavigateToUsers() }
                 )
             }
         }
@@ -105,7 +107,8 @@ fun AdminDashboardScreen(
 @Composable
 private fun DashboardContent(
     stats: DashboardStatsDto,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToUsers: () -> Unit = {}
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -124,7 +127,8 @@ private fun DashboardContent(
                 subtitle = "+${stats.customers.new7Days} this month",
                 icon = Icons.Filled.People,
                 iconColor = PrimaryBlue,
-                iconBgColor = PrimaryBlueSoft
+                iconBgColor = PrimaryBlueSoft,
+                onClick = onNavigateToUsers
             )
         }
 
@@ -183,10 +187,13 @@ private fun StatsCard(
     subtitle: String,
     icon: ImageVector,
     iconColor: Color,
-    iconBgColor: Color
+    iconBgColor: Color,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
