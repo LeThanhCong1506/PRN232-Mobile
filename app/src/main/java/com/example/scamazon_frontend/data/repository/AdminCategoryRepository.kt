@@ -10,6 +10,7 @@ import com.example.scamazon_frontend.data.models.category.CategoryDto
 import com.example.scamazon_frontend.data.network.api.AdminCategoryApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MultipartBody
 
 class AdminCategoryRepository(
     private val api: AdminCategoryApi,
@@ -61,6 +62,32 @@ class AdminCategoryRepository(
                     Resource.Success(Unit)
                 } else {
                     Resource.Error(response.body()?.message ?: "Failed to delete category")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    suspend fun uploadCategoryImage(id: Int, filePart: MultipartBody.Part): Resource<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.uploadCategoryImage(id, filePart)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    val errorMsg = if (!response.isSuccessful) {
+                        val body = response.errorBody()?.string()
+                        try {
+                            org.json.JSONObject(body ?: "{}").optString("Message", null)
+                                ?: "Failed to upload image (${response.code()})"
+                        } catch (_: Exception) {
+                            "Failed to upload image (${response.code()})"
+                        }
+                    } else {
+                        response.body()?.message ?: "Failed to upload image"
+                    }
+                    Resource.Error(errorMsg)
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")

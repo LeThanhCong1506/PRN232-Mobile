@@ -162,3 +162,9 @@ data class BackendRecentOrderDto(
     @SerializedName("paymentMethod") val paymentMethod: String?,
     @SerializedName("createdAt") val createdAt: String?
 )
+
+data class BackendDailyRevenueDto(
+    @SerializedName("date") val date: String,
+    @SerializedName("revenue") val revenue: Double,
+    @SerializedName("orderCount") val orderCount: Int
+)

@@ -1,6 +1,8 @@
 package com.example.scamazon_frontend.ui.screens.admin.category
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,6 +54,25 @@ fun AdminCategoryFormScreen(
     var name by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") } // For category
     var logoUrl by remember { mutableStateOf("") } // For brand
+
+    // Image picker for category image upload
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            if (!isBrand && isEdit && editId != null) {
+                val inputStream = context.contentResolver.openInputStream(it)
+                val bytes = inputStream?.readBytes()
+                inputStream?.close()
+                if (bytes != null) {
+                    val mediaType = okhttp3.MediaType.parse("image/*")
+                    val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
+                    val body = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
+                    viewModel.uploadCategoryImage(editId, body)
+                }
+            }
+        }
+    }
 
     // Pre-fill for edit mode
     LaunchedEffect(editId, categoriesState, brandsState) {
@@ -154,6 +175,16 @@ fun AdminCategoryFormScreen(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
                 )
+                // Image upload button (only available in edit mode when category ID is known)
+                if (isEdit && editId != null) {
+                    OutlinedButton(
+                        onClick = { imageLauncher.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Upload Category Image", fontFamily = Poppins)
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))

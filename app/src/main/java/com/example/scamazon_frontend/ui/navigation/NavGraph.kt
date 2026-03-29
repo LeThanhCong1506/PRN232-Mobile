@@ -44,6 +44,7 @@ import com.example.scamazon_frontend.ui.screens.favorite.FavoriteScreen
 import com.example.scamazon_frontend.ui.screens.search.ExploreScreen
 import com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel
 import com.example.scamazon_frontend.ui.screens.notification.NotificationScreen
+import com.example.scamazon_frontend.ui.screens.chat.ChatViewModel
 import com.example.scamazon_frontend.ui.screens.profile.ProfileViewModel
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.theme.TextSecondary
@@ -70,6 +71,8 @@ fun NavGraph(
     val notificationViewModel: NotificationViewModel = viewModel(factory = ViewModelFactory(context))
     val unreadCount by notificationViewModel.unreadCount.collectAsStateWithLifecycle()
     val profileViewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(context))
+    val sharedChatViewModel: ChatViewModel = viewModel(factory = ViewModelFactory(context))
+    val chatUnreadCount by sharedChatViewModel.unreadCount.collectAsStateWithLifecycle()
 
     NavHost(
         navController = navController,
@@ -191,7 +194,8 @@ fun NavGraph(
                 },
                 onNavigateToClaims = {
                     navController.navigate(Screen.MyClaims.route)
-                }
+                },
+                chatUnreadCount = chatUnreadCount
             )
         }
 
@@ -492,10 +496,8 @@ fun NavGraph(
         }
 
         composable(route = Screen.Chat.route) {
-            val context = LocalContext.current
-            val viewModel: com.example.scamazon_frontend.ui.screens.chat.ChatViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
             com.example.scamazon_frontend.ui.screens.chat.ChatScreen(
-                viewModel = viewModel,
+                viewModel = sharedChatViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

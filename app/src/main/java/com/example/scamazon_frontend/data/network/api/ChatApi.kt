@@ -59,6 +59,26 @@ interface ChatApi {
     suspend fun uploadImage(
         @Part image: MultipartBody.Part
     ): Response<BackendApiResponse<UploadImageResponse>>
+
+    /**
+     * Mark all messages from a specific user as read (Admin use).
+     */
+    @POST("chat/mark-read/{userId}")
+    suspend fun markReadByUserId(
+        @Path("userId") userId: Int
+    ): Response<BackendApiResponse<Any>>
+
+    /**
+     * Mark all messages as read for the authenticated user (Customer use).
+     */
+    @POST("chat/mark-read")
+    suspend fun markRead(): Response<BackendApiResponse<Any>>
+
+    /**
+     * Get unread message count for the authenticated user.
+     */
+    @GET("chat/unread-count")
+    suspend fun getUnreadCount(): Response<BackendApiResponse<Int>>
 }
 
 data class SendMessageRequest(

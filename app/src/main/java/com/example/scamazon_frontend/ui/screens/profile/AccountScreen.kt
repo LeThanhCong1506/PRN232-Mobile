@@ -41,7 +41,8 @@ fun AccountScreen(
     onNavigateToLogin: () -> Unit = {},
     onNavigateToWarranty: () -> Unit = {},
     onNavigateToReturns: () -> Unit = {},
-    onNavigateToClaims: () -> Unit = {}
+    onNavigateToClaims: () -> Unit = {},
+    chatUnreadCount: Int = 0
 ) {
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -155,6 +156,7 @@ fun AccountScreen(
                 icon = Icons.Outlined.ChatBubbleOutline,
                 title = "Customer Support",
                 subtitle = "Chat with us online",
+                badge = chatUnreadCount,
                 onClick = onNavigateToChat
             )
 
@@ -225,6 +227,7 @@ private fun AccountMenuItem(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    badge: Int = 0,
     onClick: () -> Unit
 ) {
     Row(
@@ -234,19 +237,36 @@ private fun AccountMenuItem(
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(PrimaryBlueSoft, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = PrimaryBlue,
-                modifier = Modifier.size(20.dp)
-            )
+        // Icon with optional badge
+        Box(contentAlignment = Alignment.TopEnd) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(PrimaryBlueSoft, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = PrimaryBlue,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            if (badge > 0) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(androidx.compose.ui.graphics.Color.Red, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (badge > 99) "99+" else badge.toString(),
+                        color = White,
+                        fontSize = 8.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.width(16.dp))

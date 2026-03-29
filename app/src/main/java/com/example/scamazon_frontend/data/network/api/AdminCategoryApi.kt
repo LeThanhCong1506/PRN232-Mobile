@@ -5,6 +5,7 @@ import com.example.scamazon_frontend.data.models.admin.CreateCategoryRequest
 import com.example.scamazon_frontend.data.models.admin.UpdateBrandRequest
 import com.example.scamazon_frontend.data.models.admin.UpdateCategoryRequest
 import com.example.scamazon_frontend.data.models.common.BackendApiResponse
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -26,6 +27,13 @@ interface AdminCategoryApi {
     @DELETE("categories/{id}")
     suspend fun deleteCategory(
         @Path("id") id: Int
+    ): Response<BackendApiResponse<Any>>
+
+    @Multipart
+    @POST("categories/{id}/image")
+    suspend fun uploadCategoryImage(
+        @Path("id") id: Int,
+        @Part image: MultipartBody.Part
     ): Response<BackendApiResponse<Any>>
 
     // ===== Brand CRUD =====

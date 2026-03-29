@@ -16,11 +16,12 @@ class ProductRepository(private val api: ProductApi) {
         categoryId: Int? = null,
         brandId: Int? = null,
         minPrice: Double? = null,
-        maxPrice: Double? = null
+        maxPrice: Double? = null,
+        productType: String? = null
     ): Resource<ProductPaginationResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = api.getProducts(pageNumber, pageSize, searchTerm, categoryId, brandId, minPrice, maxPrice)
+                val response = api.getProducts(pageNumber, pageSize, searchTerm, categoryId, brandId, minPrice, maxPrice, productType)
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.success == true && body.data != null) {

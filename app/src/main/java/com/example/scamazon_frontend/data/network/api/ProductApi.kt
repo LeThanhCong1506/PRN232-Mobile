@@ -21,7 +21,8 @@ interface ProductApi {
         @Query("categoryId") categoryId: Int? = null,
         @Query("brandId") brandId: Int? = null,
         @Query("minPrice") minPrice: Double? = null,
-        @Query("maxPrice") maxPrice: Double? = null
+        @Query("maxPrice") maxPrice: Double? = null,
+        @Query("productType") productType: String? = null
     ): Response<BackendApiResponse<BackendPagedResponse<BackendProductDto>>>
 
     @GET("product/{id}")

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 
 class AdminCategoryViewModel(
     private val adminCategoryRepo: AdminCategoryRepository
@@ -127,6 +128,18 @@ class AdminCategoryViewModel(
             _deleteState.value = when (result) {
                 is Resource.Success -> Resource.Success(Unit)
                 is Resource.Error -> Resource.Error(result.message ?: "Failed to delete brand")
+                is Resource.Loading -> Resource.Loading()
+            }
+        }
+    }
+
+    fun uploadCategoryImage(id: Int, filePart: MultipartBody.Part) {
+        viewModelScope.launch {
+            _saveState.value = Resource.Loading()
+            val result = adminCategoryRepo.uploadCategoryImage(id, filePart)
+            _saveState.value = when (result) {
+                is Resource.Success -> Resource.Success(Unit)
+                is Resource.Error -> Resource.Error(result.message ?: "Failed to upload image")
                 is Resource.Loading -> Resource.Loading()
             }
         }

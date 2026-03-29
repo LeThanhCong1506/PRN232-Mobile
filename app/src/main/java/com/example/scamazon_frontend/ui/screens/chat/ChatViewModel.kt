@@ -35,11 +35,31 @@ class ChatViewModel(
     private val _sendError = MutableStateFlow<String?>(null)
     val sendError = _sendError.asStateFlow()
 
+    private val _unreadCount = MutableStateFlow(0)
+    val unreadCount = _unreadCount.asStateFlow()
+
     private val localMessages = mutableListOf<ChatMessageDto>()
+
+    init {
+        fetchUnreadCount()
+    }
+
+    fun fetchUnreadCount() {
+        viewModelScope.launch {
+            val result = chatRepo.getUnreadCount()
+            if (result is Resource.Success) {
+                _unreadCount.value = result.data ?: 0
+            }
+        }
+    }
 
     fun startOrLoadChat(storeId: Int? = null) {
         viewModelScope.launch {
             _messagesState.value = Resource.Loading()
+
+            // Mark messages as read when opening chat
+            chatRepo.markRead()
+            _unreadCount.value = 0
 
             // Load chat history from REST API
             val result = chatRepo.getChatHistory()

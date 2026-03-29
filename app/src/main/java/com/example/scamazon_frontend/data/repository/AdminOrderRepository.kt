@@ -9,6 +9,7 @@ import com.example.scamazon_frontend.data.models.admin.OrderStatsDto
 import com.example.scamazon_frontend.data.models.admin.ProductStatsDto
 import com.example.scamazon_frontend.data.models.admin.RevenueStatsDto
 import com.example.scamazon_frontend.data.models.admin.ChatStatsDto
+import com.example.scamazon_frontend.data.models.admin.DailyRevenueDto
 import com.example.scamazon_frontend.data.models.order.AdminOrderSummaryDto
 import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
 import com.example.scamazon_frontend.data.models.order.OrderItemDto
@@ -151,6 +152,29 @@ class AdminOrderRepository(private val api: AdminOrderApi) {
                     Resource.Success(Unit)
                 } else {
                     Resource.Error(response.body()?.message ?: "Failed to update payment status")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    suspend fun getRevenueChart(from: String, to: String, status: String? = null): Resource<List<DailyRevenueDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getRevenueChart(from, to, status)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        val items = body.data.map { d ->
+                            DailyRevenueDto(date = d.date, revenue = d.revenue, orderCount = d.orderCount)
+                        }
+                        Resource.Success(items)
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to load revenue chart")
+                    }
+                } else {
+                    Resource.Error("Error ${response.code()}: ${response.message()}")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")

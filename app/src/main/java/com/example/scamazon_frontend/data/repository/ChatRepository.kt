@@ -170,6 +170,65 @@ class ChatRepository(private val api: ChatApi) {
         }
     }
 
+    /**
+     * Mark all messages from a specific user as read (Admin use).
+     */
+    suspend fun markReadByUserId(userId: Int): Resource<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.markReadByUserId(userId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    Resource.Error(response.body()?.message ?: "Failed to mark messages as read")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    /**
+     * Mark all messages as read for the authenticated user.
+     */
+    suspend fun markRead(): Resource<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.markRead()
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    Resource.Error(response.body()?.message ?: "Failed to mark messages as read")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    /**
+     * Get unread message count for the authenticated user.
+     */
+    suspend fun getUnreadCount(): Resource<Int> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getUnreadCount()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true) {
+                        Resource.Success(body.data ?: 0)
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to get unread count")
+                    }
+                } else {
+                    Resource.Error("Error ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
     companion object {
         /**
          * Map backend DTO → existing UI ChatMessageDto.

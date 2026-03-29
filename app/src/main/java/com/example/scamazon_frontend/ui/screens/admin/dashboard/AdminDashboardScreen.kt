@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.admin.DailyRevenueDto
 import com.example.scamazon_frontend.data.models.admin.DashboardStatsDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
@@ -40,6 +41,7 @@ fun AdminDashboardScreen(
 ) {
     val statsState by viewModel.statsState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val revenueChartState by viewModel.revenueChartState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -95,8 +97,10 @@ fun AdminDashboardScreen(
 
             is Resource.Success -> {
                 val stats = (statsState as Resource.Success<DashboardStatsDto>).data!!
+                val chartData = (revenueChartState as? Resource.Success)?.data
                 DashboardContent(
                     stats = stats,
+                    revenueChartData = chartData,
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToUsers = { onNavigateToUsers() }
                 )
@@ -108,6 +112,7 @@ fun AdminDashboardScreen(
 @Composable
 private fun DashboardContent(
     stats: DashboardStatsDto,
+    revenueChartData: List<DailyRevenueDto>? = null,
     modifier: Modifier = Modifier,
     onNavigateToUsers: () -> Unit = {}
 ) {
@@ -177,6 +182,13 @@ private fun DashboardContent(
         // Revenue Summary Card (full width)
         item(span = { GridItemSpan(maxLineSpan) }) {
             RevenueSummaryCard(stats)
+        }
+
+        // Daily Revenue Chart (full width) – only shown when data is available
+        if (!revenueChartData.isNullOrEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                DailyRevenueChartCard(data = revenueChartData)
+            }
         }
     }
 }
@@ -430,6 +442,106 @@ private fun RevenueRow(label: String, amount: Double) {
             fontSize = 13.sp,
             color = StatusSuccess
         )
+    }
+}
+
+@Composable
+private fun DailyRevenueChartCard(data: List<DailyRevenueDto>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Daily Revenue (Last 7 Days)",
+                fontFamily = Poppins,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val maxRevenue = data.maxOfOrNull { it.revenue }?.toFloat() ?: 1f
+            val barHeight = 100.dp
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                data.forEach { item ->
+                    val heightRatio = if (maxRevenue == 0f) 0f else (item.revenue.toFloat() / maxRevenue)
+                    // Show last 3 chars of date (day part)
+                    val dayLabel = item.date.takeLast(5)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = formatCurrencyShort(item.revenue),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryBlue,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Box(
+                            modifier = Modifier
+                                .height(barHeight)
+                                .fillMaxWidth()
+                                .padding(horizontal = 3.dp),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(heightRatio.coerceAtLeast(0.04f))
+                                    .background(PrimaryBlue, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = dayLabel,
+                            fontSize = 9.sp,
+                            color = TextSecondary,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            data.forEach { item ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = item.date, fontSize = 12.sp, color = TextSecondary)
+                    Text(
+                        text = "${item.orderCount} orders · ${formatCurrency(item.revenue)}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextPrimary
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun formatCurrencyShort(amount: Double): String {
+    return when {
+        amount >= 1_000_000 -> "${(amount / 1_000_000).toInt()}M"
+        amount >= 1_000 -> "${(amount / 1_000).toInt()}K"
+        else -> amount.toInt().toString()
     }
 }
 
