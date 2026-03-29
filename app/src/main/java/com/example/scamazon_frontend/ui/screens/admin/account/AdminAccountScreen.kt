@@ -165,12 +165,6 @@ fun AdminAccountScreen(
                         subtitle = "View and manage registered users",
                         onClick = onNavigateToUserManagement
                     )
-                    HorizontalDivider(color = BorderLight)
-                    AdminMenuItem(
-                        icon = Icons.Filled.Settings,
-                        title = "Settings",
-                        subtitle = "App settings"
-                    )
                 }
             }
 

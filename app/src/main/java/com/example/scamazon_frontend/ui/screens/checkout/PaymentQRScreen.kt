@@ -45,7 +45,8 @@ fun PaymentQRScreen(
     viewModel: PaymentQRViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
     onNavigateToHome: () -> Unit = {},
-    onNavigateToOrders: () -> Unit = {}
+    onNavigateToOrders: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     val qrState by viewModel.qrState.collectAsStateWithLifecycle()
     val qrBitmap by viewModel.qrBitmap.collectAsStateWithLifecycle()
@@ -55,6 +56,15 @@ fun PaymentQRScreen(
 
     LaunchedEffect(orderId) {
         viewModel.createPaymentQR(orderId)
+    }
+
+    // When bank-transfer payment is confirmed, navigate to Notification screen after
+    // a brief delay so the user can see the success animation.
+    LaunchedEffect(paymentStatus) {
+        if (paymentStatus == "success") {
+            kotlinx.coroutines.delay(1500)
+            onNavigateToNotifications()
+        }
     }
 
     Column(

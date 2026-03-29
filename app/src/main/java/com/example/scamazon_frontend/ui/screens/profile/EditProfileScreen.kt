@@ -68,10 +68,19 @@ fun EditProfileScreen(
             val bytes = inputStream?.readBytes()
             inputStream?.close()
             if (bytes != null) {
-                val mediaType = "image/*".toMediaTypeOrNull()
+                val mimeType = context.contentResolver.getType(it)
+                    ?.takeIf { t -> t.startsWith("image/") }
+                    ?: "image/jpeg"
+                val extension = when (mimeType) {
+                    "image/png"  -> "png"
+                    "image/gif"  -> "gif"
+                    "image/webp" -> "webp"
+                    else         -> "jpg"
+                }
+                val mediaType = mimeType.toMediaTypeOrNull()
                 if (mediaType != null) {
                     val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
-                    val body = okhttp3.MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile)
+                    val body = okhttp3.MultipartBody.Part.createFormData("file", "avatar.$extension", requestFile)
                     viewModel.uploadAvatar(body)
                 }
             }
@@ -83,6 +92,8 @@ fun EditProfileScreen(
     LaunchedEffect(updateState) {
         when (updateState) {
             is Resource.Success -> {
+                // Refresh local avatar URL so the form shows the newly uploaded image
+                updateState.data?.avatarUrl?.let { newUrl -> avatarUrl = newUrl }
                 snackbarHostState.showSnackbar("Profile updated successfully!")
                 viewModel.resetUpdateState()
                 onNavigateBack()

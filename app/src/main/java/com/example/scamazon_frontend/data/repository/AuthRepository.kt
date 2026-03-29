@@ -204,9 +204,10 @@ class AuthRepository(
             try {
                 val response = authApi.uploadAvatar(filePart)
                 if (response.isSuccessful) {
-                    response.body()?.let {
-                        Resource.Success(it)
-                    } ?: Resource.Error("Response body is null")
+                    // Backend returns ApiResponse<{avatarUrl}>, NOT ProfileDataDto.
+                    // Parsing as ProfileDataDto would produce empty/corrupt data.
+                    // Fetch fresh profile instead to get the correctly updated DTO.
+                    getProfile()
                 } else {
                     val errorBody = response.errorBody()?.string()
                     Resource.Error(

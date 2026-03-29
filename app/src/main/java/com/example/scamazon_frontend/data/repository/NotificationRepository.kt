@@ -19,7 +19,7 @@ class NotificationRepository(private val api: NotificationApi) {
                         Resource.Error(body?.message ?: "Failed to load notifications")
                     }
                 } else {
-                    Resource.Error("Error \${response.code()}")
+                    Resource.Error("Error ${response.code()}")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")
@@ -39,7 +39,7 @@ class NotificationRepository(private val api: NotificationApi) {
                         Resource.Error(body?.message ?: "Failed to mark as read")
                     }
                 } else {
-                    Resource.Error("Error \${response.code()}")
+                    Resource.Error("Error ${response.code()}")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")
@@ -59,7 +59,7 @@ class NotificationRepository(private val api: NotificationApi) {
                         Resource.Error(body?.message ?: "Failed to mark all as read")
                     }
                 } else {
-                    Resource.Error("Error \${response.code()}")
+                    Resource.Error("Error ${response.code()}")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")

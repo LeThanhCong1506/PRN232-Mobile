@@ -336,6 +336,13 @@ fun NavGraph(
                     navController.navigate(Screen.OrderHistory.route) {
                         popUpTo(Screen.Home.route)
                     }
+                },
+                onNavigateToNotifications = {
+                    // Reload notifications so the payment confirmation appears at the top
+                    notificationViewModel.loadNotifications()
+                    navController.navigate(Screen.Notifications.route) {
+                        popUpTo(Screen.Home.route)
+                    }
                 }
             )
         }

@@ -33,6 +33,12 @@ fun NotificationScreen(
 ) {
     val state by viewModel.notificationsState.collectAsState()
 
+    // Reload every time this screen is opened (ViewModel is NavGraph-scoped and may
+    // have been created before the user was logged in, leaving state as Error/stale).
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.loadNotifications()
+    }
+
     Scaffold(
         topBar = {
             LafyuuTopAppBar(

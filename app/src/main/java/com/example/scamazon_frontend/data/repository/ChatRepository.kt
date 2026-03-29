@@ -148,8 +148,19 @@ class ChatRepository(private val api: ChatApi) {
                 val bytes = inputStream.readBytes()
                 inputStream.close()
 
-                val fileName = "chat_image_${System.currentTimeMillis()}.jpg"
-                val requestBody = bytes.toRequestBody("image/*".toMediaType())
+                // Use the actual MIME type from the content resolver so the backend
+                // content-type whitelist (jpeg/png/gif/webp) is satisfied.
+                val mimeType = context.contentResolver.getType(uri)
+                    ?.takeIf { it.startsWith("image/") }
+                    ?: "image/jpeg"
+                val extension = when (mimeType) {
+                    "image/png"  -> "png"
+                    "image/gif"  -> "gif"
+                    "image/webp" -> "webp"
+                    else         -> "jpg"
+                }
+                val fileName = "chat_image_${System.currentTimeMillis()}.$extension"
+                val requestBody = bytes.toRequestBody(mimeType.toMediaType())
                 val part = MultipartBody.Part.createFormData("image", fileName, requestBody)
 
                 val response = api.uploadImage(part)
