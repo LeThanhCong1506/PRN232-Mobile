@@ -21,8 +21,17 @@ class SignalRChatClient {
     fun connect(token: String) {
         if (hubConnection?.connectionState == HubConnectionState.CONNECTED) return
 
+        // ============================================================
+        // ĐỂ CHUYỂN VỀ LOCAL: comment dòng SERVER, bỏ comment dòng LOCAL
+        // ============================================================
+        // [LOCAL]  Android emulator → host machine localhost
+        // val hubUrl = "https://10.0.2.2:7295/hubs/chat?access_token=$token"
+
+        // [SERVER] Railway deploy
+        val hubUrl = "https://prn232-backend-production.up.railway.app/hubs/chat?access_token=$token"
+
         hubConnection = HubConnectionBuilder
-            .create("https://10.0.2.2:7295/hubs/chat?access_token=$token")
+            .create(hubUrl)
             .build()
 
         try {

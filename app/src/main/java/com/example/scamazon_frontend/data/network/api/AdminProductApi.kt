@@ -1,7 +1,7 @@
 package com.example.scamazon_frontend.data.network.api
 
 import com.example.scamazon_frontend.data.models.admin.BackendAdminCreateProductResponseDto
-import com.example.scamazon_frontend.data.models.admin.BackendAdminImagesResponseDto
+import com.example.scamazon_frontend.data.models.admin.BackendAdminProductImageDto
 import com.example.scamazon_frontend.data.models.admin.BackendAdminProductDto
 import com.example.scamazon_frontend.data.models.admin.CreateProductRequest
 import com.example.scamazon_frontend.data.models.admin.UpdateProductRequest
@@ -47,7 +47,7 @@ interface AdminProductApi {
         @Path("id") productId: Int,
         @Part images: List<MultipartBody.Part>,
         @Part("setPrimaryIndex") setPrimaryIndex: RequestBody
-    ): Response<BackendApiResponse<BackendAdminImagesResponseDto>>
+    ): Response<BackendApiResponse<List<BackendAdminProductImageDto>>>
 
     @DELETE("admin/products/{id}/images/{imageId}")
     suspend fun deleteImage(

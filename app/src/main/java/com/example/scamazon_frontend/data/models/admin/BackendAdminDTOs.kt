@@ -111,7 +111,9 @@ data class BackendAdminOrderStatusCountsDto(
 
 data class BackendUpdateOrderStatusRequest(
     @SerializedName("newStatus") val newStatus: String,
-    @SerializedName("note") val note: String? = null
+    @SerializedName("note") val note: String? = null,
+    @SerializedName("trackingNumber") val trackingNumber: String? = null,
+    @SerializedName("carrier") val carrier: String? = null
 )
 
 data class BackendUpdatePaymentStatusRequest(

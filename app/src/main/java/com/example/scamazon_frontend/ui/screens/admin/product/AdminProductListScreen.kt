@@ -1,5 +1,6 @@
 package com.example.scamazon_frontend.ui.screens.admin.product
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -40,6 +41,7 @@ fun AdminProductListScreen(
     onNavigateToEditProduct: (String) -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val productsState by viewModel.productsState.collectAsStateWithLifecycle()
     val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
@@ -60,9 +62,17 @@ fun AdminProductListScreen(
     }
 
     LaunchedEffect(deleteState) {
-        if (deleteState is Resource.Success) {
-            viewModel.resetDeleteState()
-            viewModel.loadProducts(search = searchQuery.ifEmpty { null })
+        when (deleteState) {
+            is Resource.Success -> {
+                Toast.makeText(context, "Product deleted successfully", Toast.LENGTH_SHORT).show()
+                viewModel.resetDeleteState()
+                // Không gọi loadProducts() ở đây nữa — ViewModel đã tự reload
+            }
+            is Resource.Error -> {
+                Toast.makeText(context, (deleteState as Resource.Error).message ?: "Failed to delete product", Toast.LENGTH_SHORT).show()
+                viewModel.resetDeleteState()
+            }
+            else -> {}
         }
     }
 

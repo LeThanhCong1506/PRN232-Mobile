@@ -117,14 +117,25 @@ class AdminOrderRepository(private val api: AdminOrderApi) {
         }
     }
 
-    suspend fun updateOrderStatus(orderId: Int, newStatus: String, note: String? = null): Resource<Unit> {
+    suspend fun updateOrderStatus(orderId: Int, newStatus: String, note: String? = null, trackingNumber: String? = null, carrier: String? = null): Resource<Unit> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = api.updateOrderStatus(orderId, BackendUpdateOrderStatusRequest(newStatus, note))
+                val response = api.updateOrderStatus(orderId, BackendUpdateOrderStatusRequest(newStatus, note, trackingNumber, carrier))
                 if (response.isSuccessful && response.body()?.success == true) {
                     Resource.Success(Unit)
                 } else {
-                    Resource.Error(response.body()?.message ?: "Failed to update status")
+                    val errorMsg = if (!response.isSuccessful) {
+                        val body = response.errorBody()?.string()
+                        try {
+                            org.json.JSONObject(body ?: "{}").optString("Message", null)
+                                ?: "Failed to update status (${response.code()})"
+                        } catch (_: Exception) {
+                            "Failed to update status (${response.code()})"
+                        }
+                    } else {
+                        response.body()?.message ?: "Failed to update status"
+                    }
+                    Resource.Error(errorMsg)
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")

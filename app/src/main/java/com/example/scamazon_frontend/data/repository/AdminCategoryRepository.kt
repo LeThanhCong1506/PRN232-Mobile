@@ -107,7 +107,18 @@ class AdminCategoryRepository(
                 if (response.isSuccessful && response.body()?.success == true) {
                     Resource.Success(Unit)
                 } else {
-                    Resource.Error(response.body()?.message ?: "Failed to delete brand")
+                    val errorMsg = if (!response.isSuccessful) {
+                        val body = response.errorBody()?.string()
+                        try {
+                            org.json.JSONObject(body ?: "{}").optString("Message", null)
+                                ?: "Failed to delete brand (${response.code()})"
+                        } catch (_: Exception) {
+                            "Failed to delete brand (${response.code()})"
+                        }
+                    } else {
+                        response.body()?.message ?: "Failed to delete brand"
+                    }
+                    Resource.Error(errorMsg)
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")

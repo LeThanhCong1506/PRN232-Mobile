@@ -1,6 +1,7 @@
 package com.example.scamazon_frontend
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import com.example.scamazon_frontend.core.utils.OAuthCallbackHolder
 import com.example.scamazon_frontend.ui.navigation.MainScreen
 import com.example.scamazon_frontend.ui.theme.BackgroundWhite
 import com.example.scamazon_frontend.ui.theme.ScamazonFrontendTheme
@@ -28,6 +30,19 @@ class MainActivity : ComponentActivity() {
                 Log.w("MainActivity", "Notification permission denied")
             }
         }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Handle GitHub OAuth callback: myapp://auth/github?code=XXX
+        val data = intent.data
+        if (data?.scheme == "myapp" && data.host == "auth") {
+            val code = data.getQueryParameter("code")
+            if (!code.isNullOrBlank()) {
+                Log.d("MainActivity", "GitHub OAuth code received")
+                OAuthCallbackHolder.setGitHubCode(code)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

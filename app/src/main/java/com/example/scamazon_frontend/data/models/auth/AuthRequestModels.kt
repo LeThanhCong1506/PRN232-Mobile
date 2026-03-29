@@ -17,3 +17,8 @@ data class RegisterRequest(
     @SerializedName("phone") val phone: String?,
     @SerializedName("address") val address: String?
 )
+
+data class SocialLoginRequest(
+    @SerializedName("code") val code: String,
+    @SerializedName("redirectUri") val redirectUri: String
+)

@@ -1,5 +1,9 @@
 package com.example.scamazon_frontend.ui.screens.chat
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,17 +12,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import com.example.scamazon_frontend.data.models.chat.ChatMessageDto
 import com.example.scamazon_frontend.ui.components.LafyuuTopAppBar
@@ -35,6 +39,13 @@ fun ChatScreen(
     val sendError by viewModel.sendError.collectAsState()
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+
+    // Image picker launcher — opens system gallery/file picker
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.sendImage(it, context) }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.startOrLoadChat()
@@ -73,6 +84,7 @@ fun ChatScreen(
                         messageText = ""
                     }
                 },
+                onImagePick = { imagePickerLauncher.launch("image/*") },
                 isSending = isSending
             )
         }
@@ -198,6 +210,7 @@ private fun ChatInputBar(
     text: String,
     onTextChange: (String) -> Unit,
     onSend: () -> Unit,
+    onImagePick: () -> Unit = {},
     isSending: Boolean = false
 ) {
     Surface(
@@ -208,10 +221,19 @@ private fun ChatInputBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 8.dp, vertical = 12.dp)
                 .navigationBarsPadding(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Image picker button
+            IconButton(onClick = onImagePick, enabled = !isSending) {
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = "Send Image",
+                    tint = if (!isSending) PrimaryBlue else TextHint
+                )
+            }
+
             OutlinedTextField(
                 value = text,
                 onValueChange = onTextChange,
@@ -226,9 +248,9 @@ private fun ChatInputBar(
                 ),
                 maxLines = 4
             )
-            
+
             Spacer(modifier = Modifier.width(8.dp))
-            
+
             IconButton(onClick = onSend, enabled = text.isNotBlank() && !isSending) {
                 Icon(
                     Icons.AutoMirrored.Filled.Send,

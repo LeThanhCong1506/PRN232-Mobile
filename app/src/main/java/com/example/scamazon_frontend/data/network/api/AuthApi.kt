@@ -3,6 +3,7 @@ package com.example.scamazon_frontend.data.network.api
 import com.example.scamazon_frontend.data.models.auth.AuthResponse
 import com.example.scamazon_frontend.data.models.auth.LoginRequest
 import com.example.scamazon_frontend.data.models.auth.RegisterRequest
+import com.example.scamazon_frontend.data.models.auth.SocialLoginRequest
 import com.example.scamazon_frontend.data.models.profile.ProfileDataDto
 import com.example.scamazon_frontend.data.models.profile.UpdateProfileRequest
 import retrofit2.Response
@@ -23,6 +24,12 @@ interface AuthApi {
 
     @PUT("users/me")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<ProfileDataDto>
+
+    @POST("auth/google")
+    suspend fun googleLogin(@Body request: SocialLoginRequest): Response<AuthResponse>
+
+    @POST("auth/github")
+    suspend fun githubLogin(@Body request: SocialLoginRequest): Response<AuthResponse>
 }
 
 // Wrapper cho response base từ backend

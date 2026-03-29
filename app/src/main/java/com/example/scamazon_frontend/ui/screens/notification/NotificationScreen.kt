@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,7 +37,12 @@ fun NotificationScreen(
         topBar = {
             LafyuuTopAppBar(
                 title = "Notifications",
-                onBackClick = onNavigateBack
+                onBackClick = onNavigateBack,
+                actions = {
+                    IconButton(onClick = { viewModel.markAllAsRead() }) {
+                        Icon(Icons.Default.DoneAll, contentDescription = "Mark all as read", tint = TextSecondary)
+                    }
+                }
             )
         }
     ) { paddingValues ->

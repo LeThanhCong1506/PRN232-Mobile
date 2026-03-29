@@ -16,8 +16,14 @@ import javax.net.ssl.X509TrustManager
 import javax.net.ssl.HostnameVerifier
 
 object ApiClient {
-    // Backend running locally (use 10.0.2.2 for Android emulator to reach host machine)
-    private const val BASE_URL = "https://10.0.2.2:7295/api/"
+    // ============================================================
+    // ĐỂ CHUYỂN VỀ LOCAL: comment dòng SERVER, bỏ comment dòng LOCAL
+    // ============================================================
+    // [LOCAL]  Android emulator → host machine localhost
+     private const val BASE_URL = "https://10.0.2.2:7295/api/"
+
+    // [SERVER] Railway deploy
+    // private const val BASE_URL = "https://prn232-backend-production.up.railway.app/api/"
 
     private var retrofit: Retrofit? = null
 

@@ -102,6 +102,12 @@ dependencies {
     // QR Code generation (ZXing Core - pure Java, no camera)
     implementation("com.google.zxing:core:3.5.3")
 
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+
+    // Chrome Custom Tab (for GitHub OAuth)
+    implementation("androidx.browser:browser:1.8.0")
+
     // SignalR (real-time chat)
     implementation("com.microsoft.signalr:signalr:8.0.0")
 

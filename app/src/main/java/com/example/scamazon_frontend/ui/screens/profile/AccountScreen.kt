@@ -44,6 +44,15 @@ fun AccountScreen(
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // Re-fetch profile when Account screen is shown.
+    // profileViewModel is Activity-scoped and its initial fetchProfile() runs before login (no token),
+    // so profileState is often in Error state. Re-fetch here ensures fresh data after login.
+    LaunchedEffect(Unit) {
+        if (viewModel.profileState.value !is Resource.Success) {
+            viewModel.fetchProfile()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

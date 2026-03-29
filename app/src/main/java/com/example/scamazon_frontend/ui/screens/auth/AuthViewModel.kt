@@ -49,7 +49,31 @@ class AuthViewModel(
             _registerState.value = result
         }
     }
-    
+
+    fun googleLogin(serverAuthCode: String) {
+        _loginState.value = Resource.Loading()
+        viewModelScope.launch {
+            val result = authRepository.googleLogin(serverAuthCode)
+            if (result is Resource.Success) {
+                result.data?.token?.let { tokenManager.saveToken(it) }
+                result.data?.role?.let { tokenManager.saveUserRole(it.lowercase()) }
+            }
+            _loginState.value = result
+        }
+    }
+
+    fun githubLogin(code: String) {
+        _loginState.value = Resource.Loading()
+        viewModelScope.launch {
+            val result = authRepository.githubLogin(code)
+            if (result is Resource.Success) {
+                result.data?.token?.let { tokenManager.saveToken(it) }
+                result.data?.role?.let { tokenManager.saveUserRole(it.lowercase()) }
+            }
+            _loginState.value = result
+        }
+    }
+
     fun resetState() {
         _loginState.value = null
         _registerState.value = null

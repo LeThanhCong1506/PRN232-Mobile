@@ -21,6 +21,7 @@ data class CreateProductRequest(
 
 data class UpdateProductRequest(
     @SerializedName("name") val name: String? = null,
+    @SerializedName("sku") val sku: String? = null,
     @SerializedName("description") val description: String? = null,
     @SerializedName("detailDescription") val detailDescription: String? = null,
     @SerializedName("specifications") val specifications: String? = null,

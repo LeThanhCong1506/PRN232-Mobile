@@ -11,40 +11,49 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import com.example.scamazon_frontend.data.repository.NotificationRepository
 
-class NotificationViewModel : ViewModel() {
+class NotificationViewModel(private val repository: NotificationRepository) : ViewModel() {
 
     private val _notificationsState = MutableStateFlow<Resource<List<NotificationDto>>>(Resource.Loading())
     val notificationsState = _notificationsState.asStateFlow()
 
-    val unreadCount: StateFlow<Int> = _notificationsState
-        .map { state ->
-            (state as? Resource.Success)?.data?.count { it.isRead == false } ?: 0
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-
-    private val localNotifications = MockData.notifications.toMutableList()
+    private val _unreadCount = MutableStateFlow(0)
+    val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
 
     init {
         loadNotifications()
     }
 
     fun loadNotifications() {
-        _notificationsState.value = Resource.Success(localNotifications.toList())
+        viewModelScope.launch {
+            _notificationsState.value = Resource.Loading()
+            val result = repository.getNotifications()
+            if (result is Resource.Success) {
+                _notificationsState.value = Resource.Success(result.data?.items ?: emptyList())
+                _unreadCount.value = result.data?.unreadCount ?: 0
+            } else if (result is Resource.Error) {
+                _notificationsState.value = Resource.Error(result.message ?: "Failed")
+            }
+        }
     }
 
     fun markAsRead(id: Int) {
-        val index = localNotifications.indexOfFirst { it.id == id }
-        if (index != -1) {
-            localNotifications[index] = localNotifications[index].copy(isRead = true)
-            _notificationsState.value = Resource.Success(localNotifications.toList())
+        viewModelScope.launch {
+            val res = repository.markAsRead(id)
+            if (res is Resource.Success) {
+                loadNotifications() // Reload
+            }
         }
     }
 
     fun markAllAsRead() {
-        for (i in localNotifications.indices) {
-            localNotifications[i] = localNotifications[i].copy(isRead = true)
+        viewModelScope.launch {
+            val res = repository.markAllAsRead()
+            if (res is Resource.Success) {
+                loadNotifications() // Reload
+            }
         }
-        _notificationsState.value = Resource.Success(localNotifications.toList())
     }
 }

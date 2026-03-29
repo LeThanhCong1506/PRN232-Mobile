@@ -457,10 +457,12 @@ fun AdminProductFormScreen(
                     }
 
                     if (isEdit && formProductId != null) {
-                        viewModel.updateProduct(
-                            formProductId!!,
-                            UpdateProductRequest(
+                        viewModel.updateProductWithImages(
+                            context = context,
+                            id = formProductId!!,
+                            request = UpdateProductRequest(
                                 name = name,
+                                sku = sku.ifBlank { null },
                                 price = price.toDoubleOrNull(),
                                 salePrice = salePrice.toDoubleOrNull(),
                                 stockQuantity = stockQuantity.toIntOrNull(),
@@ -470,7 +472,8 @@ fun AdminProductFormScreen(
                                 brandId = selectedBrandId,
                                 isFeatured = isFeatured,
                                 images = finalImages
-                            )
+                            ),
+                            imageUris = pendingImageUris
                         )
                     } else {
                         // Create product then upload images to Cloudinary in one go

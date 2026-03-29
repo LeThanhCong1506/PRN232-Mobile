@@ -50,11 +50,8 @@ fun AdminCategoryFormScreen(
 
     // Form fields
     var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") } // For category
     var logoUrl by remember { mutableStateOf("") } // For brand
-    var selectedParentId by remember { mutableStateOf<Int?>(null) }
-    var parentExpanded by remember { mutableStateOf(false) }
 
     // Pre-fill for edit mode
     LaunchedEffect(editId, categoriesState, brandsState) {
@@ -64,16 +61,13 @@ fun AdminCategoryFormScreen(
                 val category = categories.find { it.id == editId }
                 if (category != null) {
                     name = category.name
-                    description = category.description ?: ""
                     imageUrl = category.imageUrl ?: ""
-                    selectedParentId = category.parentId
                 }
             } else {
                 val brands = (brandsState as? Resource.Success)?.data ?: emptyList()
                 val brand = brands.find { it.id == editId }
                 if (brand != null) {
                     name = brand.name
-                    description = brand.description ?: ""
                     logoUrl = brand.logoUrl ?: ""
                 }
             }
@@ -90,6 +84,8 @@ fun AdminCategoryFormScreen(
                     Toast.LENGTH_SHORT
                 ).show()
                 viewModel.resetSaveState()
+                // Reload list so changes are reflected immediately when user goes back
+                if (isBrand) viewModel.loadBrands() else viewModel.loadCategories()
                 onNavigateBack()
             }
             is Resource.Error -> {
@@ -138,17 +134,6 @@ fun AdminCategoryFormScreen(
                 singleLine = true
             )
 
-            // Description
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Description", fontFamily = Poppins) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
-                shape = RoundedCornerShape(12.dp)
-            )
-
             if (isBrand) {
                 // Logo URL for Brand
                 OutlinedTextField(
@@ -169,49 +154,6 @@ fun AdminCategoryFormScreen(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
                 )
-
-                // Parent Category Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = parentExpanded,
-                    onExpandedChange = { parentExpanded = !parentExpanded }
-                ) {
-                    val categories = (categoriesState as? Resource.Success)?.data ?: emptyList()
-                    val parentCategory = categories.find { it.id == selectedParentId }
-                    OutlinedTextField(
-                        value = parentCategory?.name ?: "None (Top Level)",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Parent Category", fontFamily = Poppins) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = parentExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    ExposedDropdownMenu(
-                        expanded = parentExpanded,
-                        onDismissRequest = { parentExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("None (Top Level)", fontFamily = Poppins) },
-                            onClick = {
-                                selectedParentId = null
-                                parentExpanded = false
-                            }
-                        )
-                        categories
-                            .filter { it.id != editId } // Can't be parent of itself
-                            .forEach { category ->
-                                DropdownMenuItem(
-                                    text = { Text(category.name, fontFamily = Poppins) },
-                                    onClick = {
-                                        selectedParentId = category.id
-                                        parentExpanded = false
-                                    }
-                                )
-                            }
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -229,7 +171,6 @@ fun AdminCategoryFormScreen(
                                 editId,
                                 UpdateBrandRequest(
                                     name = name,
-                                    description = description.ifBlank { null },
                                     logoUrl = logoUrl.ifBlank { null }
                                 )
                             )
@@ -237,7 +178,6 @@ fun AdminCategoryFormScreen(
                             viewModel.createBrand(
                                 CreateBrandRequest(
                                     name = name,
-                                    description = description.ifBlank { null },
                                     logoUrl = logoUrl.ifBlank { null }
                                 )
                             )
@@ -248,18 +188,14 @@ fun AdminCategoryFormScreen(
                                 editId,
                                 UpdateCategoryRequest(
                                     name = name,
-                                    description = description.ifBlank { null },
-                                    imageUrl = imageUrl.ifBlank { null },
-                                    parentId = selectedParentId
+                                    imageUrl = imageUrl.ifBlank { null }
                                 )
                             )
                         } else {
                             viewModel.createCategory(
                                 CreateCategoryRequest(
                                     name = name,
-                                    description = description.ifBlank { null },
-                                    imageUrl = imageUrl.ifBlank { null },
-                                    parentId = selectedParentId
+                                    imageUrl = imageUrl.ifBlank { null }
                                 )
                             )
                         }

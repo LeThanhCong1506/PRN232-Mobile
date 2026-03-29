@@ -4,10 +4,14 @@ import com.example.scamazon_frontend.data.models.chat.BackendChatMessageDto
 import com.example.scamazon_frontend.data.models.chat.BackendConversationDto
 import com.example.scamazon_frontend.data.models.common.BackendApiResponse
 import com.example.scamazon_frontend.data.models.common.BackendPagedResponse
+import com.google.gson.annotations.SerializedName
+import okhttp3.MultipartBody
 import retrofit2.Response
-import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
+import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -45,9 +49,23 @@ interface ChatApi {
     suspend fun sendMessage(
         @Body request: SendMessageRequest
     ): Response<BackendApiResponse<BackendChatMessageDto>>
+
+    /**
+     * Upload a chat image to Cloudinary.
+     * Returns { imageUrl } wrapped in ApiResponse.
+     */
+    @Multipart
+    @POST("chat/upload-image")
+    suspend fun uploadImage(
+        @Part image: MultipartBody.Part
+    ): Response<BackendApiResponse<UploadImageResponse>>
 }
 
 data class SendMessageRequest(
     val receiverId: Int?,
     val content: String
+)
+
+data class UploadImageResponse(
+    @SerializedName("imageUrl") val imageUrl: String?
 )

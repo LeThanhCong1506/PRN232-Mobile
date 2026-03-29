@@ -23,7 +23,9 @@ import com.example.scamazon_frontend.data.network.api.ChatApi
 import com.example.scamazon_frontend.data.network.api.ReviewApi
 import com.example.scamazon_frontend.data.network.api.StoreApi
 import com.example.scamazon_frontend.data.network.api.WarrantyApi
+import com.example.scamazon_frontend.data.network.api.NotificationApi
 import com.example.scamazon_frontend.data.network.SignalRChatClient
+import com.example.scamazon_frontend.data.network.SignalRNotificationClient
 import com.example.scamazon_frontend.data.repository.AdminCategoryRepository
 import com.example.scamazon_frontend.data.repository.AdminOrderRepository
 import com.example.scamazon_frontend.data.repository.ChatRepository
@@ -34,6 +36,7 @@ import com.example.scamazon_frontend.data.repository.CartRepository
 import com.example.scamazon_frontend.data.repository.ProductRepository
 import com.example.scamazon_frontend.data.repository.ReviewRepository
 import com.example.scamazon_frontend.data.repository.WarrantyRepository
+import com.example.scamazon_frontend.data.repository.NotificationRepository
 import com.example.scamazon_frontend.data.network.api.CheckoutApi
 import com.example.scamazon_frontend.data.network.api.OrderApi
 import com.example.scamazon_frontend.data.network.api.PaymentApi
@@ -79,6 +82,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         val reviewApi = retrofit.create(ReviewApi::class.java)
         val storeApi = retrofit.create(StoreApi::class.java)
         val chatApi = retrofit.create(ChatApi::class.java)
+        val notificationApi = retrofit.create(NotificationApi::class.java)
 
         val productRepo = ProductRepository(productApi)
         val cartRepo = CartRepository(cartApi)
@@ -89,7 +93,9 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         val reviewRepo = ReviewRepository(reviewApi)
         val storeRepo = StoreRepository(storeApi)
         val chatRepo = ChatRepository(chatApi)
+        val notificationRepo = NotificationRepository(notificationApi)
         val signalRClient = SignalRChatClient()
+        val signalRNotificationClient = SignalRNotificationClient()
 
         @Suppress("UNCHECKED_CAST")
         return when {
@@ -119,7 +125,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(AdminDashboardViewModel::class.java) -> AdminDashboardViewModel(adminOrderRepo)
             modelClass.isAssignableFrom(AdminProductViewModel::class.java) -> AdminProductViewModel(adminProductRepo, productRepo)
             modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) -> AdminCategoryViewModel(adminCategoryRepo)
-            modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> AdminOrderViewModel(adminOrderRepo)
+            modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> AdminOrderViewModel(adminOrderRepo, signalRNotificationClient, tokenManager)
             modelClass.isAssignableFrom(PaymentQRViewModel::class.java) -> {
                 val paymentApi = retrofit.create(PaymentApi::class.java)
                 PaymentQRViewModel(PaymentRepository(paymentApi))
@@ -130,7 +136,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(ChatViewModel::class.java) -> ChatViewModel(chatRepo, signalRClient, tokenManager)
             modelClass.isAssignableFrom(AdminChatListViewModel::class.java) -> AdminChatListViewModel(chatRepo)
             modelClass.isAssignableFrom(AdminChatDetailViewModel::class.java) -> AdminChatDetailViewModel(chatRepo, signalRClient, tokenManager)
-            modelClass.isAssignableFrom(NotificationViewModel::class.java) -> NotificationViewModel()
+            modelClass.isAssignableFrom(NotificationViewModel::class.java) -> NotificationViewModel(notificationRepo)
             modelClass.isAssignableFrom(WarrantyViewModel::class.java) -> WarrantyViewModel(warrantyRepo)
             modelClass.isAssignableFrom(AdminWarrantyViewModel::class.java) -> AdminWarrantyViewModel(warrantyRepo)
             else -> throw IllegalArgumentException("Unknown ViewModel class")

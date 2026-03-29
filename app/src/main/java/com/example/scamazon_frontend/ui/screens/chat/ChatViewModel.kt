@@ -1,5 +1,7 @@
 package com.example.scamazon_frontend.ui.screens.chat
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
@@ -122,6 +124,78 @@ class ChatViewModel(
                     _sendError.value = response.message ?: "Không thể gửi tin nhắn. Vui lòng thử lại."
                 }
                 else -> { /* Loading - no-op */ }
+            }
+
+            _isSending.value = false
+        }
+    }
+
+    /**
+     * Upload an image and send it as a chat message.
+     * Flow: pick image → upload to Cloudinary → send message with imageUrl as content.
+     * The backend stores the URL as message content; toUiDto() detects it and sets imageUrl.
+     */
+    fun sendImage(uri: Uri, context: Context) {
+        viewModelScope.launch {
+            _isSending.value = true
+
+            // Optimistic preview: show image immediately using the local content:// URI
+            val optimisticMsg = ChatMessageDto(
+                id = -(localMessages.size + 1),
+                chatRoomId = 0,
+                senderId = null,
+                senderName = null,
+                messageType = "image",
+                content = "📷 Ảnh",
+                imageUrl = uri.toString(), // local URI – Coil can render it as preview
+                productId = null,
+                productName = null,
+                productImage = null,
+                isFromStore = false,
+                isRead = false,
+                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
+            )
+            localMessages.add(optimisticMsg)
+            _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
+
+            // Step 1: Upload image to Cloudinary
+            val uploadResult = chatRepo.uploadImage(uri, context)
+
+            when (uploadResult) {
+                is Resource.Success -> {
+                    val imageUrl = uploadResult.data!!
+
+                    // Step 2: Send message via REST (content = Cloudinary URL)
+                    val sendResult = chatRepo.sendMessage(null, imageUrl)
+
+                    when (sendResult) {
+                        is Resource.Success -> {
+                            // Replace optimistic with real server message (toUiDto already sets imageUrl)
+                            val realMsg = sendResult.data
+                            if (realMsg != null) {
+                                val idx = localMessages.indexOf(optimisticMsg)
+                                if (idx >= 0) localMessages[idx] = realMsg
+                                else localMessages.add(realMsg)
+                            }
+                            _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
+                        }
+                        is Resource.Error -> {
+                            // Upload succeeded but REST send failed — update optimistic with real URL
+                            val idx = localMessages.indexOf(optimisticMsg)
+                            if (idx >= 0) localMessages[idx] = optimisticMsg.copy(imageUrl = imageUrl)
+                            _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
+                            _sendError.value = sendResult.message ?: "Không thể gửi ảnh. Vui lòng thử lại."
+                        }
+                        else -> {}
+                    }
+                }
+                is Resource.Error -> {
+                    // Upload failed — remove optimistic message
+                    localMessages.remove(optimisticMsg)
+                    _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
+                    _sendError.value = uploadResult.message ?: "Không thể tải ảnh lên. Vui lòng thử lại."
+                }
+                else -> {}
             }
 
             _isSending.value = false

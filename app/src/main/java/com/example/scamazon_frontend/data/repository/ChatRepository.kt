@@ -1,5 +1,7 @@
 package com.example.scamazon_frontend.data.repository
 
+import android.content.Context
+import android.net.Uri
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.chat.BackendChatMessageDto
 import com.example.scamazon_frontend.data.models.chat.ChatMessageDto
@@ -8,6 +10,9 @@ import com.example.scamazon_frontend.data.network.api.ChatApi
 import com.example.scamazon_frontend.data.network.api.SendMessageRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class ChatRepository(private val api: ChatApi) {
 
@@ -130,19 +135,57 @@ class ChatRepository(private val api: ChatApi) {
         }
     }
 
+    /**
+     * Upload an image to Cloudinary via the backend.
+     * Returns the public Cloudinary URL on success.
+     */
+    suspend fun uploadImage(uri: Uri, context: Context): Resource<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                    ?: return@withContext Resource.Error("Cannot open image file")
+
+                val bytes = inputStream.readBytes()
+                inputStream.close()
+
+                val fileName = "chat_image_${System.currentTimeMillis()}.jpg"
+                val requestBody = bytes.toRequestBody("image/*".toMediaType())
+                val part = MultipartBody.Part.createFormData("image", fileName, requestBody)
+
+                val response = api.uploadImage(part)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    val imageUrl = body?.data?.imageUrl
+                    if (!imageUrl.isNullOrBlank()) {
+                        Resource.Success(imageUrl)
+                    } else {
+                        Resource.Error(body?.message ?: "No image URL returned")
+                    }
+                } else {
+                    Resource.Error("Upload failed (${response.code()})")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Upload error")
+            }
+        }
+    }
+
     companion object {
         /**
-         * Map backend DTO → existing UI ChatMessageDto
+         * Map backend DTO → existing UI ChatMessageDto.
+         * If content is a Cloudinary/HTTP URL, treat it as an image message:
+         *   imageUrl = content, content = "📷 Ảnh"
          */
         fun BackendChatMessageDto.toUiDto(): ChatMessageDto {
+            val isImageContent = content.startsWith("https://") || content.startsWith("http://")
             return ChatMessageDto(
                 id = messageId,
                 chatRoomId = 0,
                 senderId = senderId,
                 senderName = senderName,
-                messageType = "text",
-                content = content,
-                imageUrl = null,
+                messageType = if (isImageContent) "image" else "text",
+                content = if (isImageContent) "📷 Ảnh" else content,
+                imageUrl = if (isImageContent) content else null,
                 productId = null,
                 productName = null,
                 productImage = null,
