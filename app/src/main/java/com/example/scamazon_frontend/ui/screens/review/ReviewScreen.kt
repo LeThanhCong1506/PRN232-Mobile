@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.core.utils.TokenManager
 import com.example.scamazon_frontend.data.models.review.ReviewResponse
 import com.example.scamazon_frontend.data.models.review.ProductReviewSummaryResponse
 import com.example.scamazon_frontend.di.ViewModelFactory
@@ -41,6 +42,9 @@ fun ReviewScreen(
     val createReviewState by viewModel.createReviewState.collectAsStateWithLifecycle()
     val selectedRating by viewModel.selectedRating.collectAsStateWithLifecycle()
     val comment by viewModel.comment.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    val isAdmin = tokenManager.getRole() == "Admin"
 
     LaunchedEffect(productId) {
         viewModel.loadReviews(productId)
@@ -98,6 +102,7 @@ fun ReviewScreen(
                     ReviewContent(
                         data = data,
                         canWrite = canWrite,
+                        isAdmin = isAdmin,
                         selectedRating = selectedRating,
                         comment = comment,
                         isSubmitting = createReviewState is Resource.Loading,
@@ -124,6 +129,7 @@ fun ReviewScreen(
 private fun ReviewContent(
     data: ProductReviewSummaryResponse,
     canWrite: Boolean,
+    isAdmin: Boolean,
     selectedRating: Int,
     comment: String,
     isSubmitting: Boolean,
@@ -180,6 +186,7 @@ private fun ReviewContent(
             items(reviewList) { review ->
                 ReviewCard(
                     review = review,
+                    isAdmin = isAdmin,
                     onDelete = { onDeleteReview(review.reviewId) }
                 )
             }
@@ -349,7 +356,7 @@ private fun WriteReviewSection(
 }
 
 @Composable
-private fun ReviewCard(review: ReviewResponse, onDelete: () -> Unit = {}) {
+private fun ReviewCard(review: ReviewResponse, isAdmin: Boolean, onDelete: () -> Unit = {}) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
@@ -419,16 +426,18 @@ private fun ReviewCard(review: ReviewResponse, onDelete: () -> Unit = {}) {
                     )
                 }
 
-                IconButton(
-                    onClick = { showDeleteDialog = true },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Xoá đánh giá",
-                        tint = TextHint,
-                        modifier = Modifier.size(18.dp)
-                    )
+                if (isAdmin) {
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Xoá đánh giá",
+                            tint = TextHint,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 
