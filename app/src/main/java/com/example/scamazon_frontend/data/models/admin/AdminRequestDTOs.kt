@@ -15,6 +15,7 @@ data class CreateProductRequest(
     @SerializedName("stockQuantity") val stockQuantity: Int = 0,
     @SerializedName("categoryId") val categoryId: Int? = null,
     @SerializedName("brandId") val brandId: Int? = null,
+    @SerializedName("warrantyPolicyId") val warrantyPolicyId: Int? = null,
     @SerializedName("isFeatured") val isFeatured: Boolean = false,
     @SerializedName("images") val images: List<ProductImageRequest>? = null
 )
@@ -30,6 +31,7 @@ data class UpdateProductRequest(
     @SerializedName("stockQuantity") val stockQuantity: Int? = null,
     @SerializedName("categoryId") val categoryId: Int? = null,
     @SerializedName("brandId") val brandId: Int? = null,
+    @SerializedName("warrantyPolicyId") val warrantyPolicyId: Int? = null,
     @SerializedName("isActive") val isActive: Boolean? = null,
     @SerializedName("isFeatured") val isFeatured: Boolean? = null,
     @SerializedName("images") val images: List<ProductImageRequest>? = null

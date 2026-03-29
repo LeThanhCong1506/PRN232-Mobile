@@ -46,6 +46,7 @@ fun AdminProductFormScreen(
     val isEdit = !productSlug.isNullOrBlank()
     val categoriesState by viewModel.categoriesState.collectAsStateWithLifecycle()
     val brandsState by viewModel.brandsState.collectAsStateWithLifecycle()
+    val policiesState by viewModel.policiesState.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val productDetailState by viewModel.productDetailState.collectAsStateWithLifecycle()
 
@@ -61,6 +62,7 @@ fun AdminProductFormScreen(
     var detailDescription by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
     var selectedBrandId by remember { mutableStateOf<Int?>(null) }
+    var selectedPolicyId by remember { mutableStateOf<Int?>(null) }
     var isFeatured by remember { mutableStateOf(false) }
     // Already-uploaded Cloudinary URLs (used in edit mode)
     var imageUrls by remember { mutableStateOf(listOf<ProductImageRequest>()) }
@@ -68,6 +70,7 @@ fun AdminProductFormScreen(
     var pendingImageUris by remember { mutableStateOf(listOf<Uri>()) }
     var categoryExpanded by remember { mutableStateOf(false) }
     var brandExpanded by remember { mutableStateOf(false) }
+    var policyExpanded by remember { mutableStateOf(false) }
 
     // Image picker: just collect the URI locally, no fake upload
     val imagePicker = rememberLauncherForActivityResult(
@@ -97,6 +100,7 @@ fun AdminProductFormScreen(
             detailDescription = product.detailDescription ?: ""
             selectedCategoryId = product.category?.id
             selectedBrandId = product.brand?.id
+            selectedPolicyId = product.warrantyPolicy?.policyId
             isFeatured = product.isFeatured ?: false
             imageUrls = product.images
                 .filter { !it.imageUrl.isNullOrBlank() }
@@ -303,6 +307,53 @@ fun AdminProductFormScreen(
                 }
             }
 
+            // Warranty Policy Dropdown
+            val policies = (policiesState as? Resource.Success)?.data ?: emptyList()
+            val selectedPolicy = policies.find { it.policyId == selectedPolicyId }
+
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = selectedPolicy?.policyName ?: "Default Policy",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Warranty Policy", fontFamily = Poppins) },
+                    trailingIcon = {
+                        IconButton(onClick = { policyExpanded = !policyExpanded }) {
+                            Icon(
+                                imageVector = if (policyExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Toggle dropdown"
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { policyExpanded = !policyExpanded },
+                    shape = RoundedCornerShape(12.dp)
+                )
+                DropdownMenu(
+                    expanded = policyExpanded,
+                    onDismissRequest = { policyExpanded = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                ) {
+                    if (policies.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("Loading...", fontFamily = Poppins) },
+                            onClick = { }
+                        )
+                    } else {
+                        policies.forEach { policy ->
+                            DropdownMenuItem(
+                                text = { Text(policy.policyName, fontFamily = Poppins) },
+                                onClick = {
+                                    selectedPolicyId = policy.policyId
+                                    policyExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
             // Description
             OutlinedTextField(
                 value = description,
@@ -470,6 +521,7 @@ fun AdminProductFormScreen(
                                 detailDescription = detailDescription.ifBlank { null },
                                 categoryId = selectedCategoryId,
                                 brandId = selectedBrandId,
+                                warrantyPolicyId = selectedPolicyId,
                                 isFeatured = isFeatured,
                                 images = finalImages
                             ),
@@ -489,6 +541,7 @@ fun AdminProductFormScreen(
                                 detailDescription = detailDescription.ifBlank { null },
                                 categoryId = selectedCategoryId,
                                 brandId = selectedBrandId,
+                                warrantyPolicyId = selectedPolicyId,
                                 isFeatured = isFeatured,
                                 images = null // images uploaded separately via multipart
                             ),

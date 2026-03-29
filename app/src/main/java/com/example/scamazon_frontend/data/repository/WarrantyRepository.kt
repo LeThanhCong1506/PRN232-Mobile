@@ -34,6 +34,27 @@ class WarrantyRepository(private val api: WarrantyApi) {
         }
     }
 
+    suspend fun getPolicies(): Resource<List<com.example.scamazon_frontend.data.models.product.BackendWarrantyPolicyDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getPolicies()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        Resource.Success(body.data)
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to get warranty policies")
+                    }
+                } else {
+                    val err = response.errorBody()?.string() ?: response.message()
+                    Resource.Error("Failed: $err")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
     suspend fun getWarrantyById(id: Int): Resource<MyWarrantyDto> {
         return withContext(Dispatchers.IO) {
             try {

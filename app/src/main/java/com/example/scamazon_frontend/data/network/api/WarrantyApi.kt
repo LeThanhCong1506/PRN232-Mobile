@@ -21,6 +21,9 @@ interface WarrantyApi {
     @GET("warranties")
     suspend fun getMyWarranties(): Response<BackendApiResponse<List<MyWarrantyDto>>>
 
+    @GET("warranties/policies")
+    suspend fun getPolicies(): Response<BackendApiResponse<List<com.example.scamazon_frontend.data.models.product.BackendWarrantyPolicyDto>>>
+
     @GET("Warranty/{id}")
     suspend fun getWarrantyById(@Path("id") id: Int): Response<BackendApiResponse<MyWarrantyDto>>
 

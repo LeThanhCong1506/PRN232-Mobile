@@ -103,7 +103,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
                 OrderHistoryViewModel(OrderRepository(orderApi))
             }
             modelClass.isAssignableFrom(AdminDashboardViewModel::class.java) -> AdminDashboardViewModel(adminOrderRepo)
-            modelClass.isAssignableFrom(AdminProductViewModel::class.java) -> AdminProductViewModel(adminProductRepo, productRepo)
+            modelClass.isAssignableFrom(AdminProductViewModel::class.java) -> AdminProductViewModel(adminProductRepo, productRepo, warrantyRepo)
             modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) -> AdminCategoryViewModel(adminCategoryRepo)
             modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> AdminOrderViewModel(adminOrderRepo, signalRNotificationClient, tokenManager)
             modelClass.isAssignableFrom(PaymentQRViewModel::class.java) -> {

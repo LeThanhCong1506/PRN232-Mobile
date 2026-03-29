@@ -11,6 +11,7 @@ import com.example.scamazon_frontend.data.models.product.ProductDetailDto
 import com.example.scamazon_frontend.data.models.product.ProductPaginationResponse
 import com.example.scamazon_frontend.data.repository.AdminProductRepository
 import com.example.scamazon_frontend.data.repository.ProductRepository
+import com.example.scamazon_frontend.data.repository.WarrantyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +21,8 @@ import kotlinx.coroutines.withContext
 
 class AdminProductViewModel(
     private val adminProductRepo: AdminProductRepository,
-    private val productRepo: ProductRepository
+    private val productRepo: ProductRepository,
+    private val warrantyRepo: WarrantyRepository
 ) : ViewModel() {
 
     private val _productsState = MutableStateFlow<Resource<ProductPaginationResponse>>(Resource.Loading())
@@ -34,6 +36,9 @@ class AdminProductViewModel(
 
     private val _brandsState = MutableStateFlow<Resource<List<BrandDto>>>(Resource.Loading())
     val brandsState: StateFlow<Resource<List<BrandDto>>> = _brandsState.asStateFlow()
+
+    private val _policiesState = MutableStateFlow<Resource<List<com.example.scamazon_frontend.data.models.product.BackendWarrantyPolicyDto>>>(Resource.Loading())
+    val policiesState: StateFlow<Resource<List<com.example.scamazon_frontend.data.models.product.BackendWarrantyPolicyDto>>> = _policiesState.asStateFlow()
 
     private val _saveState = MutableStateFlow<Resource<Any>?>(null)
     val saveState: StateFlow<Resource<Any>?> = _saveState.asStateFlow()
@@ -51,6 +56,7 @@ class AdminProductViewModel(
         loadProducts()
         loadCategories()
         loadBrands()
+        loadPolicies()
     }
 
     fun loadProducts(page: Int = 1, search: String? = null) {
@@ -91,6 +97,17 @@ class AdminProductViewModel(
                 is Resource.Success -> _brandsState.value = Resource.Success(result.data ?: emptyList())
                 is Resource.Error -> _brandsState.value = Resource.Error(result.message ?: "Error loading brands")
                 is Resource.Loading -> _brandsState.value = Resource.Loading()
+            }
+        }
+    }
+
+    fun loadPolicies() {
+        viewModelScope.launch {
+            val result = warrantyRepo.getPolicies()
+            when (result) {
+                is Resource.Success -> _policiesState.value = Resource.Success(result.data ?: emptyList())
+                is Resource.Error -> _policiesState.value = Resource.Error(result.message ?: "Error loading policies")
+                is Resource.Loading -> _policiesState.value = Resource.Loading()
             }
         }
     }
