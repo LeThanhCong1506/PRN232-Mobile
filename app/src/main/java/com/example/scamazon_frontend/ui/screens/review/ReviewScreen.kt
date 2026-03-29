@@ -44,7 +44,7 @@ fun ReviewScreen(
     val comment by viewModel.comment.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
-    val isAdmin = tokenManager.getRole() == "Admin"
+    val isAdmin = tokenManager.getUserRole() == "Admin"
 
     LaunchedEffect(productId) {
         viewModel.loadReviews(productId)

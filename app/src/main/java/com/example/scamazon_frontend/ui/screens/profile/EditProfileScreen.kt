@@ -22,6 +22,7 @@ import com.example.scamazon_frontend.data.models.profile.UpdateProfileRequest
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 
 @Composable
 fun EditProfileScreen(
@@ -67,10 +68,12 @@ fun EditProfileScreen(
             val bytes = inputStream?.readBytes()
             inputStream?.close()
             if (bytes != null) {
-                val mediaType = okhttp3.MediaType.parse("image/*")
-                val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
-                val body = okhttp3.MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile)
-                viewModel.uploadAvatar(body)
+                val mediaType = "image/*".toMediaTypeOrNull()
+                if (mediaType != null) {
+                    val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
+                    val body = okhttp3.MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile)
+                    viewModel.uploadAvatar(body)
+                }
             }
         }
     }

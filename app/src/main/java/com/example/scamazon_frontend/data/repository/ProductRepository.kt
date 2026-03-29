@@ -189,6 +189,9 @@ class ProductRepository(private val api: ProductApi) {
             viewCount = null,
             soldCount = null,
             isFeatured = null,
+            warrantyPolicy = warrantyPolicy?.let {
+                WarrantyPolicyInfoDto(policyId = it.policyId, policyName = it.policyName)
+            },
             createdAt = createdAt,
             updatedAt = null,
             productType = productType,

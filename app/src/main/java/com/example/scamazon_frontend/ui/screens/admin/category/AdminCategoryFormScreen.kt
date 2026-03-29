@@ -22,6 +22,7 @@ import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.admin.*
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.theme.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 
 /**
  * Shared form screen for both Category and Brand add/edit operations.
@@ -66,10 +67,12 @@ fun AdminCategoryFormScreen(
                 val bytes = inputStream?.readBytes()
                 inputStream?.close()
                 if (bytes != null) {
-                    val mediaType = okhttp3.MediaType.parse("image/*")
-                    val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
-                    val body = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
-                    viewModel.uploadCategoryImage(editId, body)
+                    val mediaType = "image/*".toMediaTypeOrNull()
+                    if (mediaType != null) {
+                        val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
+                        val body = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
+                        viewModel.uploadCategoryImage(editId, body)
+                    }
                 }
             } else if (!isBrand && !isEdit) {
                 selectedImageUri = it
@@ -236,9 +239,11 @@ fun AdminCategoryFormScreen(
                                     val bytes = inputStream?.readBytes()
                                     inputStream?.close()
                                     if (bytes != null) {
-                                        val mediaType = okhttp3.MediaType.parse("image/*")
-                                        val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
-                                        imagePart = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
+                                        val mediaType = "image/*".toMediaTypeOrNull()
+                                        if (mediaType != null) {
+                                            val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
+                                            imagePart = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
+                                        }
                                     }
                                 } catch (e: Exception) {
                                     e.printStackTrace()

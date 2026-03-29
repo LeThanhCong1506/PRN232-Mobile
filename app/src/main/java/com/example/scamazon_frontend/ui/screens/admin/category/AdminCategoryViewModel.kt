@@ -66,7 +66,7 @@ class AdminCategoryViewModel(
             if (result is Resource.Success && result.data != null) {
                 if (imagePart != null) {
                     val uploadResult = adminCategoryRepo.uploadCategoryImage(result.data.id, imagePart)
-                    _saveState.value = uploadResult
+                    _saveState.value = uploadResult as Resource<Any>?
                 } else {
                     _saveState.value = Resource.Success(Unit)
                 }

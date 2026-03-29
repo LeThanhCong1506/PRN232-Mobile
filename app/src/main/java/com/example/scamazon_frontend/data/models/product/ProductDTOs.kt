@@ -62,6 +62,7 @@ data class ProductDetailDto(
     @SerializedName("viewCount") val viewCount: Int?,
     @SerializedName("soldCount") val soldCount: Int?,
     @SerializedName("isFeatured") val isFeatured: Boolean?,
+    @SerializedName("warrantyPolicy") val warrantyPolicy: WarrantyPolicyInfoDto?,
     @SerializedName("createdAt") val createdAt: String?,
     @SerializedName("updatedAt") val updatedAt: String?,
     @SerializedName("productType") val productType: String?,
@@ -88,6 +89,11 @@ data class BrandInfoDto(
     @SerializedName("name") val name: String,
     @SerializedName("slug") val slug: String,
     @SerializedName("logoUrl") val logoUrl: String?
+)
+
+data class WarrantyPolicyInfoDto(
+    @SerializedName("policyId") val policyId: Int,
+    @SerializedName("policyName") val policyName: String
 )
 
 data class RatingSummaryDto(
