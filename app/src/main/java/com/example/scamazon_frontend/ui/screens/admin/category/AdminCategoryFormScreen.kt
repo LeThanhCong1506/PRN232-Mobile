@@ -54,6 +54,7 @@ fun AdminCategoryFormScreen(
     var name by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") } // For category
     var logoUrl by remember { mutableStateOf("") } // For brand
+    var selectedImageUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
     // Image picker for category image upload
     val imageLauncher = rememberLauncherForActivityResult(
@@ -70,6 +71,10 @@ fun AdminCategoryFormScreen(
                     val body = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
                     viewModel.uploadCategoryImage(editId, body)
                 }
+            } else if (!isBrand && !isEdit) {
+                selectedImageUri = it
+                imageUrl = "Image selected from Gallery"
+                Toast.makeText(context, "Image selected. Will upload on create.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -175,15 +180,16 @@ fun AdminCategoryFormScreen(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
                 )
-                // Image upload button (only available in edit mode when category ID is known)
-                if (isEdit && editId != null) {
-                    OutlinedButton(
-                        onClick = { imageLauncher.launch("image/*") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Upload Category Image", fontFamily = Poppins)
-                    }
+                // Image upload button
+                OutlinedButton(
+                    onClick = { imageLauncher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = if (selectedImageUri != null) "Selected: Image" else "Upload Category Image",
+                        fontFamily = Poppins
+                    )
                 }
             }
 
@@ -223,11 +229,30 @@ fun AdminCategoryFormScreen(
                                 )
                             )
                         } else {
+                            var imagePart: okhttp3.MultipartBody.Part? = null
+                            selectedImageUri?.let { uri ->
+                                try {
+                                    val inputStream = context.contentResolver.openInputStream(uri)
+                                    val bytes = inputStream?.readBytes()
+                                    inputStream?.close()
+                                    if (bytes != null) {
+                                        val mediaType = okhttp3.MediaType.parse("image/*")
+                                        val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
+                                        imagePart = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                            
+                            val finalImageUrl = if (imageUrl == "Image selected from Gallery" || imageUrl.isBlank()) null else imageUrl
+                            
                             viewModel.createCategory(
                                 CreateCategoryRequest(
                                     name = name,
-                                    imageUrl = imageUrl.ifBlank { null }
-                                )
+                                    imageUrl = finalImageUrl
+                                ),
+                                imagePart
                             )
                         }
                     }

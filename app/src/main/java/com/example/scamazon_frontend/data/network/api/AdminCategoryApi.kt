@@ -16,7 +16,7 @@ interface AdminCategoryApi {
     @POST("categories")
     suspend fun createCategory(
         @Body request: CreateCategoryRequest
-    ): Response<BackendApiResponse<Any>>
+    ): Response<BackendApiResponse<com.example.scamazon_frontend.data.models.category.CategoryDto>>
 
     @PUT("categories/{id}")
     suspend fun updateCategory(

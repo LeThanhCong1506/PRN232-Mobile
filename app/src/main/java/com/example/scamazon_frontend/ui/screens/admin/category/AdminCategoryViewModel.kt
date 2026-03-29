@@ -59,14 +59,23 @@ class AdminCategoryViewModel(
 
     // ===== Category CRUD =====
 
-    fun createCategory(request: CreateCategoryRequest) {
+    fun createCategory(request: CreateCategoryRequest, imagePart: MultipartBody.Part? = null) {
         viewModelScope.launch {
             _saveState.value = Resource.Loading()
             val result = adminCategoryRepo.createCategory(request)
-            _saveState.value = when (result) {
-                is Resource.Success -> Resource.Success(Unit)
-                is Resource.Error -> Resource.Error(result.message ?: "Failed to create category")
-                is Resource.Loading -> Resource.Loading()
+            if (result is Resource.Success && result.data != null) {
+                if (imagePart != null) {
+                    val uploadResult = adminCategoryRepo.uploadCategoryImage(result.data.id, imagePart)
+                    _saveState.value = uploadResult
+                } else {
+                    _saveState.value = Resource.Success(Unit)
+                }
+            } else {
+                _saveState.value = when (result) {
+                    is Resource.Success -> Resource.Success(Unit) // fallback
+                    is Resource.Error -> Resource.Error(result.message ?: "Failed to create category")
+                    is Resource.Loading -> Resource.Loading()
+                }
             }
         }
     }

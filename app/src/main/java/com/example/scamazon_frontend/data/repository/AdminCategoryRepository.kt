@@ -24,12 +24,17 @@ class AdminCategoryRepository(
 
     // ===== Category CRUD =====
 
-    suspend fun createCategory(request: CreateCategoryRequest): Resource<Unit> {
+    suspend fun createCategory(request: CreateCategoryRequest): Resource<CategoryDto> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = api.createCategory(request)
                 if (response.isSuccessful && response.body()?.success == true) {
-                    Resource.Success(Unit)
+                    val data = response.body()?.data
+                    if (data != null) {
+                        Resource.Success(data)
+                    } else {
+                        Resource.Error("Success but no data returned")
+                    }
                 } else {
                     Resource.Error(response.body()?.message ?: "Failed to create category")
                 }
