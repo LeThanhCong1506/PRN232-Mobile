@@ -15,7 +15,7 @@ interface AdminCategoryApi {
     // ===== Category CRUD =====
 
     @GET("categories")
-    suspend fun getCategories(): Response<BackendApiResponse<List<BackendAdminCategoryDto>>>
+    suspend fun getCategories(): Response<com.example.scamazon_frontend.data.models.common.BackendPagedResponse<BackendAdminCategoryDto>>
 
     @POST("categories")
     suspend fun createCategory(

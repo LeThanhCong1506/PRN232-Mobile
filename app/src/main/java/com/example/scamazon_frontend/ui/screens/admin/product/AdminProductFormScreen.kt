@@ -494,10 +494,10 @@ fun AdminProductFormScreen(
             Button(
                 onClick = {
                     val skuMissing = !isEdit && sku.isBlank()
-                    if (name.isBlank() || skuMissing || price.isBlank()) {
+                    if (name.isBlank() || skuMissing || price.isBlank() || selectedBrandId == null) {
                         Toast.makeText(context,
-                            if (skuMissing) "Name, SKU and Price are required"
-                            else "Name and Price are required",
+                            if (skuMissing) "Name, SKU, Price, and Brand are required"
+                            else "Name, Price, and Brand are required",
                             Toast.LENGTH_SHORT
                         ).show()
                         return@Button
@@ -519,7 +519,8 @@ fun AdminProductFormScreen(
                                 stockQuantity = stockQuantity.toIntOrNull(),
                                 description = description.ifBlank { null },
                                 detailDescription = detailDescription.ifBlank { null },
-                                categoryId = selectedCategoryId,
+                                categoryIds = selectedCategoryId?.let { listOf(it) } ?: emptyList(),
+                                productType = 0,
                                 brandId = selectedBrandId,
                                 warrantyPolicyId = selectedPolicyId,
                                 isFeatured = isFeatured,
@@ -539,7 +540,8 @@ fun AdminProductFormScreen(
                                 stockQuantity = stockQuantity.toIntOrNull() ?: 0,
                                 description = description.ifBlank { null },
                                 detailDescription = detailDescription.ifBlank { null },
-                                categoryId = selectedCategoryId,
+                                categoryIds = selectedCategoryId?.let { listOf(it) } ?: emptyList(),
+                                productType = 0,
                                 brandId = selectedBrandId,
                                 warrantyPolicyId = selectedPolicyId,
                                 isFeatured = isFeatured,

@@ -21,8 +21,8 @@ class AdminCategoryRepository(
         return withContext(Dispatchers.IO) {
             try {
                 val response = api.getCategories()
-                if (response.isSuccessful && response.body()?.success == true) {
-                    val items = response.body()?.data ?: emptyList()
+                if (response.isSuccessful) {
+                    val items = response.body()?.items ?: emptyList()
                     val categories = items.map {
                         CategoryDto(
                             id = it.categoryId,
@@ -37,7 +37,7 @@ class AdminCategoryRepository(
                     }
                     Resource.Success(categories)
                 } else {
-                    Resource.Error(response.body()?.message ?: "Failed to load categories")
+                    Resource.Error("Failed to load categories: ${response.code()}")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")
