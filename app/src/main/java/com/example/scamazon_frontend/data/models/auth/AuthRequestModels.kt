@@ -20,7 +20,7 @@ data class RegisterRequest(
 
 data class SocialLoginRequest(
     @SerializedName("code") val code: String,
-    @SerializedName("redirectUri") val redirectUri: String
+    @SerializedName("redirectUri") val redirectUri: String? = null
 )
 
 data class ForgotPasswordRequest(

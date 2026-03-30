@@ -2,6 +2,7 @@ package com.example.scamazon_frontend.ui.screens.auth
 
 import android.app.Activity
 import android.net.Uri
+import org.json.JSONObject
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.browser.customtabs.CustomTabsIntent
@@ -42,6 +43,22 @@ import com.example.scamazon_frontend.ui.theme.*
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+
+/** Convert raw backend error body (may be JSON) into a human-readable message. */
+private fun parseAuthError(raw: String?): String {
+    if (raw.isNullOrBlank()) return "Sign-in failed. Please try again."
+    return try {
+        val obj = JSONObject(raw)
+        // {"Message": "..."} → use that message directly
+        if (obj.has("Message")) return obj.getString("Message")
+        // {"field": ["error1", ...]} → validation errors, show generic message
+        "Sign-in failed. Please try again."
+    } catch (_: Exception) {
+        // Not JSON — return as-is if it looks like a plain message
+        if (raw.startsWith("{") || raw.startsWith("[")) "Sign-in failed. Please try again."
+        else raw
+    }
+}
 
 @Composable
 fun LoginScreen(
@@ -105,7 +122,7 @@ fun LoginScreen(
                 }
             }
             is Resource.Error -> {
-                emailError = loginState?.message
+                emailError = parseAuthError((loginState as Resource.Error).message)
             }
             else -> {}
         }

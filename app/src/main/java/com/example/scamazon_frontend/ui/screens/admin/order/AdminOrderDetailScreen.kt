@@ -749,24 +749,55 @@ private fun AdminPaymentInfoCard(order: OrderDetailDataDto) {
             )
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Payment method - use actual data, not hardcoded
             PriceRow(
                 "Method",
-                when (payment.paymentMethod.lowercase()) {
-                    "vnpay" -> "VNPay"
-                    "zalopay" -> "ZaloPay"
-                    else -> "COD"
+                when (payment.paymentMethod.uppercase()) {
+                    "VNPAY"         -> "VNPay"
+                    "ZALOPAY"       -> "ZaloPay"
+                    "SEPAY"         -> "SePay"
+                    "BANK_TRANSFER" -> "Bank Transfer"
+                    "COD"           -> "COD"
+                    else            -> payment.paymentMethod.replaceFirstChar { it.uppercase() }
                 }
             )
+
+            // Amount from payment record
             PriceRow("Amount", "${formatPrice(payment.amount)}đ")
+
+            // Payment status
             PriceRow(
                 "Status",
-                (payment.status ?: "pending").replaceFirstChar { it.uppercase() }
+                payment.status.replaceFirstChar { it.uppercase() }
             )
-            payment.transactionId?.let {
-                PriceRow("Transaction", it)
+
+            // Received amount (e.g. COD)
+            payment.receivedAmount?.let { received ->
+                if (received > 0) {
+                    PriceRow("Received", "${formatPrice(received)}đ")
+                }
             }
-            payment.paidAt?.let {
-                PriceRow("Paid At", it.take(19).replace("T", " "))
+
+            // Payment reference (e.g. SePay)
+            payment.paymentReference?.let { ref ->
+                PriceRow("Reference", ref)
+            }
+
+            // Transaction ID
+            payment.transactionId?.let { txId ->
+                PriceRow("Transaction", txId)
+            }
+
+            // Paid date
+            payment.paidAt?.let { date ->
+                PriceRow("Paid At", date.take(19).replace("T", " "))
+            }
+
+            // Expiry (for pending QR payments)
+            if (payment.status.lowercase() == "pending") {
+                payment.expiredAt?.let { exp ->
+                    PriceRow("Expires At", exp.take(19).replace("T", " "))
+                }
             }
         }
     }

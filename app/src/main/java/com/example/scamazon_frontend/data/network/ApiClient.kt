@@ -16,7 +16,7 @@ import javax.net.ssl.X509TrustManager
 import javax.net.ssl.HostnameVerifier
 
 object ApiClient {
-    // Render
+    // Render https://prn232-backend-production.up.railway.app/swagger/index.html
      private const val BASE_URL = "https://prn232-backend-production.up.railway.app/api/"
 
     // Local
@@ -41,9 +41,9 @@ object ApiClient {
         return OkHttpClient.Builder()
             .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
             .hostnameVerifier { _, _ -> true }
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
     }
 

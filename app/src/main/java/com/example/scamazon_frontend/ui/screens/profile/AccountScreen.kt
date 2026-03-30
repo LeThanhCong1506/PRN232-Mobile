@@ -42,6 +42,7 @@ fun AccountScreen(
     onNavigateToWarranty: () -> Unit = {},
     onNavigateToReturns: () -> Unit = {},
     onNavigateToClaims: () -> Unit = {},
+    onNavigateToChatbot: () -> Unit = {},
     chatUnreadCount: Int = 0
 ) {
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
@@ -155,6 +156,13 @@ fun AccountScreen(
                 subtitle = "Chat with us online",
                 badge = chatUnreadCount,
                 onClick = onNavigateToChat
+            )
+
+            AccountMenuItem(
+                icon = Icons.Outlined.SmartToy,
+                title = "AI Assistant",
+                subtitle = "Ask STEM AI anything about products",
+                onClick = onNavigateToChatbot
             )
 
             AccountMenuItem(

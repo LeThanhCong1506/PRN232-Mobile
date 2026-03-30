@@ -36,7 +36,7 @@ class CartViewModel(
             _cartState.value = result
             // Keep CartBadgeManager in sync so the bottom-nav badge reflects actual count
             if (result is Resource.Success) {
-                val count = result.data?.items?.sumOf { it.quantity } ?: 0
+                val count = result.data?.items?.size ?: 0
                 CartBadgeManager.updateCount(count)
             }
         }

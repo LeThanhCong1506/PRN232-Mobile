@@ -19,5 +19,13 @@ data class ChatbotAskRequest(
 data class ChatbotAnswerDto(
     @SerializedName("answer") val answer: String,
     @SerializedName("source") val source: String?,
-    @SerializedName("timestamp") val timestamp: String?
+    @SerializedName("timestamp") val timestamp: String?,
+    @SerializedName("products") val products: List<ProductSuggestionDto>? = null
+)
+
+data class ProductSuggestionDto(
+    @SerializedName("productId") val productId: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("price") val price: Double,
+    @SerializedName("imageUrl") val imageUrl: String?
 )

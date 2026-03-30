@@ -99,9 +99,12 @@ class AdminOrderRepository(private val api: AdminOrderApi) {
                                 PaymentInfoDto(
                                     paymentMethod = p.paymentMethod ?: "",
                                     amount = p.amount,
-                                    status = p.paymentStatus,
+                                    status = p.paymentStatus ?: "pending",
                                     transactionId = p.transactionId,
-                                    paidAt = p.paymentDate
+                                    paidAt = p.paymentDate,
+                                    receivedAmount = null,
+                                    paymentReference = null,
+                                    expiredAt = null
                                 )
                             }
                         )

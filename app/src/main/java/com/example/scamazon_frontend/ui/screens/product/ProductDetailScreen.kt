@@ -66,7 +66,7 @@ fun ProductDetailScreen(
     // Cart item count from CartViewModel
     val cartItemCount = remember(cartState) {
         when (cartState) {
-            is Resource.Success -> (cartState as Resource.Success).data?.items?.sumOf { it.quantity } ?: 0
+            is Resource.Success -> (cartState as Resource.Success).data?.items?.size ?: 0
             else -> CartBadgeManager.getCount()
         }
     }
@@ -74,7 +74,7 @@ fun ProductDetailScreen(
     // Update CartBadgeManager when cart loads
     LaunchedEffect(cartState) {
         if (cartState is Resource.Success) {
-            val count = (cartState as Resource.Success).data?.items?.sumOf { it.quantity } ?: 0
+            val count = (cartState as Resource.Success).data?.items?.size ?: 0
             CartBadgeManager.updateCount(count)
         }
     }
@@ -98,8 +98,8 @@ fun ProductDetailScreen(
                 delay(400) // Wait for fly animation
                 showFlyAnimation = false
 
-                // Update cart count and trigger badge animation
-                CartBadgeManager.incrementCount(quantity)
+                // Update cart count and trigger badge animation (increment by 1 for new distinct item)
+                CartBadgeManager.incrementCount(1)
                 animateBadge = true
                 delay(300)
                 animateBadge = false

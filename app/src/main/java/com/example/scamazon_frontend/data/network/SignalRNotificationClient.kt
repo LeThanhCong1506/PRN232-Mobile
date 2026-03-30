@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.microsoft.signalr.HubConnection
 import com.microsoft.signalr.HubConnectionBuilder
 import com.microsoft.signalr.HubConnectionState
+import java.util.concurrent.TimeUnit
 
 class SignalRNotificationClient {
 
@@ -20,7 +21,7 @@ class SignalRNotificationClient {
             .build()
 
         try {
-            hubConnection?.start()?.blockingAwait()
+            hubConnection?.start()?.blockingAwait(10, TimeUnit.SECONDS)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -37,6 +38,16 @@ class SignalRNotificationClient {
 
     fun onAdminOrderUpdated(callback: (Any) -> Unit) {
         hubConnection?.on("AdminOrderUpdated", { data ->
+            try {
+                callback(data)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }, Object::class.java)
+    }
+
+    fun onOrderStatusChanged(callback: (Any) -> Unit) {
+        hubConnection?.on("OrderStatusChanged", { data ->
             try {
                 callback(data)
             } catch (e: Exception) {
