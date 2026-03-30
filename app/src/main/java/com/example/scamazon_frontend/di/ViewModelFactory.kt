@@ -125,7 +125,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.admin.user.AdminUserViewModel::class.java) -> com.example.scamazon_frontend.ui.screens.admin.user.AdminUserViewModel(adminUserRepo)
             modelClass.isAssignableFrom(ChatbotViewModel::class.java) -> {
                 val chatbotApi = retrofit.create(ChatbotApi::class.java)
-                ChatbotViewModel(ChatbotRepository(chatbotApi))
+                ChatbotViewModel(ChatbotRepository(chatbotApi), cartRepo)
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         } as T

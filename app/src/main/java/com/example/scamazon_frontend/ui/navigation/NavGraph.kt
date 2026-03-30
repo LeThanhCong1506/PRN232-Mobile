@@ -591,7 +591,14 @@ fun NavGraph(
 
         composable(route = Screen.Chatbot.route) {
             ChatbotScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSearchProduct = { keyword ->
+                    navController.navigate("${Screen.Explore.route}?query=$keyword") {
+                        popUpTo(Screen.Home.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 

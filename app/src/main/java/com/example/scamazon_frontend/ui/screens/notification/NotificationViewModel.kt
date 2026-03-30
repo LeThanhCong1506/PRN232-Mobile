@@ -4,13 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.notification.NotificationDto
-import com.example.scamazon_frontend.data.mock.MockData
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.example.scamazon_frontend.data.repository.NotificationRepository
 
@@ -40,20 +36,32 @@ class NotificationViewModel(private val repository: NotificationRepository) : Vi
     }
 
     fun markAsRead(id: Int) {
+        // Optimistic update: immediately reflect change in UI
+        val current = _notificationsState.value
+        if (current is Resource.Success) {
+            val updated = current.data?.map {
+                if (it.id == id) it.copy(isRead = true) else it
+            } ?: emptyList()
+            _notificationsState.value = Resource.Success(updated)
+            _unreadCount.value = updated.count { it.isRead == false }
+        }
+        // Fire-and-forget: sync with server in background
         viewModelScope.launch {
-            val res = repository.markAsRead(id)
-            if (res is Resource.Success) {
-                loadNotifications() // Reload
-            }
+            repository.markAsRead(id)
         }
     }
 
     fun markAllAsRead() {
+        // Optimistic update: immediately mark all as read
+        val current = _notificationsState.value
+        if (current is Resource.Success) {
+            val updated = current.data?.map { it.copy(isRead = true) } ?: emptyList()
+            _notificationsState.value = Resource.Success(updated)
+            _unreadCount.value = 0
+        }
+        // Fire-and-forget: sync with server
         viewModelScope.launch {
-            val res = repository.markAllAsRead()
-            if (res is Resource.Success) {
-                loadNotifications() // Reload
-            }
+            repository.markAllAsRead()
         }
     }
 }

@@ -115,7 +115,15 @@ fun MainScreen(
             )
             // Floating AI chatbot widget — visible on all customer main tabs
             if (showCustomerBottomNav) {
-                ChatbotWidget()
+                ChatbotWidget(
+                    onSearchProduct = { keyword ->
+                        navController.navigate("${Screen.Explore.route}?query=$keyword") {
+                            popUpTo(Screen.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
             }
         }
     }

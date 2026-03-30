@@ -102,7 +102,7 @@ private fun NotificationItem(notif: NotificationDto, onMarkAsRead: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = unread) { onMarkAsRead() },
+            .clickable { if (unread) onMarkAsRead() },
         colors = CardDefaults.cardColors(
             containerColor = if (unread) PrimaryBlueSoft else White
         ),
@@ -154,7 +154,7 @@ private fun NotificationItem(notif: NotificationDto, onMarkAsRead: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = notif.createdAt ?: "",
+                    text = formatNotifDate(notif.createdAt),
                     fontFamily = Poppins,
                     fontSize = 10.sp,
                     color = TextHint
@@ -171,6 +171,18 @@ private fun NotificationItem(notif: NotificationDto, onMarkAsRead: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+private fun formatNotifDate(raw: String?): String {
+    if (raw.isNullOrBlank()) return ""
+    return try {
+        val input = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+        val output = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+        val date = input.parse(raw.take(19))
+        if (date != null) output.format(date) else raw
+    } catch (e: Exception) {
+        raw
     }
 }
 
