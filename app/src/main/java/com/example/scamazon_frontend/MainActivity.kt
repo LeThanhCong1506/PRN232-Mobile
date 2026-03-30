@@ -33,8 +33,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        handleOAuthIntent(intent)
+    }
+
+    private fun handleOAuthIntent(intent: Intent?) {
         // Handle GitHub OAuth callback: myapp://auth/github?code=XXX
-        val data = intent.data
+        val data = intent?.data
         if (data?.scheme == "myapp" && data.host == "auth") {
             val code = data.getQueryParameter("code")
             if (!code.isNullOrBlank()) {
@@ -47,6 +51,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Handle GitHub OAuth callback if app was launched/relaunched via deep link
+        handleOAuthIntent(intent)
 
         // Xin quyền hiển thị thông báo cho Android 13+ (API 33+)
         askNotificationPermission()

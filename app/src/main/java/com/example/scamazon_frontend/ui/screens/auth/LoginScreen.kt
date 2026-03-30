@@ -283,7 +283,7 @@ fun LoginScreen(
                         val uri = Uri.parse(
                             "https://github.com/login/oauth/authorize" +
                                     "?client_id=${SocialAuthConfig.GITHUB_CLIENT_ID}" +
-                                    "&redirect_uri=${SocialAuthConfig.GITHUB_REDIRECT_URI}" +
+                                    "&redirect_uri=${Uri.encode(SocialAuthConfig.GITHUB_REDIRECT_URI)}" +
                                     "&scope=user:email"
                         )
                         CustomTabsIntent.Builder().build().launchUrl(context, uri)
