@@ -170,7 +170,7 @@ object MockData {
             OrderItemDto(1, 1, "iPhone 16 Pro Max", "https://picsum.photos/seed/p1/400/400", 32490000.0, 1, 32490000.0),
             OrderItemDto(2, 5, "AirPods Pro 2", "https://picsum.photos/seed/p5/400/400", 4990000.0, 2, 9980000.0),
         ),
-        payment = PaymentInfoDto("vnpay", 42500000.0, "success", "TXN123456", "2025-02-20T10:30:00")
+        payment = PaymentInfoDto("vnpay", 42500000.0, "success", "TXN123456", "2025-02-20T10:30:00", null, null, null)
     )
 
     // ==================== ADMIN ORDERS ====================

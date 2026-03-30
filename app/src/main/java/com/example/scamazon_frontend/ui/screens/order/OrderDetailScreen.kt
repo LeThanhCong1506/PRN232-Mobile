@@ -751,26 +751,55 @@ private fun PaymentInfoSection(order: OrderDetailResponse) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Payment method
             SummaryRow(
                 "Method",
-                when (payment.paymentMethod.lowercase()) {
-                    "vnpay" -> "VNPay"
-                    "zalopay" -> "ZaloPay"
-                    "sepay" -> "SePay"
-                    "bank_transfer" -> "Bank Transfer"
-                    "cod" -> "Cash on Delivery"
-                    else -> payment.paymentMethod.replaceFirstChar { it.uppercase() }
+                when (payment.paymentMethod.uppercase()) {
+                    "VNPAY"         -> "VNPay"
+                    "ZALOPAY"       -> "ZaloPay"
+                    "SEPAY"         -> "SePay"
+                    "BANK_TRANSFER" -> "Bank Transfer"
+                    "COD"           -> "COD"
+                    else            -> payment.paymentMethod.replaceFirstChar { it.uppercase() }
                 }
             )
+
+            // Amount actually charged (from payment record, not order total)
+            SummaryRow("Amount", "${formatPrice(payment.amount)}đ")
+
+            // Payment status
             SummaryRow(
                 "Status",
-                (payment.status ?: "pending").replaceFirstChar { it.uppercase() }
+                payment.status.replaceFirstChar { it.uppercase() }
             )
-            payment.transactionId?.let {
-                SummaryRow("Transaction ID", it)
+
+            // Received amount (e.g. for COD partial payment)
+            payment.receivedAmount?.let { received ->
+                if (received > 0) {
+                    SummaryRow("Received", "${formatPrice(received)}đ")
+                }
             }
-            payment.paymentDate?.let {
-                SummaryRow("Paid At", it.take(19).replace("T", " "))
+
+            // Payment reference (e.g. SePay reference code)
+            payment.paymentReference?.let { ref ->
+                SummaryRow("Reference", ref)
+            }
+
+            // Transaction ID
+            payment.transactionId?.let { txId ->
+                SummaryRow("Transaction", txId)
+            }
+
+            // Paid date
+            payment.paymentDate?.let { date ->
+                SummaryRow("Paid At", date.take(19).replace("T", " "))
+            }
+
+            // Expiry date (for pending payments like SePay QR)
+            if (payment.status.lowercase() == "pending") {
+                payment.expiredAt?.let { exp ->
+                    SummaryRow("Expires At", exp.take(19).replace("T", " "))
+                }
             }
         }
     }

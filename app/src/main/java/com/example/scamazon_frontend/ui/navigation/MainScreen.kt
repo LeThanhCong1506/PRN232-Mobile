@@ -71,12 +71,22 @@ fun MainScreen(
                     LafyuuBottomNavBar(
                         currentRoute = currentRoute ?: Screen.Home.route,
                         onItemClick = { item ->
-                            navController.navigate(item.route) {
-                                popUpTo(Screen.Home.route) {
-                                    saveState = true
+                            if (item.route == Screen.Home.route) {
+                                // Navigate to Home and clear the entire back stack above it
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Home.route) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                            } else {
+                                navController.navigate(item.route) {
+                                    popUpTo(Screen.Home.route) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         cartBadgeCount = cartItemCount

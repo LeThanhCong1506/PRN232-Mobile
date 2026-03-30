@@ -55,9 +55,12 @@ data class OrderItemDto(
 data class PaymentInfoDto(
     @SerializedName("paymentMethod") val paymentMethod: String,
     @SerializedName("amount") val amount: Double,
-    @SerializedName("status") val status: String?,
+    @SerializedName("status") val status: String = "pending",
     @SerializedName("transactionId") val transactionId: String?,
-    @SerializedName("paidAt") val paidAt: String?
+    @SerializedName("paidAt") val paidAt: String?,
+    @SerializedName("receivedAmount") val receivedAmount: Double?,
+    @SerializedName("paymentReference") val paymentReference: String?,
+    @SerializedName("expiredAt") val expiredAt: String?
 )
 
 // ==================== Admin Order ====================
