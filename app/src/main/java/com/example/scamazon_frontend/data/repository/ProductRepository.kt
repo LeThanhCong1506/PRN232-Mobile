@@ -16,11 +16,12 @@ class ProductRepository(private val api: ProductApi) {
         categoryId: Int? = null,
         brandId: Int? = null,
         minPrice: Double? = null,
-        maxPrice: Double? = null
+        maxPrice: Double? = null,
+        productType: String? = null
     ): Resource<ProductPaginationResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = api.getProducts(pageNumber, pageSize, searchTerm, categoryId, brandId, minPrice, maxPrice)
+                val response = api.getProducts(pageNumber, pageSize, searchTerm, categoryId, brandId, minPrice, maxPrice, productType)
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body?.success == true && body.data != null) {
@@ -154,6 +155,7 @@ class ProductRepository(private val api: ProductApi) {
             id = productId,
             name = name,
             slug = "",
+            sku = sku,
             description = description,
             detailDescription = null,
             specifications = null,
@@ -187,8 +189,22 @@ class ProductRepository(private val api: ProductApi) {
             viewCount = null,
             soldCount = null,
             isFeatured = null,
+            warrantyPolicy = warrantyPolicy?.let {
+                WarrantyPolicyInfoDto(policyId = it.policyId, policyName = it.policyName)
+            },
             createdAt = createdAt,
-            updatedAt = null
+            updatedAt = null,
+            productType = productType,
+            bundleComponents = bundleComponents?.map {
+                BundleComponentDto(
+                    bundleId = it.bundleId,
+                    childProductId = it.childProductId,
+                    childProductName = it.childProductName,
+                    childProductSku = it.childProductSku,
+                    childProductPrice = it.childProductPrice,
+                    quantity = it.quantity
+                )
+            }
         )
     }
 }

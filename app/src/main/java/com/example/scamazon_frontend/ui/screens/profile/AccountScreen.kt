@@ -36,15 +36,22 @@ fun AccountScreen(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToOrders: () -> Unit = {},
     onNavigateToWishlist: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {},
     onNavigateToChat: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {},
-    onNavigateToWarranty: () -> Unit = {}
+    onNavigateToWarranty: () -> Unit = {},
+    onNavigateToReturns: () -> Unit = {},
+    onNavigateToClaims: () -> Unit = {},
+    chatUnreadCount: Int = 0
 ) {
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    // Always re-fetch profile when Account screen is shown so that after switching
+    // accounts the displayed data matches the currently logged-in user.
+    LaunchedEffect(Unit) {
+        viewModel.fetchProfile()
+    }
 
     Column(
         modifier = Modifier
@@ -110,10 +117,24 @@ fun AccountScreen(
             )
 
             AccountMenuItem(
+                icon = Icons.Outlined.Refresh,
+                title = "My Returns",
+                subtitle = "Manage your return requests",
+                onClick = onNavigateToReturns
+            )
+
+            AccountMenuItem(
                 icon = Icons.Outlined.Shield,
                 title = "My Warranties",
                 subtitle = "View and manage product warranties",
                 onClick = onNavigateToWarranty
+            )
+
+            AccountMenuItem(
+                icon = Icons.Outlined.History,
+                title = "My Claims",
+                subtitle = "View your warranty claim history",
+                onClick = onNavigateToClaims
             )
 
             AccountMenuItem(
@@ -132,6 +153,7 @@ fun AccountScreen(
                 icon = Icons.Outlined.ChatBubbleOutline,
                 title = "Customer Support",
                 subtitle = "Chat with us online",
+                badge = chatUnreadCount,
                 onClick = onNavigateToChat
             )
 
@@ -142,38 +164,14 @@ fun AccountScreen(
                 onClick = onNavigateToMap
             )
 
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 16.dp),
-                color = BorderLight
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.Notifications,
-                title = "Notifications",
-                subtitle = "Manage notifications",
-                onClick = onNavigateToNotifications
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.Settings,
-                title = "Settings",
-                subtitle = "App settings and preferences",
-                onClick = onNavigateToSettings
-            )
-
-            AccountMenuItem(
-                icon = Icons.Outlined.Info,
-                title = "About",
-                subtitle = "App version and info",
-                onClick = { /* Navigate to about */ }
-            )
-
             Spacer(modifier = Modifier.height(24.dp))
 
             // Logout Button
             LafyuuOutlinedButton(
                 text = "Sign Out",
                 onClick = {
+                    // Reset cached profile so the next login shows fresh data
+                    viewModel.resetProfile()
                     TokenManager(context).clearAll()
                     onNavigateToLogin()
                 }
@@ -228,6 +226,7 @@ private fun AccountMenuItem(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    badge: Int = 0,
     onClick: () -> Unit
 ) {
     Row(
@@ -237,19 +236,36 @@ private fun AccountMenuItem(
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(PrimaryBlueSoft, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = PrimaryBlue,
-                modifier = Modifier.size(20.dp)
-            )
+        // Icon with optional badge
+        Box(contentAlignment = Alignment.TopEnd) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(PrimaryBlueSoft, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = PrimaryBlue,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            if (badge > 0) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(androidx.compose.ui.graphics.Color.Red, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (badge > 99) "99+" else badge.toString(),
+                        color = White,
+                        fontSize = 8.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.width(16.dp))

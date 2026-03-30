@@ -21,6 +21,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.scamazon_frontend.core.utils.Resource
@@ -44,6 +46,11 @@ fun AdminCategoryListScreen(
     val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableIntStateOf(0) }
     var showDeleteDialog by remember { mutableStateOf<Pair<String, Int>?>(null) } // type, id
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.loadCategories()
+        viewModel.loadBrands()
+    }
 
     LaunchedEffect(deleteState) {
         when (deleteState) {
@@ -237,18 +244,33 @@ private fun CategoryItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (category.imageUrl != null) {
-                AsyncImage(
-                    model = category.imageUrl,
-                    contentDescription = category.name,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BackgroundLight),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+            // Image – always show (placeholder if null)
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(BackgroundLight),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!category.imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = category.imageUrl,
+                        contentDescription = category.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Filled.Image,
+                        contentDescription = "No image",
+                        tint = TextSecondary.copy(alpha = 0.5f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -344,18 +366,33 @@ private fun BrandItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (brand.logoUrl != null) {
-                AsyncImage(
-                    model = brand.logoUrl,
-                    contentDescription = brand.name,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BackgroundLight),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+            // Logo – always show (placeholder if null)
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(BackgroundLight),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!brand.logoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = brand.logoUrl,
+                        contentDescription = brand.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Filled.Image,
+                        contentDescription = "No logo",
+                        tint = TextSecondary.copy(alpha = 0.5f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(

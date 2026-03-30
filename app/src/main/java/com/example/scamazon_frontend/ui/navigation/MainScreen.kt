@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.scamazon_frontend.core.utils.CartBadgeManager
 import com.example.scamazon_frontend.ui.components.BottomNavItem
 import com.example.scamazon_frontend.ui.components.LafyuuBottomNavBar
 
@@ -20,11 +22,12 @@ import com.example.scamazon_frontend.ui.components.LafyuuBottomNavBar
  */
 @Composable
 fun MainScreen(
-    navController: NavHostController = rememberNavController(),
-    cartItemCount: Int = 0
+    navController: NavHostController = rememberNavController()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    // Observe global cart count — updated by CartViewModel.fetchCart() and addToCart
+    val cartItemCount by CartBadgeManager.cartItemCount.collectAsState()
 
     // Customer screens that should show bottom navigation
     val customerBottomNavScreens = listOf(

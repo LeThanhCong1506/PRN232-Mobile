@@ -6,6 +6,9 @@ import com.example.scamazon_frontend.core.utils.TokenManager
 import com.example.scamazon_frontend.data.models.auth.AuthResponse
 import com.example.scamazon_frontend.data.models.auth.LoginRequest
 import com.example.scamazon_frontend.data.models.auth.RegisterRequest
+import com.example.scamazon_frontend.data.models.auth.ForgotPasswordRequest
+import com.example.scamazon_frontend.data.models.auth.ResetPasswordRequest
+import com.example.scamazon_frontend.data.network.api.ApiResponse
 import com.example.scamazon_frontend.data.mock.MockData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +28,12 @@ class AuthViewModel(
 
     private val _registerState = MutableStateFlow<Resource<AuthResponse>?>(null)
     val registerState: StateFlow<Resource<AuthResponse>?> = _registerState.asStateFlow()
+
+    private val _forgotPasswordState = MutableStateFlow<Resource<ApiResponse<String>>?>(null)
+    val forgotPasswordState: StateFlow<Resource<ApiResponse<String>>?> = _forgotPasswordState.asStateFlow()
+
+    private val _resetPasswordState = MutableStateFlow<Resource<ApiResponse<String>>?>(null)
+    val resetPasswordState: StateFlow<Resource<ApiResponse<String>>?> = _resetPasswordState.asStateFlow()
 
     fun login(request: LoginRequest) {
         _loginState.value = Resource.Loading()
@@ -49,9 +58,51 @@ class AuthViewModel(
             _registerState.value = result
         }
     }
-    
+
+    fun googleLogin(serverAuthCode: String) {
+        _loginState.value = Resource.Loading()
+        viewModelScope.launch {
+            val result = authRepository.googleLogin(serverAuthCode)
+            if (result is Resource.Success) {
+                result.data?.token?.let { tokenManager.saveToken(it) }
+                result.data?.role?.let { tokenManager.saveUserRole(it.lowercase()) }
+            }
+            _loginState.value = result
+        }
+    }
+
+    fun githubLogin(code: String) {
+        _loginState.value = Resource.Loading()
+        viewModelScope.launch {
+            val result = authRepository.githubLogin(code)
+            if (result is Resource.Success) {
+                result.data?.token?.let { tokenManager.saveToken(it) }
+                result.data?.role?.let { tokenManager.saveUserRole(it.lowercase()) }
+            }
+            _loginState.value = result
+        }
+    }
+
     fun resetState() {
         _loginState.value = null
         _registerState.value = null
+        _forgotPasswordState.value = null
+        _resetPasswordState.value = null
+    }
+
+    fun forgotPassword(email: String) {
+        _forgotPasswordState.value = Resource.Loading()
+        viewModelScope.launch {
+            val result = authRepository.forgotPassword(ForgotPasswordRequest(email))
+            _forgotPasswordState.value = result
+        }
+    }
+
+    fun resetPassword(email: String, token: String, newPassword: String) {
+        _resetPasswordState.value = Resource.Loading()
+        viewModelScope.launch {
+            val result = authRepository.resetPassword(ResetPasswordRequest(email, token, newPassword))
+            _resetPasswordState.value = result
+        }
     }
 }

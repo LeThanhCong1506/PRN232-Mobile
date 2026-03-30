@@ -112,8 +112,8 @@ fun AdminOrderDetailScreen(
                 AdminOrderDetailContent(
                     order = order,
                     isUpdating = updateStatusState is Resource.Loading,
-                    onUpdateStatus = { newStatus ->
-                        viewModel.updateOrderStatus(orderId, newStatus)
+                    onUpdateStatus = { newStatus, trackingNumber, carrier ->
+                        viewModel.updateOrderStatus(orderId, newStatus, trackingNumber, carrier)
                     },
                     modifier = Modifier.padding(innerPadding)
                 )
@@ -136,7 +136,7 @@ fun AdminOrderDetailScreen(
 private fun AdminOrderDetailContent(
     order: OrderDetailDataDto,
     isUpdating: Boolean,
-    onUpdateStatus: (String) -> Unit,
+    onUpdateStatus: (String, String?, String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -158,7 +158,7 @@ private fun AdminOrderDetailContent(
                 isUpdating = isUpdating,
                 onUpdateStatus = onUpdateStatus
             )
-        }
+        }
 
         // Shipping Info
         item {
@@ -268,13 +268,80 @@ private fun AdminOrderHeaderCard(order: OrderDetailDataDto) {
 private fun StatusUpdateCard(
     currentStatus: String,
     isUpdating: Boolean,
-    onUpdateStatus: (String) -> Unit
+    onUpdateStatus: (String, String?, String?) -> Unit
 ) {
-    val statusFlow = listOf("pending", "confirmed", "shipping", "delivered")
+    val statusFlow = listOf("pending", "confirmed", "shipped", "delivered")
     val currentIndex = statusFlow.indexOf(currentStatus.lowercase())
     val isCancelled = currentStatus.lowercase() == "cancelled"
+    val isDelivered = currentStatus.lowercase() == "delivered"
 
-    var expanded by remember { mutableStateOf(false) }
+    // Cancel chỉ cho phép khi PENDING hoặc CONFIRMED (theo AllowedTransitions backend)
+    val canCancel = currentStatus.lowercase() in listOf("pending", "confirmed")
+
+    var expandedCancel by remember { mutableStateOf(false) }
+    // Dialog nhập tracking number khi chuyển sang SHIPPED
+    var showShippingDialog by remember { mutableStateOf(false) }
+    var trackingNumberInput by remember { mutableStateOf("") }
+    var carrierInput by remember { mutableStateOf("") }
+
+    // Shipping dialog
+    if (showShippingDialog) {
+        AlertDialog(
+            onDismissRequest = { showShippingDialog = false },
+            title = {
+                Text(
+                    "Mark as Shipped",
+                    fontFamily = Poppins,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = trackingNumberInput,
+                        onValueChange = { trackingNumberInput = it },
+                        label = { Text("Tracking Number *", fontFamily = Poppins) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = carrierInput,
+                        onValueChange = { carrierInput = it },
+                        label = { Text("Carrier (optional)", fontFamily = Poppins) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (trackingNumberInput.isNotBlank()) {
+                            showShippingDialog = false
+                            onUpdateStatus(
+                                "shipped",
+                                trackingNumberInput.trim(),
+                                carrierInput.trim().ifBlank { null }
+                            )
+                            trackingNumberInput = ""
+                            carrierInput = ""
+                        }
+                    }
+                ) {
+                    Text("Confirm", color = PrimaryBlue, fontFamily = Poppins)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showShippingDialog = false
+                    trackingNumberInput = ""
+                    carrierInput = ""
+                }) {
+                    Text("Cancel", fontFamily = Poppins)
+                }
+            }
+        )
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -293,7 +360,7 @@ private fun StatusUpdateCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (isCancelled || currentStatus.lowercase() == "delivered") {
+            if (isCancelled || isDelivered) {
                 // Final state - no more updates
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -311,7 +378,7 @@ private fun StatusUpdateCard(
                     )
                 }
             } else {
-                // Current status display
+                // Current/Next status display
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -356,7 +423,16 @@ private fun StatusUpdateCard(
                     if (currentIndex < statusFlow.lastIndex) {
                         val nextStatus = statusFlow[currentIndex + 1]
                         Button(
-                            onClick = { onUpdateStatus(nextStatus) },
+                            onClick = {
+                                if (nextStatus == "shipped") {
+                                    // Cần tracking number → hiển thị dialog
+                                    trackingNumberInput = ""
+                                    carrierInput = ""
+                                    showShippingDialog = true
+                                } else {
+                                    onUpdateStatus(nextStatus, null, null)
+                                }
+                            },
                             enabled = !isUpdating,
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(8.dp),
@@ -384,10 +460,10 @@ private fun StatusUpdateCard(
                         }
                     }
 
-                    // Cancel button
-                    if (currentStatus.lowercase() != "cancelled") {
+                    // Cancel button - chỉ hiển thị cho PENDING và CONFIRMED
+                    if (canCancel) {
                         OutlinedButton(
-                            onClick = { expanded = true },
+                            onClick = { expandedCancel = true },
                             enabled = !isUpdating,
                             shape = RoundedCornerShape(8.dp),
                             border = androidx.compose.foundation.BorderStroke(1.dp, StatusError),
@@ -407,8 +483,8 @@ private fun StatusUpdateCard(
 
                 // Cancel confirmation dropdown
                 DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    expanded = expandedCancel,
+                    onDismissRequest = { expandedCancel = false }
                 ) {
                     DropdownMenuItem(
                         text = {
@@ -419,8 +495,8 @@ private fun StatusUpdateCard(
                             )
                         },
                         onClick = {
-                            expanded = false
-                            onUpdateStatus("cancelled")
+                            expandedCancel = false
+                            onUpdateStatus("cancelled", null, null)
                         },
                         leadingIcon = {
                             Icon(
@@ -742,7 +818,7 @@ private fun StatusBadge(status: String) {
     val (bgColor, textColor, label) = when (status.lowercase()) {
         "pending" -> Triple(SecondaryYellow.copy(alpha = 0.15f), SecondaryYellow, "Pending")
         "confirmed" -> Triple(PrimaryBlue.copy(alpha = 0.15f), PrimaryBlue, "Confirmed")
-        "shipping" -> Triple(PrimaryBlue.copy(alpha = 0.15f), PrimaryBlue, "Shipping")
+        "shipped" -> Triple(PrimaryBlue.copy(alpha = 0.15f), PrimaryBlue, "Shipped")
         "delivered" -> Triple(StatusSuccess.copy(alpha = 0.15f), StatusSuccess, "Delivered")
         "cancelled" -> Triple(StatusError.copy(alpha = 0.15f), StatusError, "Cancelled")
         else -> Triple(BackgroundLight, TextSecondary, status.replaceFirstChar { it.uppercase() })

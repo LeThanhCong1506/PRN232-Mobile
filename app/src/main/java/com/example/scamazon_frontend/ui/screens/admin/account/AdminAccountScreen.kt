@@ -30,12 +30,19 @@ fun AdminAccountScreen(
     viewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToProfile: () -> Unit = {},
     onNavigateToWarrantyClaims: () -> Unit = {},
+    onNavigateToReturnRequests: () -> Unit = {},
+    onNavigateToUserManagement: () -> Unit = {},
     onNavigateToLogin: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // Always fetch fresh admin profile on entry
+    LaunchedEffect(Unit) {
+        viewModel.fetchProfile()
+    }
 
     Scaffold(
         topBar = {
@@ -151,9 +158,17 @@ fun AdminAccountScreen(
                     )
                     HorizontalDivider(color = BorderLight)
                     AdminMenuItem(
-                        icon = Icons.Filled.Settings,
-                        title = "Settings",
-                        subtitle = "App settings"
+                        icon = Icons.Filled.Refresh,
+                        title = "Return Requests",
+                        subtitle = "Manage customer returns and exchanges",
+                        onClick = onNavigateToReturnRequests
+                    )
+                    HorizontalDivider(color = BorderLight)
+                    AdminMenuItem(
+                        icon = Icons.Filled.People,
+                        title = "User Management",
+                        subtitle = "View and manage registered users",
+                        onClick = onNavigateToUserManagement
                     )
                 }
             }
@@ -188,6 +203,7 @@ fun AdminAccountScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        viewModel.resetProfile()
                         tokenManager.clearAll()
                         showLogoutDialog = false
                         onNavigateToLogin()

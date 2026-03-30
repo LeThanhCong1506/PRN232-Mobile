@@ -1,9 +1,20 @@
 package com.example.scamazon_frontend.ui.screens.checkout
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
+import com.example.scamazon_frontend.MainActivity
+import com.example.scamazon_frontend.R
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,7 +56,8 @@ fun PaymentQRScreen(
     viewModel: PaymentQRViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
     onNavigateToHome: () -> Unit = {},
-    onNavigateToOrders: () -> Unit = {}
+    onNavigateToOrders: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     val qrState by viewModel.qrState.collectAsStateWithLifecycle()
     val qrBitmap by viewModel.qrBitmap.collectAsStateWithLifecycle()
@@ -55,6 +67,69 @@ fun PaymentQRScreen(
 
     LaunchedEffect(orderId) {
         viewModel.createPaymentQR(orderId)
+    }
+
+    // When payment is confirmed: show Heads-up notification + haptic feedback
+    LaunchedEffect(paymentStatus) {
+        if (paymentStatus == "success") {
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // Ensure the high-importance channel exists (reuse FCM channel)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    "scamazon_notifications",
+                    "STEM Notifications",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Thông báo từ STEM"
+                    enableVibration(true)
+                }
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            // Tap-to-open intent
+            val tapIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context, 0, tapIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            // Build Heads-up notification (PRIORITY_HIGH + IMPORTANCE_HIGH channel = heads-up banner)
+            val notification = NotificationCompat.Builder(context, "scamazon_notifications")
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle("Payment Successful!")
+                .setContentText("Your order has been confirmed and is being processed.")
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_SOUND)
+                .setContentIntent(pendingIntent)
+                .build()
+
+            notificationManager.notify(10001, notification)
+
+            // Haptic feedback: short-long pattern for payment confirmation feel
+            try {
+                val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager)
+                        .defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    // Pattern: wait 0ms, vibrate 100ms, pause 80ms, vibrate 300ms
+                    vibrator.vibrate(
+                        VibrationEffect.createWaveform(longArrayOf(0, 100, 80, 300), -1)
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(longArrayOf(0, 100, 80, 300), -1)
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     Column(

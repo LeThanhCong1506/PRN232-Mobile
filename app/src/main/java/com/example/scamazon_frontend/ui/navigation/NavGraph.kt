@@ -42,8 +42,21 @@ import com.example.scamazon_frontend.ui.screens.profile.EditProfileScreen
 import com.example.scamazon_frontend.ui.screens.review.ReviewScreen
 import com.example.scamazon_frontend.ui.screens.favorite.FavoriteScreen
 import com.example.scamazon_frontend.ui.screens.search.ExploreScreen
+import com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel
+import com.example.scamazon_frontend.ui.screens.notification.NotificationScreen
+import com.example.scamazon_frontend.ui.screens.chat.ChatViewModel
+import com.example.scamazon_frontend.ui.screens.profile.ProfileViewModel
+import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.theme.TextSecondary
 import com.example.scamazon_frontend.ui.theme.Typography
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.scamazon_frontend.ui.screens.admin.user.AdminUserListScreen
+import com.example.scamazon_frontend.ui.screens.warranty.MyClaimsScreen
+import com.example.scamazon_frontend.ui.screens.`return`.ReturnListScreen
+import com.example.scamazon_frontend.ui.screens.`return`.ReturnCreateScreen
+import com.example.scamazon_frontend.ui.screens.`return`.ReturnDetailScreen
+import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnScreen
 
 /**
  * Main Navigation Graph
@@ -55,6 +68,13 @@ fun NavGraph(
     startDestination: String = Screen.Login.route,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val notificationViewModel: NotificationViewModel = viewModel(factory = ViewModelFactory(context))
+    val unreadCount by notificationViewModel.unreadCount.collectAsStateWithLifecycle()
+    val profileViewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(context))
+    val sharedChatViewModel: ChatViewModel = viewModel(factory = ViewModelFactory(context))
+    val chatUnreadCount by sharedChatViewModel.unreadCount.collectAsStateWithLifecycle()
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -111,6 +131,7 @@ fun NavGraph(
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications.route)
                 },
+                notificationBadge = unreadCount,
                 onNavigateToWishlist = {
                     navController.navigate(Screen.Wishlist.route)
                 },
@@ -145,20 +166,15 @@ fun NavGraph(
 
         composable(route = Screen.Account.route) {
             AccountScreen(
+                viewModel = profileViewModel,
                 onNavigateToProfile = {
                     navController.navigate(Screen.EditProfile.route)
-                },
-                onNavigateToNotifications = {
-                    navController.navigate(Screen.Notifications.route)
                 },
                 onNavigateToOrders = {
                     navController.navigate(Screen.OrderHistory.route)
                 },
                 onNavigateToWishlist = {
                     navController.navigate(Screen.Wishlist.route)
-                },
-                onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
                 },
                 onNavigateToChat = {
                     navController.navigate(Screen.Chat.route)
@@ -173,7 +189,14 @@ fun NavGraph(
                 },
                 onNavigateToWarranty = {
                     navController.navigate(Screen.WarrantyList.route)
-                }
+                },
+                onNavigateToReturns = {
+                    navController.navigate(Screen.ReturnList.route)
+                },
+                onNavigateToClaims = {
+                    navController.navigate(Screen.MyClaims.route)
+                },
+                chatUnreadCount = chatUnreadCount
             )
         }
 
@@ -314,6 +337,13 @@ fun NavGraph(
                     navController.navigate(Screen.OrderHistory.route) {
                         popUpTo(Screen.Home.route)
                     }
+                },
+                onNavigateToNotifications = {
+                    // Reload notifications so the payment confirmation appears at the top
+                    notificationViewModel.loadNotifications()
+                    navController.navigate(Screen.Notifications.route) {
+                        popUpTo(Screen.Home.route)
+                    }
                 }
             )
         }
@@ -391,6 +421,7 @@ fun NavGraph(
         // ==========================================
         composable(route = Screen.Profile.route) {
             EditProfileScreen(
+                viewModel = profileViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
                 }
@@ -399,6 +430,7 @@ fun NavGraph(
 
         composable(route = Screen.EditProfile.route) {
             EditProfileScreen(
+                viewModel = profileViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
                 }
@@ -433,6 +465,9 @@ fun NavGraph(
                 },
                 onNavigateToReview = { productId ->
                     navController.navigate(Screen.Review.createRoute(productId, canWrite = true))
+                },
+                onNavigateToReturn = { orderIdParam ->
+                    navController.navigate(Screen.ReturnCreate.createRoute(orderIdParam))
                 }
             )
         }
@@ -449,10 +484,8 @@ fun NavGraph(
         }
 
         composable(route = Screen.Notifications.route) {
-            val context = LocalContext.current
-            val viewModel: com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
-            com.example.scamazon_frontend.ui.screens.notification.NotificationScreen(
-                viewModel = viewModel,
+            NotificationScreen(
+                viewModel = notificationViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -471,16 +504,37 @@ fun NavGraph(
         }
 
         composable(route = Screen.Chat.route) {
-            val context = LocalContext.current
-            val viewModel: com.example.scamazon_frontend.ui.screens.chat.ChatViewModel = viewModel(factory = com.example.scamazon_frontend.di.ViewModelFactory(context))
             com.example.scamazon_frontend.ui.screens.chat.ChatScreen(
-                viewModel = viewModel,
+                viewModel = sharedChatViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
         composable(route = Screen.ForgotPassword.route) {
-            PlaceholderScreen(screenName = "Forgot Password")
+            com.example.scamazon_frontend.ui.screens.auth.ForgotPasswordScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToResetPassword = { email ->
+                    navController.navigate(Screen.ResetPassword.createRoute(email))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ResetPassword.route,
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            com.example.scamazon_frontend.ui.screens.auth.ResetPasswordScreen(
+                email = email,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(
@@ -508,6 +562,9 @@ fun NavGraph(
             com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardScreen(
                 onNavigateToChat = {
                     navController.navigate(Screen.AdminChatList.route)
+                },
+                onNavigateToUsers = {
+                    navController.navigate(Screen.AdminUserList.route)
                 }
             )
         }
@@ -679,6 +736,12 @@ fun NavGraph(
                 onNavigateToWarrantyClaims = {
                     navController.navigate(Screen.AdminWarrantyClaims.route)
                 },
+                onNavigateToReturnRequests = {
+                    navController.navigate(Screen.AdminReturns.route)
+                },
+                onNavigateToUserManagement = {
+                    navController.navigate(Screen.AdminUserList.route)
+                },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -716,11 +779,70 @@ fun NavGraph(
             )
         }
 
+        composable(route = Screen.MyClaims.route) {
+            MyClaimsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(route = Screen.AdminWarrantyClaims.route) {
             AdminWarrantyClaimsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        // ==========================================
+        // RETURN REQUEST SCREENS
+        // ==========================================
+        composable(route = Screen.ReturnList.route) {
+            ReturnListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onReturnClick = { returnId ->
+                    navController.navigate(Screen.ReturnDetail.createRoute(returnId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ReturnDetail.route,
+            arguments = listOf(
+                navArgument("returnId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val returnId = backStackEntry.arguments?.getInt("returnId") ?: 0
+            ReturnDetailScreen(
+                returnId = returnId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.ReturnCreate.route,
+            arguments = listOf(
+                navArgument("orderId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getInt("orderId") ?: 0
+            ReturnCreateScreen(
+                orderId = orderId,
+                onNavigateBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.AdminReturns.route) {
+            AdminReturnScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.AdminUserList.route) {
+            AdminUserListScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

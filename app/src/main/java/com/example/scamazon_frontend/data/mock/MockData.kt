@@ -83,7 +83,7 @@ object MockData {
     fun getProductDetail(slug: String): ProductDetailDto {
         val p = products.find { it.slug == slug } ?: products.first()
         return ProductDetailDto(
-            id = p.id, name = p.name, slug = p.slug,
+            id = p.id, name = p.name, slug = p.slug, sku = null,
             description = p.description, detailDescription = p.detailDescription,
             specifications = mapOf("Bảo hành" to "12 tháng", "Xuất xứ" to "Chính hãng"),
             price = p.price, salePrice = p.salePrice,
@@ -97,7 +97,9 @@ object MockData {
             ),
             ratingSummary = RatingSummaryDto(p.avgRating ?: 4.5f, 25, RatingBreakdownDto(15, 5, 3, 1, 1)),
             viewCount = 1200, soldCount = p.soldCount, isFeatured = p.isFeatured,
-            createdAt = p.createdAt, updatedAt = p.createdAt
+            warrantyPolicy = null,
+            createdAt = p.createdAt, updatedAt = p.createdAt,
+            productType = "SIMPLE", bundleComponents = null
         )
     }
 

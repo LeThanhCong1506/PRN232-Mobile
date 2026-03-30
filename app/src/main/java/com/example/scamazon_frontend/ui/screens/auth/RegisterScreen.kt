@@ -124,7 +124,7 @@ fun RegisterScreen(
             LafyuuTextField(
                 value = fullName,
                 onValueChange = {
-                    fullName = it
+                    fullName = it.trimStart()
                     fullNameError = null
                 },
                 placeholder = "Full Name",
@@ -140,7 +140,7 @@ fun RegisterScreen(
             LafyuuTextField(
                 value = username,
                 onValueChange = {
-                    username = it
+                    username = it.trim()   // trim để tránh bàn phím tự thêm space
                     usernameError = null
                 },
                 placeholder = "Username",
@@ -156,7 +156,7 @@ fun RegisterScreen(
             LafyuuEmailField(
                 value = email,
                 onValueChange = {
-                    email = it
+                    email = it.trim()     // trim để tránh bàn phím tự thêm space
                     emailError = null
                 },
                 placeholder = "Email Address",
@@ -171,7 +171,7 @@ fun RegisterScreen(
             LafyuuTextField(
                 value = phone,
                 onValueChange = {
-                    phone = it
+                    phone = it.trim()
                     phoneError = null
                 },
                 placeholder = "Phone Number",
@@ -350,11 +350,18 @@ private fun performRegistrationValidation(
 ) {
     var isValid = true
 
+    // Trim tất cả các field text để loại bỏ whitespace thừa do bàn phím
+    val trimmedFullName     = fullName.trim()
+    val trimmedUsername     = username.trim()
+    val trimmedEmail        = email.trim()
+    val trimmedPhone        = phone.trim()
+    // Password KHÔNG trim (trailing space trong password là hợp lệ)
+
     // Validate full name
-    if (fullName.isBlank()) {
+    if (trimmedFullName.isBlank()) {
         onFullNameError("Full name is required")
         isValid = false
-    } else if (fullName.length < 2) {
+    } else if (trimmedFullName.length < 2) {
         onFullNameError("Full name must be at least 2 characters")
         isValid = false
     } else {
@@ -362,13 +369,13 @@ private fun performRegistrationValidation(
     }
 
     // Validate username
-    if (username.isBlank()) {
+    if (trimmedUsername.isBlank()) {
         onUsernameError("Username is required")
         isValid = false
-    } else if (username.length < 3) {
+    } else if (trimmedUsername.length < 3) {
         onUsernameError("Username must be at least 3 characters")
         isValid = false
-    } else if (!username.matches(Regex("^[a-zA-Z0-9_]+$"))) {
+    } else if (!trimmedUsername.matches(Regex("^[a-zA-Z0-9_]+$"))) {
         onUsernameError("Username can only contain letters, numbers and underscores")
         isValid = false
     } else {
@@ -376,10 +383,10 @@ private fun performRegistrationValidation(
     }
 
     // Validate email
-    if (email.isBlank()) {
+    if (trimmedEmail.isBlank()) {
         onEmailError("Email is required")
         isValid = false
-    } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+    } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
         onEmailError("Please enter a valid email")
         isValid = false
     } else {
@@ -387,10 +394,10 @@ private fun performRegistrationValidation(
     }
 
     // Validate phone (required)
-    if (phone.isBlank()) {
+    if (trimmedPhone.isBlank()) {
         onPhoneError("Phone number is required")
         isValid = false
-    } else if (phone.length < 10) {
+    } else if (trimmedPhone.length < 10) {
         onPhoneError("Please enter a valid phone number")
         isValid = false
     } else {

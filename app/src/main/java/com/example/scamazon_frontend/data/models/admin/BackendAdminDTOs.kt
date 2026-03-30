@@ -111,7 +111,9 @@ data class BackendAdminOrderStatusCountsDto(
 
 data class BackendUpdateOrderStatusRequest(
     @SerializedName("newStatus") val newStatus: String,
-    @SerializedName("note") val note: String? = null
+    @SerializedName("note") val note: String? = null,
+    @SerializedName("trackingNumber") val trackingNumber: String? = null,
+    @SerializedName("carrier") val carrier: String? = null
 )
 
 data class BackendUpdatePaymentStatusRequest(
@@ -159,4 +161,10 @@ data class BackendRecentOrderDto(
     @SerializedName("status") val status: String?,
     @SerializedName("paymentMethod") val paymentMethod: String?,
     @SerializedName("createdAt") val createdAt: String?
+)
+
+data class BackendDailyRevenueDto(
+    @SerializedName("date") val date: String,
+    @SerializedName("revenue") val revenue: Double,
+    @SerializedName("orderCount") val orderCount: Int
 )

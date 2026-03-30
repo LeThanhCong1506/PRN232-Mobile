@@ -6,6 +6,7 @@ import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.warranty.SubmitWarrantyClaimRequest
 import com.example.scamazon_frontend.data.models.warranty.SubmitWarrantyClaimResponseDto
 import com.example.scamazon_frontend.data.models.warranty.MyWarrantyDto
+import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimPagedDto
 import com.example.scamazon_frontend.data.repository.WarrantyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,9 @@ class WarrantyViewModel(
 
     private val _submitClaimState = MutableStateFlow<Resource<SubmitWarrantyClaimResponseDto>?>(null)
     val submitClaimState: StateFlow<Resource<SubmitWarrantyClaimResponseDto>?> = _submitClaimState.asStateFlow()
+
+    private val _myClaimsState = MutableStateFlow<Resource<AdminWarrantyClaimPagedDto>>(Resource.Loading())
+    val myClaimsState: StateFlow<Resource<AdminWarrantyClaimPagedDto>> = _myClaimsState.asStateFlow()
 
     private val _issueDescription = MutableStateFlow("")
     val issueDescription: StateFlow<String> = _issueDescription.asStateFlow()
@@ -49,6 +53,13 @@ class WarrantyViewModel(
         _warrantyDetailState.value = Resource.Loading()
         viewModelScope.launch {
             _warrantyDetailState.value = repository.getWarrantyById(id)
+        }
+    }
+
+    fun loadMyClaims() {
+        _myClaimsState.value = Resource.Loading()
+        viewModelScope.launch {
+            _myClaimsState.value = repository.getMyWarrantyClaims()
         }
     }
 

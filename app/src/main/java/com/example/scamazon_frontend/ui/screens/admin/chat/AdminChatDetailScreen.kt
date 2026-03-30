@@ -1,5 +1,9 @@
 package com.example.scamazon_frontend.ui.screens.admin.chat
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,12 +12,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,13 +34,30 @@ fun AdminChatDetailScreen(
     viewModel: AdminChatDetailViewModel,
     onNavigateBack: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val messagesState by viewModel.messagesState.collectAsState()
     val isSending by viewModel.isSending.collectAsState()
+    val sendError by viewModel.sendError.collectAsState()
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.sendImage(it, context) }
+    }
+
     LaunchedEffect(chatRoomId) {
         viewModel.loadMessages(chatRoomId)
+    }
+
+    // Show toast when send fails
+    LaunchedEffect(sendError) {
+        sendError?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+            viewModel.clearSendError()
+        }
     }
 
     val messages = (messagesState as? com.example.scamazon_frontend.core.utils.Resource.Success)?.data ?: emptyList()
@@ -61,6 +84,7 @@ fun AdminChatDetailScreen(
                         messageText = ""
                     }
                 },
+                onImagePick = { imagePickerLauncher.launch("image/*") },
                 isSending = isSending
             )
         }
@@ -184,6 +208,7 @@ private fun AdminChatInputBar(
     text: String,
     onTextChange: (String) -> Unit,
     onSend: () -> Unit,
+    onImagePick: () -> Unit = {},
     isSending: Boolean = false
 ) {
     Surface(
@@ -194,10 +219,19 @@ private fun AdminChatInputBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 8.dp, vertical = 12.dp)
                 .navigationBarsPadding(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Image picker button
+            IconButton(onClick = onImagePick, enabled = !isSending) {
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = "Send Image",
+                    tint = if (!isSending) PrimaryBlue else TextHint
+                )
+            }
+
             OutlinedTextField(
                 value = text,
                 onValueChange = onTextChange,
@@ -212,9 +246,9 @@ private fun AdminChatInputBar(
                 ),
                 maxLines = 4
             )
-            
+
             Spacer(modifier = Modifier.width(8.dp))
-            
+
             IconButton(onClick = onSend, enabled = text.isNotBlank() && !isSending) {
                 Icon(
                     Icons.AutoMirrored.Filled.Send,

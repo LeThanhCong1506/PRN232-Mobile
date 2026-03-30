@@ -33,6 +33,7 @@ fun HomeScreen(
     onNavigateToProductDetail: (String) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
+    notificationBadge: Int = 0,
     onNavigateToWishlist: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
     onNavigateToChat: () -> Unit = {},
@@ -62,7 +63,7 @@ fun HomeScreen(
             onNotificationClick = onNavigateToNotifications,
             onMapClick = onNavigateToMap,
             onChatClick = onNavigateToChat,
-            notificationBadge = 3
+            notificationBadge = notificationBadge
         )
 
         // Content

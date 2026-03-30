@@ -46,6 +46,7 @@ fun AdminProductFormScreen(
     val isEdit = !productSlug.isNullOrBlank()
     val categoriesState by viewModel.categoriesState.collectAsStateWithLifecycle()
     val brandsState by viewModel.brandsState.collectAsStateWithLifecycle()
+    val policiesState by viewModel.policiesState.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val productDetailState by viewModel.productDetailState.collectAsStateWithLifecycle()
 
@@ -61,6 +62,7 @@ fun AdminProductFormScreen(
     var detailDescription by remember { mutableStateOf("") }
     var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
     var selectedBrandId by remember { mutableStateOf<Int?>(null) }
+    var selectedPolicyId by remember { mutableStateOf<Int?>(null) }
     var isFeatured by remember { mutableStateOf(false) }
     // Already-uploaded Cloudinary URLs (used in edit mode)
     var imageUrls by remember { mutableStateOf(listOf<ProductImageRequest>()) }
@@ -68,6 +70,7 @@ fun AdminProductFormScreen(
     var pendingImageUris by remember { mutableStateOf(listOf<Uri>()) }
     var categoryExpanded by remember { mutableStateOf(false) }
     var brandExpanded by remember { mutableStateOf(false) }
+    var policyExpanded by remember { mutableStateOf(false) }
 
     // Image picker: just collect the URI locally, no fake upload
     val imagePicker = rememberLauncherForActivityResult(
@@ -89,6 +92,7 @@ fun AdminProductFormScreen(
             val product = (productDetailState as Resource.Success).data!!
             formProductId = product.id
             name = product.name
+            sku = product.sku ?: ""
             price = product.price.toString()
             salePrice = product.salePrice?.toString() ?: ""
             stockQuantity = product.stockQuantity?.toString() ?: ""
@@ -96,6 +100,7 @@ fun AdminProductFormScreen(
             detailDescription = product.detailDescription ?: ""
             selectedCategoryId = product.category?.id
             selectedBrandId = product.brand?.id
+            selectedPolicyId = product.warrantyPolicy?.policyId
             isFeatured = product.isFeatured ?: false
             imageUrls = product.images
                 .filter { !it.imageUrl.isNullOrBlank() }
@@ -159,15 +164,17 @@ fun AdminProductFormScreen(
                 singleLine = true
             )
 
-            // SKU
+            // SKU — editable only when creating; read-only when editing
             OutlinedTextField(
                 value = sku,
-                onValueChange = { sku = it },
-                label = { Text("SKU *", fontFamily = Poppins) },
+                onValueChange = { if (!isEdit) sku = it },
+                label = { Text(if (isEdit) "SKU (read-only)" else "SKU *", fontFamily = Poppins) },
                 placeholder = { Text("e.g. ARD-UNO-R3", fontFamily = Poppins) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                singleLine = true
+                singleLine = true,
+                readOnly = isEdit,
+                enabled = !isEdit
             )
 
             // Price Row
@@ -293,6 +300,53 @@ fun AdminProductFormScreen(
                                 onClick = {
                                     selectedBrandId = brand.id
                                     brandExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Warranty Policy Dropdown
+            val policies = (policiesState as? Resource.Success)?.data ?: emptyList()
+            val selectedPolicy = policies.find { it.policyId == selectedPolicyId }
+
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = selectedPolicy?.policyName ?: "Default Policy",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Warranty Policy", fontFamily = Poppins) },
+                    trailingIcon = {
+                        IconButton(onClick = { policyExpanded = !policyExpanded }) {
+                            Icon(
+                                imageVector = if (policyExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Toggle dropdown"
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { policyExpanded = !policyExpanded },
+                    shape = RoundedCornerShape(12.dp)
+                )
+                DropdownMenu(
+                    expanded = policyExpanded,
+                    onDismissRequest = { policyExpanded = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                ) {
+                    if (policies.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("Loading...", fontFamily = Poppins) },
+                            onClick = { }
+                        )
+                    } else {
+                        policies.forEach { policy ->
+                            DropdownMenuItem(
+                                text = { Text(policy.policyName, fontFamily = Poppins) },
+                                onClick = {
+                                    selectedPolicyId = policy.policyId
+                                    policyExpanded = false
                                 }
                             )
                         }
@@ -439,8 +493,13 @@ fun AdminProductFormScreen(
             // Save Button
             Button(
                 onClick = {
-                    if (name.isBlank() || sku.isBlank() || price.isBlank()) {
-                        Toast.makeText(context, "Name, SKU and Price are required", Toast.LENGTH_SHORT).show()
+                    val skuMissing = !isEdit && sku.isBlank()
+                    if (name.isBlank() || skuMissing || price.isBlank() || selectedBrandId == null) {
+                        Toast.makeText(context,
+                            if (skuMissing) "Name, SKU, Price, and Brand are required"
+                            else "Name, Price, and Brand are required",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         return@Button
                     }
 
@@ -449,20 +508,25 @@ fun AdminProductFormScreen(
                     }
 
                     if (isEdit && formProductId != null) {
-                        viewModel.updateProduct(
-                            formProductId!!,
-                            UpdateProductRequest(
+                        viewModel.updateProductWithImages(
+                            context = context,
+                            id = formProductId!!,
+                            request = UpdateProductRequest(
                                 name = name,
+                                sku = sku.ifBlank { null },
                                 price = price.toDoubleOrNull(),
                                 salePrice = salePrice.toDoubleOrNull(),
                                 stockQuantity = stockQuantity.toIntOrNull(),
                                 description = description.ifBlank { null },
                                 detailDescription = detailDescription.ifBlank { null },
-                                categoryId = selectedCategoryId,
+                                categoryIds = selectedCategoryId?.let { listOf(it) } ?: emptyList(),
+                                productType = 0,
                                 brandId = selectedBrandId,
+                                warrantyPolicyId = selectedPolicyId,
                                 isFeatured = isFeatured,
                                 images = finalImages
-                            )
+                            ),
+                            imageUris = pendingImageUris
                         )
                     } else {
                         // Create product then upload images to Cloudinary in one go
@@ -476,8 +540,10 @@ fun AdminProductFormScreen(
                                 stockQuantity = stockQuantity.toIntOrNull() ?: 0,
                                 description = description.ifBlank { null },
                                 detailDescription = detailDescription.ifBlank { null },
-                                categoryId = selectedCategoryId,
+                                categoryIds = selectedCategoryId?.let { listOf(it) } ?: emptyList(),
+                                productType = 0,
                                 brandId = selectedBrandId,
+                                warrantyPolicyId = selectedPolicyId,
                                 isFeatured = isFeatured,
                                 images = null // images uploaded separately via multipart
                             ),

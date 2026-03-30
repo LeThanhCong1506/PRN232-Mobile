@@ -2,6 +2,7 @@ package com.example.scamazon_frontend.ui.screens.cart
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.scamazon_frontend.core.utils.CartBadgeManager
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.cart.CartDataDto
 import com.example.scamazon_frontend.data.models.cart.ValidateCouponResponseDto
@@ -31,7 +32,13 @@ class CartViewModel(
     fun fetchCart() {
         _cartState.value = Resource.Loading()
         viewModelScope.launch {
-            _cartState.value = cartRepository.getCart()
+            val result = cartRepository.getCart()
+            _cartState.value = result
+            // Keep CartBadgeManager in sync so the bottom-nav badge reflects actual count
+            if (result is Resource.Success) {
+                val count = result.data?.items?.sumOf { it.quantity } ?: 0
+                CartBadgeManager.updateCount(count)
+            }
         }
     }
 

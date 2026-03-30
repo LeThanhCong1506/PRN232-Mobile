@@ -21,9 +21,18 @@ interface WarrantyApi {
     @GET("warranties")
     suspend fun getMyWarranties(): Response<BackendApiResponse<List<MyWarrantyDto>>>
 
-    // Backend: GET /api/Warranty/{id} (relative to controller route api/Warranty)
+    @GET("warranties/policies")
+    suspend fun getPolicies(): Response<BackendApiResponse<List<com.example.scamazon_frontend.data.models.product.BackendWarrantyPolicyDto>>>
+
     @GET("Warranty/{id}")
     suspend fun getWarrantyById(@Path("id") id: Int): Response<BackendApiResponse<MyWarrantyDto>>
+
+    // Backend: GET /api/warranties/claims (customer)
+    @GET("warranties/claims")
+    suspend fun getMyWarrantyClaims(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20
+    ): Response<BackendApiResponse<AdminWarrantyClaimPagedDto>>
 
     // Backend: POST /api/warranties/{warrantyId}/claims (absolute path on WarrantyClaimController)
     @POST("warranties/{warrantyId}/claims")

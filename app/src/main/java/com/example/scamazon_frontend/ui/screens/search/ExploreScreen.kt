@@ -3,6 +3,8 @@ package com.example.scamazon_frontend.ui.screens.search
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items as lazyItems
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -48,7 +50,14 @@ fun ExploreScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val productsState by viewModel.products.collectAsStateWithLifecycle()
     val sortBy by viewModel.sortBy.collectAsStateWithLifecycle()
+    val selectedProductType by viewModel.selectedProductType.collectAsStateWithLifecycle()
     var showSortSheet by remember { mutableStateOf(false) }
+
+    val productTypeOptions = listOf(
+        null to "All",
+        "SINGLE" to "Single",
+        "KIT" to "Kit"
+    )
 
     Column(
         modifier = Modifier
@@ -67,14 +76,30 @@ fun ExploreScreen(
             modifier = Modifier.padding(horizontal = Dimens.ScreenPadding, vertical = 8.dp)
         )
 
-        // Sort & Filter Row
+        // Product Type Filter + Sort Row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Dimens.ScreenPadding, vertical = 4.dp),
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                lazyItems(productTypeOptions) { (typeValue, typeLabel) ->
+                    FilterChip(
+                        selected = selectedProductType == typeValue,
+                        onClick = { viewModel.onProductTypeChanged(typeValue) },
+                        label = { Text(text = typeLabel, style = Typography.bodySmall) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = PrimaryBlue,
+                            selectedLabelColor = White
+                        )
+                    )
+                }
+            }
             FilterChip(
                 selected = false,
                 onClick = { showSortSheet = true },

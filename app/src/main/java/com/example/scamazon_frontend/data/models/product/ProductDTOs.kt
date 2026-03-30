@@ -46,6 +46,7 @@ data class ProductDetailDto(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
     @SerializedName("slug") val slug: String,
+    @SerializedName("sku") val sku: String?,
     @SerializedName("description") val description: String?,
     @SerializedName("detailDescription") val detailDescription: String?,
     @SerializedName("specifications") val specifications: Map<String, String>?,
@@ -61,8 +62,20 @@ data class ProductDetailDto(
     @SerializedName("viewCount") val viewCount: Int?,
     @SerializedName("soldCount") val soldCount: Int?,
     @SerializedName("isFeatured") val isFeatured: Boolean?,
+    @SerializedName("warrantyPolicy") val warrantyPolicy: WarrantyPolicyInfoDto?,
     @SerializedName("createdAt") val createdAt: String?,
-    @SerializedName("updatedAt") val updatedAt: String?
+    @SerializedName("updatedAt") val updatedAt: String?,
+    @SerializedName("productType") val productType: String?,
+    @SerializedName("bundleComponents") val bundleComponents: List<BundleComponentDto>?
+)
+
+data class BundleComponentDto(
+    @SerializedName("bundleId") val bundleId: Int,
+    @SerializedName("childProductId") val childProductId: Int,
+    @SerializedName("childProductName") val childProductName: String,
+    @SerializedName("childProductSku") val childProductSku: String,
+    @SerializedName("childProductPrice") val childProductPrice: Double,
+    @SerializedName("quantity") val quantity: Int
 )
 
 data class CategoryInfoDto(
@@ -76,6 +89,11 @@ data class BrandInfoDto(
     @SerializedName("name") val name: String,
     @SerializedName("slug") val slug: String,
     @SerializedName("logoUrl") val logoUrl: String?
+)
+
+data class WarrantyPolicyInfoDto(
+    @SerializedName("policyId") val policyId: Int,
+    @SerializedName("policyName") val policyName: String
 )
 
 data class RatingSummaryDto(

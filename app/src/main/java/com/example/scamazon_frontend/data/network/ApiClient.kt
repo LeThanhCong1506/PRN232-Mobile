@@ -16,8 +16,11 @@ import javax.net.ssl.X509TrustManager
 import javax.net.ssl.HostnameVerifier
 
 object ApiClient {
-    // Backend deployed on Render
-    private const val BASE_URL = "https://prn232-backend-production.up.railway.app/api/"
+    // Render
+     private const val BASE_URL = "https://prn232-backend-production.up.railway.app/api/"
+
+    // Local
+//     private const val BASE_URL = "http://10.0.2.2:5041/api/"
 
     private var retrofit: Retrofit? = null
 

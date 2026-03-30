@@ -13,6 +13,9 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
     object ForgotPassword : Screen("forgot_password")
+    object ResetPassword : Screen("reset_password/{email}") {
+        fun createRoute(email: String) = "reset_password/$email"
+    }
 
     // ==========================================
     // MAIN SCREENS (Bottom Navigation)
@@ -131,6 +134,20 @@ sealed class Screen(val route: String) {
         fun createRoute(warrantyId: Int) = "warranty_claim/$warrantyId"
     }
     object AdminWarrantyClaims : Screen("admin_warranty_claims")
+    object MyClaims : Screen("my_claims")
+
+    // ==========================================
+    // RETURN REQUEST SCREENS
+    // ==========================================
+    object ReturnList : Screen("return_list")
+    object ReturnDetail : Screen("return_detail/{returnId}") {
+        fun createRoute(returnId: Int) = "return_detail/$returnId"
+    }
+    object ReturnCreate : Screen("return_create/{orderId}") {
+        fun createRoute(orderId: Int) = "return_create/$orderId"
+    }
+    object AdminReturns : Screen("admin_returns")
+    object AdminUserList : Screen("admin_users")
 }
 
 /**

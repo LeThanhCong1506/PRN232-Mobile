@@ -11,6 +11,7 @@ import com.example.scamazon_frontend.data.models.product.ProductDetailDto
 import com.example.scamazon_frontend.data.models.product.ProductPaginationResponse
 import com.example.scamazon_frontend.data.repository.AdminProductRepository
 import com.example.scamazon_frontend.data.repository.ProductRepository
+import com.example.scamazon_frontend.data.repository.WarrantyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +21,8 @@ import kotlinx.coroutines.withContext
 
 class AdminProductViewModel(
     private val adminProductRepo: AdminProductRepository,
-    private val productRepo: ProductRepository
+    private val productRepo: ProductRepository,
+    private val warrantyRepo: WarrantyRepository
 ) : ViewModel() {
 
     private val _productsState = MutableStateFlow<Resource<ProductPaginationResponse>>(Resource.Loading())
@@ -35,11 +37,17 @@ class AdminProductViewModel(
     private val _brandsState = MutableStateFlow<Resource<List<BrandDto>>>(Resource.Loading())
     val brandsState: StateFlow<Resource<List<BrandDto>>> = _brandsState.asStateFlow()
 
+    private val _policiesState = MutableStateFlow<Resource<List<com.example.scamazon_frontend.data.models.product.BackendWarrantyPolicyDto>>>(Resource.Loading())
+    val policiesState: StateFlow<Resource<List<com.example.scamazon_frontend.data.models.product.BackendWarrantyPolicyDto>>> = _policiesState.asStateFlow()
+
     private val _saveState = MutableStateFlow<Resource<Any>?>(null)
     val saveState: StateFlow<Resource<Any>?> = _saveState.asStateFlow()
 
     private val _deleteState = MutableStateFlow<Resource<Any>?>(null)
     val deleteState: StateFlow<Resource<Any>?> = _deleteState.asStateFlow()
+
+    // Lưu search query hiện tại để reload sau khi delete
+    private var lastSearchQuery: String? = null
 
     private val _uploadState = MutableStateFlow<Resource<UploadDataDto>?>(null)
     val uploadState: StateFlow<Resource<UploadDataDto>?> = _uploadState.asStateFlow()
@@ -48,9 +56,11 @@ class AdminProductViewModel(
         loadProducts()
         loadCategories()
         loadBrands()
+        loadPolicies()
     }
 
     fun loadProducts(page: Int = 1, search: String? = null) {
+        lastSearchQuery = search
         viewModelScope.launch {
             _productsState.value = Resource.Loading()
             _productsState.value = adminProductRepo.getAdminProducts(page = page, search = search)
@@ -87,6 +97,17 @@ class AdminProductViewModel(
                 is Resource.Success -> _brandsState.value = Resource.Success(result.data ?: emptyList())
                 is Resource.Error -> _brandsState.value = Resource.Error(result.message ?: "Error loading brands")
                 is Resource.Loading -> _brandsState.value = Resource.Loading()
+            }
+        }
+    }
+
+    fun loadPolicies() {
+        viewModelScope.launch {
+            val result = warrantyRepo.getPolicies()
+            when (result) {
+                is Resource.Success -> _policiesState.value = Resource.Success(result.data ?: emptyList())
+                is Resource.Error -> _policiesState.value = Resource.Error(result.message ?: "Error loading policies")
+                is Resource.Loading -> _policiesState.value = Resource.Loading()
             }
         }
     }
@@ -137,15 +158,66 @@ class AdminProductViewModel(
         }
     }
 
+    fun updateProductWithImages(context: Context, id: Int, request: UpdateProductRequest, imageUris: List<Uri>) {
+        viewModelScope.launch {
+            _saveState.value = Resource.Loading()
+            val updateResult = adminProductRepo.updateProduct(id, request)
+            if (updateResult is Resource.Error) {
+                _saveState.value = Resource.Error(updateResult.message ?: "Failed to update product")
+                return@launch
+            }
+            if (imageUris.isNotEmpty()) {
+                val uploadResult = withContext(Dispatchers.IO) {
+                    adminProductRepo.uploadImages(context, id, imageUris)
+                }
+                if (uploadResult is Resource.Error) {
+                    _saveState.value = Resource.Error("Product updated but image upload failed: ${uploadResult.message}")
+                    return@launch
+                }
+            }
+            _saveState.value = Resource.Success(Unit)
+        }
+    }
+
     fun deleteProduct(id: Int) {
         viewModelScope.launch {
             _deleteState.value = Resource.Loading()
+
+            // Bước 1: Xóa ngay khỏi UI để phản hồi tức thì
+            removeProductFromState(id)
+
+            // Bước 2: Gọi API delete
             val result = adminProductRepo.deleteProduct(id)
+
+            if (result is Resource.Success) {
+                // Bước 3: Reload lại list từ server để đảm bảo đồng bộ
+                _productsState.value = adminProductRepo.getAdminProducts(
+                    page = 1,
+                    search = lastSearchQuery
+                )
+            } else {
+                // Nếu xóa thất bại, load lại để hoàn tác thay đổi local
+                _productsState.value = adminProductRepo.getAdminProducts(
+                    page = 1,
+                    search = lastSearchQuery
+                )
+            }
+
             _deleteState.value = when (result) {
                 is Resource.Success -> Resource.Success(Unit)
                 is Resource.Error -> Resource.Error(result.message ?: "Failed to delete product")
                 is Resource.Loading -> Resource.Loading()
             }
+        }
+    }
+
+    private fun removeProductFromState(productId: Int) {
+        val current = _productsState.value
+        if (current is Resource.Success && current.data != null) {
+            val updatedItems = current.data.items.filter { it.id != productId }
+            _productsState.value = Resource.Success(
+                current.data.copy(items = updatedItems)
+            )
         }
     }
 

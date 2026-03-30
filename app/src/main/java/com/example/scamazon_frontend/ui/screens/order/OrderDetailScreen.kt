@@ -35,7 +35,8 @@ fun OrderDetailScreen(
     orderId: Int,
     viewModel: OrderHistoryViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
-    onNavigateToReview: (Int) -> Unit = {}
+    onNavigateToReview: (Int) -> Unit = {},
+    onNavigateToReturn: (Int) -> Unit = {}
 ) {
     val orderDetailState by viewModel.orderDetailState.collectAsStateWithLifecycle()
 
@@ -83,6 +84,7 @@ fun OrderDetailScreen(
                         OrderDetailContent(
                             order = order,
                             onNavigateToReview = onNavigateToReview,
+                            onNavigateToReturn = { onNavigateToReturn(orderId) },
                             onCancelOrder = { reason ->
                                 viewModel.cancelOrder(
                                     id = orderId,
@@ -111,6 +113,7 @@ fun OrderDetailScreen(
 private fun OrderDetailContent(
     order: OrderDetailResponse,
     onNavigateToReview: (Int) -> Unit = {},
+    onNavigateToReturn: () -> Unit = {},
     onCancelOrder: (String) -> Unit = {}
 ) {
     val isDelivered = order.status.lowercase() == "delivered"
@@ -163,6 +166,27 @@ private fun OrderDetailContent(
                     onReviewClick = onNavigateToReview
                 )
             }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { onNavigateToReturn() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlue),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue)
+                ) {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Request Return / Exchange",
+                        fontFamily = Poppins,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
         }
 
         // Payment summary
@@ -186,43 +210,53 @@ private fun OrderDetailContent(
 
         if (canCancel) {
             item {
-                Spacer(modifier = Modifier.height(16.dp))
-                if (order.payment?.status?.lowercase() == "pending" && order.payment.paymentMethod.lowercase() == "sepay") {
-                    val context = LocalContext.current
-                    LafyuuPrimaryButton(
-                        text = "Pay Now",
-                        onClick = {
-                            try {
-                                val url = "https://prn232-backend-production.up.railway.app/api/Payment/${order.orderId}/checkout?successUrl=myapp://payment/success&errorUrl=myapp://payment/error"
-                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
-                                // Browser cannot handle the URL; silently ignore
-                                e.printStackTrace()
-                            }
-                        },
+                Spacer(modifier = Modifier.height(8.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (order.payment?.status?.lowercase() == "pending" && order.payment.paymentMethod.lowercase() == "sepay") {
+                        val context = LocalContext.current
+                        LafyuuPrimaryButton(
+                            text = "Pay Now",
+                            onClick = {
+                                try {
+                                    val url = "https://prn232-backend-production.up.railway.app/api/Payment/${order.orderId}/checkout?successUrl=myapp://payment/success&errorUrl=myapp://payment/error"
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { showCancelDialog = true },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                OutlinedButton(
-                    onClick = { showCancelDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusError),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, StatusError)
-                ) {
-                    Text(
-                        text = "Cancel Order",
-                        fontFamily = Poppins,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+                            .height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = StatusError,
+                            containerColor = Color.Transparent
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, StatusError)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = StatusError
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Cancel Order",
+                            fontFamily = Poppins,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = StatusError
+                        )
+                    }
                 }
             }
         }

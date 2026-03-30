@@ -13,31 +13,10 @@ import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductViewMo
 import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyViewModel
 import com.example.scamazon_frontend.ui.screens.auth.AuthViewModel
 import com.example.scamazon_frontend.data.network.ApiClient
-import com.example.scamazon_frontend.data.network.api.AdminOrderApi
-import com.example.scamazon_frontend.data.network.api.AdminProductApi
-import com.example.scamazon_frontend.data.network.api.AuthApi
-import com.example.scamazon_frontend.data.network.api.CartApi
-import com.example.scamazon_frontend.data.network.api.ProductApi
-import com.example.scamazon_frontend.data.network.api.ChatApi
-import com.example.scamazon_frontend.data.network.api.ReviewApi
-import com.example.scamazon_frontend.data.network.api.StoreApi
-import com.example.scamazon_frontend.data.network.api.WarrantyApi
+import com.example.scamazon_frontend.data.network.api.*
 import com.example.scamazon_frontend.data.network.SignalRChatClient
-import com.example.scamazon_frontend.data.repository.AdminOrderRepository
-import com.example.scamazon_frontend.data.repository.ChatRepository
-import com.example.scamazon_frontend.data.repository.StoreRepository
-import com.example.scamazon_frontend.data.repository.AdminProductRepository
-import com.example.scamazon_frontend.data.repository.AuthRepository
-import com.example.scamazon_frontend.data.repository.CartRepository
-import com.example.scamazon_frontend.data.repository.ProductRepository
-import com.example.scamazon_frontend.data.repository.ReviewRepository
-import com.example.scamazon_frontend.data.repository.WarrantyRepository
-import com.example.scamazon_frontend.data.network.api.CheckoutApi
-import com.example.scamazon_frontend.data.network.api.OrderApi
-import com.example.scamazon_frontend.data.network.api.PaymentApi
-import com.example.scamazon_frontend.data.repository.CheckoutRepository
-import com.example.scamazon_frontend.data.repository.OrderRepository
-import com.example.scamazon_frontend.data.repository.PaymentRepository
+import com.example.scamazon_frontend.data.network.SignalRNotificationClient
+import com.example.scamazon_frontend.data.repository.*
 import com.example.scamazon_frontend.ui.screens.cart.CartViewModel
 import com.example.scamazon_frontend.ui.screens.chat.ChatViewModel
 import com.example.scamazon_frontend.ui.screens.checkout.CheckoutViewModel
@@ -53,6 +32,8 @@ import com.example.scamazon_frontend.ui.screens.review.ReviewViewModel
 import com.example.scamazon_frontend.ui.screens.map.MapViewModel
 import com.example.scamazon_frontend.ui.screens.search.SearchViewModel
 import com.example.scamazon_frontend.ui.screens.warranty.WarrantyViewModel
+import com.example.scamazon_frontend.ui.screens.`return`.ReturnViewModel
+import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnViewModel
 
 class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -71,21 +52,30 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         val productApi = retrofit.create(ProductApi::class.java)
         val cartApi = retrofit.create(CartApi::class.java)
         val adminProductApi = retrofit.create(AdminProductApi::class.java)
+        val adminCategoryApi = retrofit.create(AdminCategoryApi::class.java)
         val adminOrderApi = retrofit.create(AdminOrderApi::class.java)
         val warrantyApi = retrofit.create(WarrantyApi::class.java)
         val reviewApi = retrofit.create(ReviewApi::class.java)
         val storeApi = retrofit.create(StoreApi::class.java)
         val chatApi = retrofit.create(ChatApi::class.java)
+        val notificationApi = retrofit.create(NotificationApi::class.java)
+        val returnApi = retrofit.create(ReturnApi::class.java)
+        val adminUserApi = retrofit.create(AdminUserApi::class.java)
 
         val productRepo = ProductRepository(productApi)
         val cartRepo = CartRepository(cartApi)
         val adminProductRepo = AdminProductRepository(adminProductApi)
+        val adminCategoryRepo = AdminCategoryRepository(adminCategoryApi, productRepo)
         val adminOrderRepo = AdminOrderRepository(adminOrderApi)
         val warrantyRepo = WarrantyRepository(warrantyApi)
         val reviewRepo = ReviewRepository(reviewApi)
         val storeRepo = StoreRepository(storeApi)
         val chatRepo = ChatRepository(chatApi)
+        val notificationRepo = NotificationRepository(notificationApi)
+        val returnRepo = ReturnRepository(returnApi)
+        val adminUserRepo = AdminUserRepository(adminUserApi)
         val signalRClient = SignalRChatClient()
+        val signalRNotificationClient = SignalRNotificationClient()
 
         @Suppress("UNCHECKED_CAST")
         return when {
@@ -113,9 +103,9 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
                 OrderHistoryViewModel(OrderRepository(orderApi))
             }
             modelClass.isAssignableFrom(AdminDashboardViewModel::class.java) -> AdminDashboardViewModel(adminOrderRepo)
-            modelClass.isAssignableFrom(AdminProductViewModel::class.java) -> AdminProductViewModel(adminProductRepo, productRepo)
-            modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) -> AdminCategoryViewModel()
-            modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> AdminOrderViewModel(adminOrderRepo)
+            modelClass.isAssignableFrom(AdminProductViewModel::class.java) -> AdminProductViewModel(adminProductRepo, productRepo, warrantyRepo)
+            modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) -> AdminCategoryViewModel(adminCategoryRepo)
+            modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> AdminOrderViewModel(adminOrderRepo, signalRNotificationClient, tokenManager)
             modelClass.isAssignableFrom(PaymentQRViewModel::class.java) -> {
                 val paymentApi = retrofit.create(PaymentApi::class.java)
                 PaymentQRViewModel(PaymentRepository(paymentApi))
@@ -126,10 +116,13 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(ChatViewModel::class.java) -> ChatViewModel(chatRepo, signalRClient, tokenManager)
             modelClass.isAssignableFrom(AdminChatListViewModel::class.java) -> AdminChatListViewModel(chatRepo)
             modelClass.isAssignableFrom(AdminChatDetailViewModel::class.java) -> AdminChatDetailViewModel(chatRepo, signalRClient, tokenManager)
-            modelClass.isAssignableFrom(NotificationViewModel::class.java) -> NotificationViewModel()
+            modelClass.isAssignableFrom(NotificationViewModel::class.java) -> NotificationViewModel(notificationRepo)
             modelClass.isAssignableFrom(WarrantyViewModel::class.java) -> WarrantyViewModel(warrantyRepo)
             modelClass.isAssignableFrom(AdminWarrantyViewModel::class.java) -> AdminWarrantyViewModel(warrantyRepo)
-            else -> throw IllegalArgumentException("Unknown ViewModel class")
+            modelClass.isAssignableFrom(ReturnViewModel::class.java) -> ReturnViewModel(returnRepo)
+            modelClass.isAssignableFrom(AdminReturnViewModel::class.java) -> AdminReturnViewModel(returnRepo)
+            modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.admin.user.AdminUserViewModel::class.java) -> com.example.scamazon_frontend.ui.screens.admin.user.AdminUserViewModel(adminUserRepo)
+            else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         } as T
     }
 }

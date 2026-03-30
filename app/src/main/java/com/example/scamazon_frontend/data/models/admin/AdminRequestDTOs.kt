@@ -13,22 +13,27 @@ data class CreateProductRequest(
     @SerializedName("price") val price: Double,
     @SerializedName("salePrice") val salePrice: Double? = null,
     @SerializedName("stockQuantity") val stockQuantity: Int = 0,
-    @SerializedName("categoryId") val categoryId: Int? = null,
-    @SerializedName("brandId") val brandId: Int? = null,
+    @SerializedName("categoryIds") val categoryIds: List<Int> = emptyList(),
+    @SerializedName("productType") val productType: Int = 0,
+    @SerializedName("brandId") val brandId: Int? = null, // Backend requires this but we allow null from UI then error out
+    @SerializedName("warrantyPolicyId") val warrantyPolicyId: Int? = null,
     @SerializedName("isFeatured") val isFeatured: Boolean = false,
     @SerializedName("images") val images: List<ProductImageRequest>? = null
 )
 
 data class UpdateProductRequest(
     @SerializedName("name") val name: String? = null,
+    @SerializedName("sku") val sku: String? = null,
     @SerializedName("description") val description: String? = null,
     @SerializedName("detailDescription") val detailDescription: String? = null,
     @SerializedName("specifications") val specifications: String? = null,
     @SerializedName("price") val price: Double? = null,
     @SerializedName("salePrice") val salePrice: Double? = null,
     @SerializedName("stockQuantity") val stockQuantity: Int? = null,
-    @SerializedName("categoryId") val categoryId: Int? = null,
+    @SerializedName("categoryIds") val categoryIds: List<Int>? = emptyList(),
+    @SerializedName("productType") val productType: Int? = 0,
     @SerializedName("brandId") val brandId: Int? = null,
+    @SerializedName("warrantyPolicyId") val warrantyPolicyId: Int? = null,
     @SerializedName("isActive") val isActive: Boolean? = null,
     @SerializedName("isFeatured") val isFeatured: Boolean? = null,
     @SerializedName("images") val images: List<ProductImageRequest>? = null

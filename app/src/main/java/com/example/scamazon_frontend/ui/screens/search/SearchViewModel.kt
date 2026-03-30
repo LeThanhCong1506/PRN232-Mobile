@@ -25,6 +25,9 @@ class SearchViewModel(
     private val _sortBy = MutableStateFlow("newest")
     val sortBy: StateFlow<String> = _sortBy.asStateFlow()
 
+    private val _selectedProductType = MutableStateFlow<String?>(null)
+    val selectedProductType: StateFlow<String?> = _selectedProductType.asStateFlow()
+
     private val rawProducts = mutableListOf<ProductDto>()
     private var searchJob: Job? = null
 
@@ -47,6 +50,11 @@ class SearchViewModel(
         applySortAndEmit()
     }
 
+    fun onProductTypeChanged(type: String?) {
+        _selectedProductType.value = type
+        searchProducts()
+    }
+
     fun searchProducts() {
         _products.value = Resource.Loading()
         viewModelScope.launch {
@@ -54,7 +62,8 @@ class SearchViewModel(
             val result = productRepository.getProducts(
                 pageNumber = 1,
                 pageSize = 50,
-                searchTerm = query
+                searchTerm = query,
+                productType = _selectedProductType.value
             )
             when (result) {
                 is Resource.Success -> {

@@ -2,6 +2,7 @@ package com.example.scamazon_frontend.data.network.api
 
 import com.example.scamazon_frontend.data.models.admin.BackendAdminOrderDetailDto
 import com.example.scamazon_frontend.data.models.admin.BackendAdminOrderListDto
+import com.example.scamazon_frontend.data.models.admin.BackendDailyRevenueDto
 import com.example.scamazon_frontend.data.models.admin.BackendDashboardDto
 import com.example.scamazon_frontend.data.models.admin.BackendUpdateOrderStatusRequest
 import com.example.scamazon_frontend.data.models.admin.BackendUpdatePaymentStatusRequest
@@ -39,4 +40,11 @@ interface AdminOrderApi {
 
     @GET("admin/dashboard")
     suspend fun getDashboard(): Response<BackendApiResponse<BackendDashboardDto>>
+
+    @GET("admin/dashboard/revenue-chart")
+    suspend fun getRevenueChart(
+        @Query("from") from: String,
+        @Query("to") to: String,
+        @Query("status") status: String? = null
+    ): Response<BackendApiResponse<List<BackendDailyRevenueDto>>>
 }

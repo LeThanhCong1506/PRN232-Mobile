@@ -46,3 +46,11 @@ data class UploadDataDto(
     @SerializedName("url") val url: String,
     @SerializedName("fileName") val fileName: String
 )
+
+// ==================== Revenue Chart ====================
+
+data class DailyRevenueDto(
+    val date: String,
+    val revenue: Double,
+    val orderCount: Int
+)

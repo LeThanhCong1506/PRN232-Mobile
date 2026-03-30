@@ -6,13 +6,17 @@ import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.order.AdminOrderSummaryDto
 import com.example.scamazon_frontend.data.models.order.OrderDetailDataDto
 import com.example.scamazon_frontend.data.repository.AdminOrderRepository
+import com.example.scamazon_frontend.data.network.SignalRNotificationClient
+import com.example.scamazon_frontend.core.utils.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AdminOrderViewModel(
-    private val adminOrderRepo: AdminOrderRepository
+    private val adminOrderRepo: AdminOrderRepository,
+    private val signalRClient: SignalRNotificationClient,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _ordersState = MutableStateFlow<Resource<List<AdminOrderSummaryDto>>>(Resource.Loading())
@@ -29,6 +33,16 @@ class AdminOrderViewModel(
 
     init {
         fetchOrders()
+        setupSignalR()
+    }
+
+    private fun setupSignalR() {
+        tokenManager.getToken()?.let { token ->
+            signalRClient.connect(token)
+            signalRClient.onAdminOrderUpdated {
+                fetchOrders(_selectedFilter.value)
+            }
+        }
     }
 
     fun fetchOrders(statusFilter: String? = null) {
@@ -46,10 +60,10 @@ class AdminOrderViewModel(
         }
     }
 
-    fun updateOrderStatus(orderId: Int, newStatus: String) {
+    fun updateOrderStatus(orderId: Int, newStatus: String, trackingNumber: String? = null, carrier: String? = null) {
         viewModelScope.launch {
             _updateStatusState.value = Resource.Loading()
-            val result = adminOrderRepo.updateOrderStatus(orderId, newStatus.uppercase())
+            val result = adminOrderRepo.updateOrderStatus(orderId, newStatus.uppercase(), trackingNumber = trackingNumber, carrier = carrier)
             _updateStatusState.value = when (result) {
                 is Resource.Success -> Resource.Success(Unit)
                 is Resource.Error -> Resource.Error(result.message ?: "Failed to update status")

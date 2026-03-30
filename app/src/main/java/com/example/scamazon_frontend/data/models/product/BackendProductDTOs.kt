@@ -89,6 +89,15 @@ data class BackendCategoryWithCountDto(
     @SerializedName("productCount") val productCount: Int
 )
 
+// === Admin category list (GET /api/categories) — includes imageUrl ===
+
+data class BackendAdminCategoryDto(
+    @SerializedName("categoryId") val categoryId: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("imageUrl") val imageUrl: String?,
+    @SerializedName("productCount") val productCount: Int
+)
+
 // === Brand with product count (GET /api/product/brands) ===
 
 data class BackendBrandWithCountDto(

@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -21,6 +22,7 @@ import com.example.scamazon_frontend.data.models.profile.UpdateProfileRequest
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 
 @Composable
 fun EditProfileScreen(
@@ -38,12 +40,20 @@ fun EditProfileScreen(
     var city by remember { mutableStateOf("") }
     var district by remember { mutableStateOf("") }
     var ward by remember { mutableStateOf("") }
+    var avatarUrl by remember { mutableStateOf<String?>(null) }
     var initialized by remember { mutableStateOf(false) }
 
-    // Populate form when profile loads
+    // Always fetch fresh profile on entry so switching accounts shows correct data
+    LaunchedEffect(Unit) {
+        initialized = false
+        viewModel.fetchProfile()
+    }
+
+    // Populate form when profile loads (reset when re-entering the screen)
     LaunchedEffect(profileState) {
-        if (profileState is Resource.Success && !initialized) {
-            val profile = profileState.data!!
+        val state = profileState
+        if (state is Resource.Success && !initialized) {
+            val profile = state.data!!
             fullName = profile.fullName ?: ""
             email = profile.email ?: ""
             phone = profile.phone ?: ""
@@ -51,20 +61,52 @@ fun EditProfileScreen(
             city = profile.city ?: ""
             district = profile.district ?: ""
             ward = profile.ward ?: ""
+            avatarUrl = profile.avatarUrl
             initialized = true
+        }
+    }
+
+    val context = LocalContext.current
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            val inputStream = context.contentResolver.openInputStream(it)
+            val bytes = inputStream?.readBytes()
+            inputStream?.close()
+            if (bytes != null) {
+                val mimeType = context.contentResolver.getType(it)
+                    ?.takeIf { t -> t.startsWith("image/") }
+                    ?: "image/jpeg"
+                val extension = when (mimeType) {
+                    "image/png"  -> "png"
+                    "image/gif"  -> "gif"
+                    "image/webp" -> "webp"
+                    else         -> "jpg"
+                }
+                val mediaType = mimeType.toMediaTypeOrNull()
+                if (mediaType != null) {
+                    val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
+                    val body = okhttp3.MultipartBody.Part.createFormData("files", "avatar.$extension", requestFile)
+                    viewModel.uploadAvatar(body)
+                }
+            }
         }
     }
 
     // Handle update result
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(updateState) {
-        when (updateState) {
+        when (val state = updateState) {
             is Resource.Success -> {
+                // Refresh local avatar URL so the form shows the newly uploaded image
+                state.data?.avatarUrl?.let { newUrl -> avatarUrl = newUrl }
                 snackbarHostState.showSnackbar("Profile updated successfully!")
                 viewModel.resetUpdateState()
+                onNavigateBack()
             }
             is Resource.Error -> {
-                snackbarHostState.showSnackbar(updateState?.message ?: "Update failed")
+                snackbarHostState.showSnackbar(state.message ?: "Update failed")
                 viewModel.resetUpdateState()
             }
             else -> {}
@@ -111,6 +153,27 @@ fun EditProfileScreen(
                             .padding(Dimens.ScreenPadding),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // Avatar
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                coil.compose.AsyncImage(
+                                    model = avatarUrl ?: "https://via.placeholder.com/150",
+                                    contentDescription = "Avatar",
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TextButton(onClick = { launcher.launch("image/*") }) {
+                                    Text("Change Picture", color = PrimaryBlue)
+                                }
+                            }
+                        }
+
                         // Full Name
                         Text(text = "Full Name", style = Typography.titleSmall, color = TextPrimary)
                         LafyuuTextField(

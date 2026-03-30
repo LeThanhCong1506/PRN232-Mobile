@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.data.repository.AuthRepository
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 
 class ProfileViewModel(
     private val authRepository: AuthRepository
@@ -33,6 +34,12 @@ class ProfileViewModel(
         }
     }
 
+    /** Call this on Sign Out so stale data is not shown when a new user logs in. */
+    fun resetProfile() {
+        _profileState.value = Resource.Loading()
+        _updateState.value = null
+    }
+
     fun updateProfile(request: UpdateProfileRequest) {
         _updateState.value = Resource.Loading()
         viewModelScope.launch {
@@ -47,5 +54,16 @@ class ProfileViewModel(
 
     fun resetUpdateState() {
         _updateState.value = null
+    }
+
+    fun uploadAvatar(filePart: MultipartBody.Part) {
+        _updateState.value = Resource.Loading()
+        viewModelScope.launch {
+            val result = authRepository.uploadAvatar(filePart)
+            _updateState.value = result
+            if (result is Resource.Success) {
+                _profileState.value = result
+            }
+        }
     }
 }

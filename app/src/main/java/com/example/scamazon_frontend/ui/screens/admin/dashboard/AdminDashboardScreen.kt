@@ -1,6 +1,7 @@
 package com.example.scamazon_frontend.ui.screens.admin.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.admin.DailyRevenueDto
 import com.example.scamazon_frontend.data.models.admin.DashboardStatsDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
@@ -34,10 +36,12 @@ import java.util.Locale
 @Composable
 fun AdminDashboardScreen(
     viewModel: AdminDashboardViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
-    onNavigateToChat: () -> Unit = {}
+    onNavigateToChat: () -> Unit = {},
+    onNavigateToUsers: () -> Unit = {}
 ) {
     val statsState by viewModel.statsState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val revenueChartState by viewModel.revenueChartState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -93,9 +97,12 @@ fun AdminDashboardScreen(
 
             is Resource.Success -> {
                 val stats = (statsState as Resource.Success<DashboardStatsDto>).data!!
+                val chartData = (revenueChartState as? Resource.Success)?.data
                 DashboardContent(
                     stats = stats,
-                    modifier = Modifier.padding(innerPadding)
+                    revenueChartData = chartData,
+                    modifier = Modifier.padding(innerPadding),
+                    onNavigateToUsers = { onNavigateToUsers() }
                 )
             }
         }
@@ -105,7 +112,9 @@ fun AdminDashboardScreen(
 @Composable
 private fun DashboardContent(
     stats: DashboardStatsDto,
-    modifier: Modifier = Modifier
+    revenueChartData: List<DailyRevenueDto>? = null,
+    modifier: Modifier = Modifier,
+    onNavigateToUsers: () -> Unit = {}
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -124,7 +133,8 @@ private fun DashboardContent(
                 subtitle = "+${stats.customers.new7Days} this month",
                 icon = Icons.Filled.People,
                 iconColor = PrimaryBlue,
-                iconBgColor = PrimaryBlueSoft
+                iconBgColor = PrimaryBlueSoft,
+                onClick = onNavigateToUsers
             )
         }
 
@@ -173,6 +183,13 @@ private fun DashboardContent(
         item(span = { GridItemSpan(maxLineSpan) }) {
             RevenueSummaryCard(stats)
         }
+
+        // Daily Revenue Chart (full width) – only shown when data is available
+        if (!revenueChartData.isNullOrEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                DailyRevenueChartCard(data = revenueChartData)
+            }
+        }
     }
 }
 
@@ -183,10 +200,13 @@ private fun StatsCard(
     subtitle: String,
     icon: ImageVector,
     iconColor: Color,
-    iconBgColor: Color
+    iconBgColor: Color,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -422,6 +442,106 @@ private fun RevenueRow(label: String, amount: Double) {
             fontSize = 13.sp,
             color = StatusSuccess
         )
+    }
+}
+
+@Composable
+private fun DailyRevenueChartCard(data: List<DailyRevenueDto>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Daily Revenue (Last 7 Days)",
+                fontFamily = Poppins,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val maxRevenue = data.maxOfOrNull { it.revenue }?.toFloat() ?: 1f
+            val barHeight = 100.dp
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                data.forEach { item ->
+                    val heightRatio = if (maxRevenue == 0f) 0f else (item.revenue.toFloat() / maxRevenue)
+                    // Show last 3 chars of date (day part)
+                    val dayLabel = item.date.takeLast(5)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = formatCurrencyShort(item.revenue),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryBlue,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Box(
+                            modifier = Modifier
+                                .height(barHeight)
+                                .fillMaxWidth()
+                                .padding(horizontal = 3.dp),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(heightRatio.coerceAtLeast(0.04f))
+                                    .background(PrimaryBlue, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = dayLabel,
+                            fontSize = 9.sp,
+                            color = TextSecondary,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            data.forEach { item ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = item.date, fontSize = 12.sp, color = TextSecondary)
+                    Text(
+                        text = "${item.orderCount} orders · ${formatCurrency(item.revenue)}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextPrimary
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun formatCurrencyShort(amount: Double): String {
+    return when {
+        amount >= 1_000_000 -> "${(amount / 1_000_000).toInt()}M"
+        amount >= 1_000 -> "${(amount / 1_000).toInt()}K"
+        else -> amount.toInt().toString()
     }
 }
 

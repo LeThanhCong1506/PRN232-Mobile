@@ -33,7 +33,7 @@ class AdminProductRepository(private val api: AdminProductApi) {
                     val body = response.body()
                     if (body?.success == true && body.data != null) {
                         val pagedData = body.data
-                        val products = pagedData.items.map { admin ->
+                        val products = pagedData.items.filter { it.isActive }.map { admin ->
                             ProductDto(
                                 id = admin.productId,
                                 name = admin.name,

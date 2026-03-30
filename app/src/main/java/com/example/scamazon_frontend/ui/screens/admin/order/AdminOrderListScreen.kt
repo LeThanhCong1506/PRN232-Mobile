@@ -154,7 +154,7 @@ private fun StatusFilterRow(
         "all" to "All",
         "pending" to "Pending",
         "confirmed" to "Confirmed",
-        "shipping" to "Shipping",
+        "shipped" to "Shipped",
         "delivered" to "Delivered",
         "cancelled" to "Cancelled"
     )
@@ -313,7 +313,7 @@ private fun AdminOrderStatusBadge(status: String) {
     val (bgColor, textColor, label) = when (status.lowercase()) {
         "pending" -> Triple(SecondaryYellow.copy(alpha = 0.15f), SecondaryYellow, "Pending")
         "confirmed" -> Triple(PrimaryBlue.copy(alpha = 0.15f), PrimaryBlue, "Confirmed")
-        "shipping" -> Triple(PrimaryBlue.copy(alpha = 0.15f), PrimaryBlue, "Shipping")
+        "shipped" -> Triple(PrimaryBlue.copy(alpha = 0.15f), PrimaryBlue, "Shipped")
         "delivered" -> Triple(StatusSuccess.copy(alpha = 0.15f), StatusSuccess, "Delivered")
         "cancelled" -> Triple(StatusError.copy(alpha = 0.15f), StatusError, "Cancelled")
         else -> Triple(BackgroundLight, TextSecondary, status.replaceFirstChar { it.uppercase() })

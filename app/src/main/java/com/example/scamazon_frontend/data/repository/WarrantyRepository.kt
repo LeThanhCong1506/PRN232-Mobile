@@ -5,6 +5,7 @@ import com.example.scamazon_frontend.data.models.warranty.SubmitWarrantyClaimReq
 import com.example.scamazon_frontend.data.models.warranty.SubmitWarrantyClaimResponseDto
 import com.example.scamazon_frontend.data.models.warranty.MyWarrantyDto
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimDto
+import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimPagedDto
 import com.example.scamazon_frontend.data.models.warranty.ResolveWarrantyClaimRequest
 import com.example.scamazon_frontend.data.models.warranty.ResolveWarrantyClaimResponseDto
 import com.example.scamazon_frontend.data.network.api.WarrantyApi
@@ -33,6 +34,27 @@ class WarrantyRepository(private val api: WarrantyApi) {
         }
     }
 
+    suspend fun getPolicies(): Resource<List<com.example.scamazon_frontend.data.models.product.BackendWarrantyPolicyDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getPolicies()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        Resource.Success(body.data)
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to get warranty policies")
+                    }
+                } else {
+                    val err = response.errorBody()?.string() ?: response.message()
+                    Resource.Error("Failed: $err")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
     suspend fun getWarrantyById(id: Int): Resource<MyWarrantyDto> {
         return withContext(Dispatchers.IO) {
             try {
@@ -43,6 +65,30 @@ class WarrantyRepository(private val api: WarrantyApi) {
                         Resource.Success(body.data)
                     } else {
                         Resource.Error(body?.message ?: "Failed to get warranty detail")
+                    }
+                } else {
+                    val err = response.errorBody()?.string() ?: response.message()
+                    Resource.Error("Failed: $err")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    suspend fun getMyWarrantyClaims(
+        page: Int = 1,
+        pageSize: Int = 20
+    ): Resource<AdminWarrantyClaimPagedDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getMyWarrantyClaims(page, pageSize)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        Resource.Success(body.data)
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to load claims")
                     }
                 } else {
                     val err = response.errorBody()?.string() ?: response.message()

@@ -333,6 +333,58 @@ fun ProductDetailScreen(
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
 
+                            // Bundle Components
+                            product.bundleComponents?.let { components ->
+                                if (components.isNotEmpty()) {
+                                    Text(
+                                        text = "Bundle Contains",
+                                        style = Typography.titleMedium,
+                                        color = TextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                                        colors = CardDefaults.cardColors(containerColor = BackgroundLight),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                    ) {
+                                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            components.forEach { component ->
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            text = component.childProductName,
+                                                            style = Typography.bodyMedium,
+                                                            color = TextPrimary,
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                        Text(
+                                                            text = "SKU: ${component.childProductSku}",
+                                                            style = Typography.bodySmall,
+                                                            color = TextSecondary
+                                                        )
+                                                    }
+                                                    Text(
+                                                        text = "x${component.quantity}",
+                                                        style = Typography.bodyMedium,
+                                                        color = PrimaryBlue,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                                if (component != components.last()) {
+                                                    HorizontalDivider(color = BorderLight, modifier = Modifier.padding(vertical = 4.dp))
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                }
+                            }
+
                             // Review Section Header
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
