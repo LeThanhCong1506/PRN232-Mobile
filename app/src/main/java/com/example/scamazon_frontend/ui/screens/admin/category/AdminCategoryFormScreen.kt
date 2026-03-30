@@ -70,7 +70,7 @@ fun AdminCategoryFormScreen(
                     val mediaType = "image/*".toMediaTypeOrNull()
                     if (mediaType != null) {
                         val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
-                        val body = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
+                        val body = okhttp3.MultipartBody.Part.createFormData("files", "category_image.jpg", requestFile)
                         viewModel.uploadCategoryImage(editId, body)
                     }
                 }
@@ -242,7 +242,7 @@ fun AdminCategoryFormScreen(
                                         val mediaType = "image/*".toMediaTypeOrNull()
                                         if (mediaType != null) {
                                             val requestFile = okhttp3.RequestBody.create(mediaType, bytes)
-                                            imagePart = okhttp3.MultipartBody.Part.createFormData("image", "category_image.jpg", requestFile)
+                                            imagePart = okhttp3.MultipartBody.Part.createFormData("files", "category_image.jpg", requestFile)
                                         }
                                     }
                                 } catch (e: Exception) {
