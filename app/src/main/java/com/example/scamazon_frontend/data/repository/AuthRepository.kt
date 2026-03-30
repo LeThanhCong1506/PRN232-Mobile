@@ -94,7 +94,7 @@ class AuthRepository(
         return withContext(Dispatchers.IO) {
             try {
                 val response = authApi.googleLogin(
-                    SocialLoginRequest(code = serverAuthCode, redirectUri = "")
+                    SocialLoginRequest(code = serverAuthCode, redirectUri = null)
                 )
                 if (response.isSuccessful) {
                     response.body()?.let { Resource.Success(it) }
