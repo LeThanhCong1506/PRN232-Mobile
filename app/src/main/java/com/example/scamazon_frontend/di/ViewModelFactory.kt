@@ -34,6 +34,7 @@ import com.example.scamazon_frontend.ui.screens.search.SearchViewModel
 import com.example.scamazon_frontend.ui.screens.warranty.WarrantyViewModel
 import com.example.scamazon_frontend.ui.screens.`return`.ReturnViewModel
 import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnViewModel
+import com.example.scamazon_frontend.ui.screens.chatbot.ChatbotViewModel
 
 class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -122,6 +123,10 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(ReturnViewModel::class.java) -> ReturnViewModel(returnRepo)
             modelClass.isAssignableFrom(AdminReturnViewModel::class.java) -> AdminReturnViewModel(returnRepo)
             modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.admin.user.AdminUserViewModel::class.java) -> com.example.scamazon_frontend.ui.screens.admin.user.AdminUserViewModel(adminUserRepo)
+            modelClass.isAssignableFrom(ChatbotViewModel::class.java) -> {
+                val chatbotApi = retrofit.create(ChatbotApi::class.java)
+                ChatbotViewModel(ChatbotRepository(chatbotApi))
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         } as T
     }

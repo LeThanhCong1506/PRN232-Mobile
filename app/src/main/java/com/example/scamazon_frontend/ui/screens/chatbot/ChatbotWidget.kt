@@ -194,7 +194,7 @@ fun ChatbotWidget(
 }
 
 @Composable
-private fun ChatbotMessageBubble(message: ChatbotMessage) {
+internal fun ChatbotMessageBubble(message: ChatbotMessage) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start

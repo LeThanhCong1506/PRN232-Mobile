@@ -14,6 +14,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.scamazon_frontend.core.utils.CartBadgeManager
 import com.example.scamazon_frontend.ui.components.BottomNavItem
 import com.example.scamazon_frontend.ui.components.LafyuuBottomNavBar
+import com.example.scamazon_frontend.ui.screens.chatbot.ChatbotWidget
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 
 /**
  * Main Screen with Bottom Navigation
@@ -45,8 +48,14 @@ fun MainScreen(
         Screen.AdminAccount.route
     )
 
-    val showCustomerBottomNav = currentRoute in customerBottomNavScreens
-    val showAdminBottomNav = currentRoute in adminBottomNavScreens
+    // Normalize route: "explore?query={query}" template → "explore" so the tab is recognized
+    val normalizedRoute = when {
+        currentRoute?.startsWith(Screen.Explore.route) == true -> Screen.Explore.route
+        else -> currentRoute
+    }
+
+    val showCustomerBottomNav = normalizedRoute in customerBottomNavScreens
+    val showAdminBottomNav = normalizedRoute in adminBottomNavScreens
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
@@ -55,7 +64,7 @@ fun MainScreen(
                 showAdminBottomNav -> {
                     LafyuuBottomNavBar(
                         items = adminBottomNavItems,
-                        currentRoute = currentRoute ?: Screen.AdminDashboard.route,
+                        currentRoute = normalizedRoute ?: Screen.AdminDashboard.route,
                         onItemClick = { item ->
                             navController.navigate(item.route) {
                                 popUpTo(Screen.AdminDashboard.route) {
@@ -69,7 +78,7 @@ fun MainScreen(
                 }
                 showCustomerBottomNav -> {
                     LafyuuBottomNavBar(
-                        currentRoute = currentRoute ?: Screen.Home.route,
+                        currentRoute = normalizedRoute ?: Screen.Home.route,
                         onItemClick = { item ->
                             if (item.route == Screen.Home.route) {
                                 // Navigate to Home and clear the entire back stack above it
@@ -95,11 +104,20 @@ fun MainScreen(
             }
         }
     ) { innerPadding ->
-        NavGraph(
-            navController = navController,
-            startDestination = Screen.Login.route,
-            modifier = Modifier.padding(innerPadding)
-        )
+        Box(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            NavGraph(
+                navController = navController,
+                startDestination = Screen.Login.route
+            )
+            // Floating AI chatbot widget — visible on all customer main tabs
+            if (showCustomerBottomNav) {
+                ChatbotWidget()
+            }
+        }
     }
 }
 

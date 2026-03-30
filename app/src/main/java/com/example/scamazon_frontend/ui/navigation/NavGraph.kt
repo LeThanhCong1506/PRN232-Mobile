@@ -1,12 +1,30 @@
 package com.example.scamazon_frontend.ui.navigation
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.app.NotificationCompat
+import com.example.scamazon_frontend.MainActivity
+import com.example.scamazon_frontend.R
+import com.example.scamazon_frontend.core.utils.TokenManager
+import com.example.scamazon_frontend.data.network.SignalRNotificationClient
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -42,6 +60,7 @@ import com.example.scamazon_frontend.ui.screens.profile.EditProfileScreen
 import com.example.scamazon_frontend.ui.screens.review.ReviewScreen
 import com.example.scamazon_frontend.ui.screens.favorite.FavoriteScreen
 import com.example.scamazon_frontend.ui.screens.search.ExploreScreen
+import com.example.scamazon_frontend.ui.screens.chatbot.ChatbotScreen
 import com.example.scamazon_frontend.ui.screens.notification.NotificationViewModel
 import com.example.scamazon_frontend.ui.screens.notification.NotificationScreen
 import com.example.scamazon_frontend.ui.screens.chat.ChatViewModel
@@ -74,6 +93,63 @@ fun NavGraph(
     val profileViewModel: ProfileViewModel = viewModel(factory = ViewModelFactory(context))
     val sharedChatViewModel: ChatViewModel = viewModel(factory = ViewModelFactory(context))
     val chatUnreadCount by sharedChatViewModel.unreadCount.collectAsStateWithLifecycle()
+
+    // Listen for SignalR OrderStatusChanged and show heads-up notification (Customer only)
+    LaunchedEffect(Unit) {
+        val tokenManager = TokenManager(context)
+        var activeClient: SignalRNotificationClient? = null
+        try {
+            while (true) {
+                val token = tokenManager.getToken()
+                val userRole = tokenManager.getUserRole()
+                if (token != null && userRole?.lowercase() != "admin") {
+                    val client = SignalRNotificationClient()
+                    activeClient = client
+                    withContext(Dispatchers.IO) { client.connect(token) }
+                    client.onOrderStatusChanged { data ->
+                        val gson = Gson()
+                        val json = try { gson.toJson(data) } catch (e: Exception) { "{}" }
+                        @Suppress("UNCHECKED_CAST")
+                        val map = try { gson.fromJson(json, Map::class.java) as? Map<String, Any> } catch (e: Exception) { null }
+                        val title = map?.get("title")?.toString() ?: "Order Status Updated"
+                        val body = map?.get("body")?.toString() ?: "Your order status has been updated."
+                        Handler(Looper.getMainLooper()).post {
+                            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                nm.createNotificationChannel(
+                                    NotificationChannel("scamazon_notifications", "STEM Notifications", NotificationManager.IMPORTANCE_HIGH)
+                                        .apply { description = "Thông báo từ STEM"; enableVibration(true) }
+                                )
+                            }
+                            val tapIntent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+                            val pendingIntent = PendingIntent.getActivity(context, 0, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                            val notification = NotificationCompat.Builder(context, "scamazon_notifications")
+                                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                .setContentTitle(title)
+                                .setContentText(body)
+                                .setAutoCancel(true)
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .setDefaults(NotificationCompat.DEFAULT_SOUND)
+                                .setContentIntent(pendingIntent)
+                                .build()
+                            nm.notify(10002, notification)
+                            notificationViewModel.loadNotifications()
+                        }
+                    }
+                    // Stay connected while token is valid
+                    while (tokenManager.getToken() != null) {
+                        delay(5_000)
+                    }
+                    withContext(Dispatchers.IO) { client.disconnect() }
+                    activeClient = null
+                } else {
+                    delay(2_000) // Wait for token (e.g., after fresh login)
+                }
+            }
+        } finally {
+            activeClient?.let { withContext(Dispatchers.IO) { it.disconnect() } }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -195,6 +271,9 @@ fun NavGraph(
                 },
                 onNavigateToClaims = {
                     navController.navigate(Screen.MyClaims.route)
+                },
+                onNavigateToChatbot = {
+                    navController.navigate(Screen.Chatbot.route)
                 },
                 chatUnreadCount = chatUnreadCount
             )
@@ -506,6 +585,12 @@ fun NavGraph(
         composable(route = Screen.Chat.route) {
             com.example.scamazon_frontend.ui.screens.chat.ChatScreen(
                 viewModel = sharedChatViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.Chatbot.route) {
+            ChatbotScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
