@@ -34,6 +34,12 @@ class ProfileViewModel(
         }
     }
 
+    /** Call this on Sign Out so stale data is not shown when a new user logs in. */
+    fun resetProfile() {
+        _profileState.value = Resource.Loading()
+        _updateState.value = null
+    }
+
     fun updateProfile(request: UpdateProfileRequest) {
         _updateState.value = Resource.Loading()
         viewModelScope.launch {

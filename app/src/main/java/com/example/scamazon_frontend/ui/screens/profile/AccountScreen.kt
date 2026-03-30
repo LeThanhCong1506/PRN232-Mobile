@@ -47,13 +47,10 @@ fun AccountScreen(
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // Re-fetch profile when Account screen is shown.
-    // profileViewModel is Activity-scoped and its initial fetchProfile() runs before login (no token),
-    // so profileState is often in Error state. Re-fetch here ensures fresh data after login.
+    // Always re-fetch profile when Account screen is shown so that after switching
+    // accounts the displayed data matches the currently logged-in user.
     LaunchedEffect(Unit) {
-        if (viewModel.profileState.value !is Resource.Success) {
-            viewModel.fetchProfile()
-        }
+        viewModel.fetchProfile()
     }
 
     Column(
@@ -173,6 +170,8 @@ fun AccountScreen(
             LafyuuOutlinedButton(
                 text = "Sign Out",
                 onClick = {
+                    // Reset cached profile so the next login shows fresh data
+                    viewModel.resetProfile()
                     TokenManager(context).clearAll()
                     onNavigateToLogin()
                 }

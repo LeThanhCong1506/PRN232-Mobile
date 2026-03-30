@@ -244,18 +244,33 @@ private fun CategoryItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (category.imageUrl != null) {
-                AsyncImage(
-                    model = category.imageUrl,
-                    contentDescription = category.name,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BackgroundLight),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+            // Image – always show (placeholder if null)
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(BackgroundLight),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!category.imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = category.imageUrl,
+                        contentDescription = category.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Filled.Image,
+                        contentDescription = "No image",
+                        tint = TextSecondary.copy(alpha = 0.5f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -351,18 +366,33 @@ private fun BrandItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (brand.logoUrl != null) {
-                AsyncImage(
-                    model = brand.logoUrl,
-                    contentDescription = brand.name,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BackgroundLight),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+            // Logo – always show (placeholder if null)
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(BackgroundLight),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!brand.logoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = brand.logoUrl,
+                        contentDescription = brand.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Filled.Image,
+                        contentDescription = "No logo",
+                        tint = TextSecondary.copy(alpha = 0.5f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(

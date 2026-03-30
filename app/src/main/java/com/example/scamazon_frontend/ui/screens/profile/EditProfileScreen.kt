@@ -43,7 +43,13 @@ fun EditProfileScreen(
     var avatarUrl by remember { mutableStateOf<String?>(null) }
     var initialized by remember { mutableStateOf(false) }
 
-    // Populate form when profile loads (only once per screen entry)
+    // Always fetch fresh profile on entry so switching accounts shows correct data
+    LaunchedEffect(Unit) {
+        initialized = false
+        viewModel.fetchProfile()
+    }
+
+    // Populate form when profile loads (reset when re-entering the screen)
     LaunchedEffect(profileState) {
         val state = profileState
         if (state is Resource.Success && !initialized) {

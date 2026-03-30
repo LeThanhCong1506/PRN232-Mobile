@@ -28,6 +28,9 @@ class AdminCategoryViewModel(
     private val _deleteState = MutableStateFlow<Resource<Any>?>(null)
     val deleteState: StateFlow<Resource<Any>?> = _deleteState.asStateFlow()
 
+    private val _uploadImageState = MutableStateFlow<Resource<Any>?>(null)
+    val uploadImageState: StateFlow<Resource<Any>?> = _uploadImageState.asStateFlow()
+
     init {
         loadCategories()
         loadBrands()
@@ -144,9 +147,9 @@ class AdminCategoryViewModel(
 
     fun uploadCategoryImage(id: Int, filePart: MultipartBody.Part) {
         viewModelScope.launch {
-            _saveState.value = Resource.Loading()
+            _uploadImageState.value = Resource.Loading()
             val result = adminCategoryRepo.uploadCategoryImage(id, filePart)
-            _saveState.value = when (result) {
+            _uploadImageState.value = when (result) {
                 is Resource.Success -> Resource.Success(Unit)
                 is Resource.Error -> Resource.Error(result.message ?: "Failed to upload image")
                 is Resource.Loading -> Resource.Loading()
@@ -156,4 +159,5 @@ class AdminCategoryViewModel(
 
     fun resetSaveState() { _saveState.value = null }
     fun resetDeleteState() { _deleteState.value = null }
+    fun resetUploadImageState() { _uploadImageState.value = null }
 }

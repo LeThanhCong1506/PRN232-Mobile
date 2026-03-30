@@ -39,6 +39,11 @@ fun AdminAccountScreen(
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
 
+    // Always fetch fresh admin profile on entry
+    LaunchedEffect(Unit) {
+        viewModel.fetchProfile()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -198,6 +203,7 @@ fun AdminAccountScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        viewModel.resetProfile()
                         tokenManager.clearAll()
                         showLogoutDialog = false
                         onNavigateToLogin()
