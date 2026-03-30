@@ -44,6 +44,8 @@ class AdminChatDetailViewModel(
                 localMessages.clear()
                 localMessages.addAll(result.data ?: emptyList())
                 _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
+                // Mark all messages from this user as read so unread badge disappears
+                chatRepo.markReadByUserId(userId)
             } else {
                 _messagesState.value = result
             }

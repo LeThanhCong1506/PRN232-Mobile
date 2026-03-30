@@ -211,60 +211,51 @@ private fun OrderDetailContent(
         if (canCancel) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        if (order.payment?.status?.lowercase() == "pending" && order.payment.paymentMethod.lowercase() == "sepay") {
-                            val context = LocalContext.current
-                            LafyuuPrimaryButton(
-                                text = "Pay Now",
-                                onClick = {
-                                    try {
-                                        val url = "https://prn232-backend-production.up.railway.app/api/Payment/${order.orderId}/checkout?successUrl=myapp://payment/success&errorUrl=myapp://payment/error"
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(52.dp)
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                        }
-
-                        OutlinedButton(
-                            onClick = { showCancelDialog = true },
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (order.payment?.status?.lowercase() == "pending" && order.payment.paymentMethod.lowercase() == "sepay") {
+                        val context = LocalContext.current
+                        LafyuuPrimaryButton(
+                            text = "Pay Now",
+                            onClick = {
+                                try {
+                                    val url = "https://prn232-backend-production.up.railway.app/api/Payment/${order.orderId}/checkout?successUrl=myapp://payment/success&errorUrl=myapp://payment/error"
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = StatusError,
-                                containerColor = androidx.compose.ui.graphics.Color(0xFFFFF5F5)
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(1.5.dp, StatusError)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = StatusError
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Hủy đơn hàng",
-                                fontFamily = Poppins,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp,
-                                color = StatusError
-                            )
-                        }
+                                .height(52.dp)
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { showCancelDialog = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = StatusError,
+                            containerColor = Color.Transparent
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, StatusError)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = StatusError
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Cancel Order",
+                            fontFamily = Poppins,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = StatusError
+                        )
                     }
                 }
             }

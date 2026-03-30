@@ -17,8 +17,33 @@ class AdminCategoryRepository(
     private val productRepo: ProductRepository
 ) {
 
-    // Reuse existing product API endpoints for loading lists
-    suspend fun getCategories(): Resource<List<CategoryDto>> = productRepo.getCategories()
+    suspend fun getCategories(): Resource<List<CategoryDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getCategories()
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val items = response.body()?.data ?: emptyList()
+                    val categories = items.map {
+                        CategoryDto(
+                            id = it.categoryId,
+                            name = it.name,
+                            slug = "",
+                            description = null,
+                            imageUrl = it.imageUrl,
+                            parentId = null,
+                            isActive = true,
+                            createdAt = ""
+                        )
+                    }
+                    Resource.Success(categories)
+                } else {
+                    Resource.Error(response.body()?.message ?: "Failed to load categories")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
 
     suspend fun getBrands(): Resource<List<BrandDto>> = productRepo.getBrands()
 

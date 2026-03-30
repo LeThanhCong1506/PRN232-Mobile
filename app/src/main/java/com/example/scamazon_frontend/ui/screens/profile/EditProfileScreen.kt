@@ -45,8 +45,9 @@ fun EditProfileScreen(
 
     // Populate form when profile loads (only once per screen entry)
     LaunchedEffect(profileState) {
-        if (profileState is Resource.Success && !initialized) {
-            val profile = profileState.data!!
+        val state = profileState
+        if (state is Resource.Success && !initialized) {
+            val profile = state.data!!
             fullName = profile.fullName ?: ""
             email = profile.email ?: ""
             phone = profile.phone ?: ""
@@ -90,16 +91,16 @@ fun EditProfileScreen(
     // Handle update result
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(updateState) {
-        when (updateState) {
+        when (val state = updateState) {
             is Resource.Success -> {
                 // Refresh local avatar URL so the form shows the newly uploaded image
-                updateState.data?.avatarUrl?.let { newUrl -> avatarUrl = newUrl }
+                state.data?.avatarUrl?.let { newUrl -> avatarUrl = newUrl }
                 snackbarHostState.showSnackbar("Profile updated successfully!")
                 viewModel.resetUpdateState()
                 onNavigateBack()
             }
             is Resource.Error -> {
-                snackbarHostState.showSnackbar(updateState?.message ?: "Update failed")
+                snackbarHostState.showSnackbar(state.message ?: "Update failed")
                 viewModel.resetUpdateState()
             }
             else -> {}

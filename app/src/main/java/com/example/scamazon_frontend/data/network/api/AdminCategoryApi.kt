@@ -5,6 +5,7 @@ import com.example.scamazon_frontend.data.models.admin.CreateCategoryRequest
 import com.example.scamazon_frontend.data.models.admin.UpdateBrandRequest
 import com.example.scamazon_frontend.data.models.admin.UpdateCategoryRequest
 import com.example.scamazon_frontend.data.models.common.BackendApiResponse
+import com.example.scamazon_frontend.data.models.product.BackendAdminCategoryDto
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -12,6 +13,9 @@ import retrofit2.http.*
 interface AdminCategoryApi {
 
     // ===== Category CRUD =====
+
+    @GET("categories")
+    suspend fun getCategories(): Response<BackendApiResponse<List<BackendAdminCategoryDto>>>
 
     @POST("categories")
     suspend fun createCategory(

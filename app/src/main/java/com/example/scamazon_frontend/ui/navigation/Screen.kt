@@ -140,6 +140,9 @@ sealed class Screen(val route: String) {
     // RETURN REQUEST SCREENS
     // ==========================================
     object ReturnList : Screen("return_list")
+    object ReturnDetail : Screen("return_detail/{returnId}") {
+        fun createRoute(returnId: Int) = "return_detail/$returnId"
+    }
     object ReturnCreate : Screen("return_create/{orderId}") {
         fun createRoute(orderId: Int) = "return_create/$orderId"
     }

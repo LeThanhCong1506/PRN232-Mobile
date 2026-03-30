@@ -26,6 +26,9 @@ import com.example.scamazon_frontend.ui.theme.*
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.scamazon_frontend.data.models.chat.ChatRoomSummaryDto
 
 @Composable
@@ -35,6 +38,18 @@ fun AdminChatListScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     val conversationsState by viewModel.conversationsState.collectAsState()
+
+    // Reload conversations every time this screen becomes visible again (e.g. after reading a chat)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.loadConversations()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Scaffold(
         topBar = {

@@ -14,15 +14,15 @@ data class NotificationListResponse(
 )
 
 interface NotificationApi {
-    @GET("api/Notification")
+    @GET("Notification")
     suspend fun getMyNotifications(
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 50
     ): Response<BackendApiResponse<NotificationListResponse>>
 
-    @PUT("api/Notification/{id}/read")
+    @PUT("Notification/{id}/read")
     suspend fun markAsRead(@Path("id") id: Int): Response<BackendApiResponse<Any>>
 
-    @PUT("api/Notification/read-all")
+    @PUT("Notification/read-all")
     suspend fun markAllAsRead(): Response<BackendApiResponse<Any>>
 }

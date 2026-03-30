@@ -55,6 +55,7 @@ import com.example.scamazon_frontend.ui.screens.admin.user.AdminUserListScreen
 import com.example.scamazon_frontend.ui.screens.warranty.MyClaimsScreen
 import com.example.scamazon_frontend.ui.screens.`return`.ReturnListScreen
 import com.example.scamazon_frontend.ui.screens.`return`.ReturnCreateScreen
+import com.example.scamazon_frontend.ui.screens.`return`.ReturnDetailScreen
 import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnScreen
 
 /**
@@ -800,7 +801,22 @@ fun NavGraph(
         composable(route = Screen.ReturnList.route) {
             ReturnListScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onReturnClick = { /* Maybe navigate to detail later */ }
+                onReturnClick = { returnId ->
+                    navController.navigate(Screen.ReturnDetail.createRoute(returnId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ReturnDetail.route,
+            arguments = listOf(
+                navArgument("returnId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val returnId = backStackEntry.arguments?.getInt("returnId") ?: 0
+            ReturnDetailScreen(
+                returnId = returnId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

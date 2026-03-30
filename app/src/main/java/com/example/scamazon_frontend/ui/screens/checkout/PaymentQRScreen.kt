@@ -3,6 +3,7 @@ package com.example.scamazon_frontend.ui.screens.checkout
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.media.RingtoneManager
 import android.widget.Toast
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -58,12 +59,14 @@ fun PaymentQRScreen(
         viewModel.createPaymentQR(orderId)
     }
 
-    // When bank-transfer payment is confirmed, navigate to Notification screen after
-    // a brief delay so the user can see the success animation.
+    // When payment is confirmed, play a notification sound so the user is alerted.
     LaunchedEffect(paymentStatus) {
         if (paymentStatus == "success") {
-            kotlinx.coroutines.delay(1500)
-            onNavigateToNotifications()
+            try {
+                val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                val ringtone = RingtoneManager.getRingtone(context, notificationUri)
+                ringtone?.play()
+            } catch (_: Exception) {}
         }
     }
 
