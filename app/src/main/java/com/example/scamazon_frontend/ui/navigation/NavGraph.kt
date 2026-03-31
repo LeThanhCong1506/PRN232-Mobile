@@ -136,6 +136,66 @@ fun NavGraph(
                             notificationViewModel.loadNotifications()
                         }
                     }
+                    client.onPaymentConfirmed { data ->
+                        val gson = Gson()
+                        val json = try { gson.toJson(data) } catch (e: Exception) { "{}" }
+                        @Suppress("UNCHECKED_CAST")
+                        val map = try { gson.fromJson(json, Map::class.java) as? Map<String, Any> } catch (e: Exception) { null }
+                        val title = map?.get("title")?.toString() ?: "Payment Successful!"
+                        val body = map?.get("message")?.toString() ?: "Your payment has been confirmed."
+                        Handler(Looper.getMainLooper()).post {
+                            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                nm.createNotificationChannel(
+                                    NotificationChannel("scamazon_notifications", "STEM Notifications", NotificationManager.IMPORTANCE_HIGH)
+                                        .apply { description = "Thông báo từ STEM"; enableVibration(true) }
+                                )
+                            }
+                            val tapIntent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+                            val pendingIntent = PendingIntent.getActivity(context, 0, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                            val notification = NotificationCompat.Builder(context, "scamazon_notifications")
+                                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                .setContentTitle(title)
+                                .setContentText(body)
+                                .setAutoCancel(true)
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .setDefaults(NotificationCompat.DEFAULT_SOUND)
+                                .setContentIntent(pendingIntent)
+                                .build()
+                            nm.notify(10003, notification)
+                            notificationViewModel.loadNotifications()
+                        }
+                    }
+                    client.onPaymentExpired { data ->
+                        val gson = Gson()
+                        val json = try { gson.toJson(data) } catch (e: Exception) { "{}" }
+                        @Suppress("UNCHECKED_CAST")
+                        val map = try { gson.fromJson(json, Map::class.java) as? Map<String, Any> } catch (e: Exception) { null }
+                        val title = map?.get("title")?.toString() ?: "Payment Expired"
+                        val body = map?.get("message")?.toString() ?: "Your payment window has expired. Please place a new order."
+                        Handler(Looper.getMainLooper()).post {
+                            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                nm.createNotificationChannel(
+                                    NotificationChannel("scamazon_notifications", "STEM Notifications", NotificationManager.IMPORTANCE_HIGH)
+                                        .apply { description = "Thông báo từ STEM"; enableVibration(true) }
+                                )
+                            }
+                            val tapIntent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+                            val pendingIntent = PendingIntent.getActivity(context, 0, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                            val notification = NotificationCompat.Builder(context, "scamazon_notifications")
+                                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                .setContentTitle(title)
+                                .setContentText(body)
+                                .setAutoCancel(true)
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .setDefaults(NotificationCompat.DEFAULT_SOUND)
+                                .setContentIntent(pendingIntent)
+                                .build()
+                            nm.notify(10004, notification)
+                            notificationViewModel.loadNotifications()
+                        }
+                    }
                     // Stay connected while token is valid
                     while (tokenManager.getToken() != null) {
                         delay(5_000)

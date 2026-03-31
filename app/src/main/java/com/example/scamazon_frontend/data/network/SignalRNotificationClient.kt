@@ -14,7 +14,7 @@ class SignalRNotificationClient {
     fun connect(token: String) {
         if (hubConnection?.connectionState == HubConnectionState.CONNECTED) return
 
-        val hubUrl = "https://prn232-backend-production.up.railway.app/hubs/notification?access_token=\$token"
+        val hubUrl = "https://prn232-backend-production.up.railway.app/hubs/notification?access_token=$token"
 
         hubConnection = HubConnectionBuilder
             .create(hubUrl)
@@ -48,6 +48,26 @@ class SignalRNotificationClient {
 
     fun onOrderStatusChanged(callback: (Any) -> Unit) {
         hubConnection?.on("OrderStatusChanged", { data ->
+            try {
+                callback(data)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }, Object::class.java)
+    }
+
+    fun onPaymentConfirmed(callback: (Any) -> Unit) {
+        hubConnection?.on("PaymentConfirmed", { data ->
+            try {
+                callback(data)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }, Object::class.java)
+    }
+
+    fun onPaymentExpired(callback: (Any) -> Unit) {
+        hubConnection?.on("PaymentExpired", { data ->
             try {
                 callback(data)
             } catch (e: Exception) {
