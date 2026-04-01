@@ -2,6 +2,7 @@ package com.example.scamazon_frontend.ui.screens.admin.warranty
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -34,6 +35,7 @@ fun AdminWarrantyListScreen(
     viewModel: AdminWarrantyManagementViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateToAdd: () -> Unit = {},
     onNavigateToEdit: (Int) -> Unit = {},
+    onNavigateToDetail: (Int) -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -135,6 +137,7 @@ fun AdminWarrantyListScreen(
                     ) {
                         WarrantyListItem(
                             warranty = searchState.data!!,
+                            onClick = { onNavigateToDetail(searchState.data.warrantyId) },
                             onEdit = {
                                 viewModel.loadWarrantyForEdit(searchState.data.warrantyId)
                                 onNavigateToEdit(searchState.data.warrantyId)
@@ -206,6 +209,7 @@ fun AdminWarrantyListScreen(
                             items(list, key = { it.warrantyId }) { warranty ->
                                 WarrantyListItem(
                                     warranty = warranty,
+                                    onClick = { onNavigateToDetail(warranty.warrantyId) },
                                     onEdit = {
                                         viewModel.loadWarrantyForEdit(warranty.warrantyId)
                                         onNavigateToEdit(warranty.warrantyId)
@@ -246,6 +250,7 @@ fun AdminWarrantyListScreen(
 @Composable
 private fun WarrantyListItem(
     warranty: AdminWarrantyDto,
+    onClick: () -> Unit = {},
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -269,7 +274,7 @@ private fun WarrantyListItem(
     } else 0
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = BackgroundLight),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
