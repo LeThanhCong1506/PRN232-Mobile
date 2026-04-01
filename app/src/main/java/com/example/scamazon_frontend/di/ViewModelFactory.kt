@@ -11,6 +11,7 @@ import com.example.scamazon_frontend.ui.screens.admin.dashboard.AdminDashboardVi
 import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderViewModel
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductViewModel
 import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyViewModel
+import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyManagementViewModel
 import com.example.scamazon_frontend.ui.screens.auth.AuthViewModel
 import com.example.scamazon_frontend.data.network.ApiClient
 import com.example.scamazon_frontend.data.network.api.*
@@ -106,7 +107,10 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(AdminDashboardViewModel::class.java) -> AdminDashboardViewModel(adminOrderRepo)
             modelClass.isAssignableFrom(AdminProductViewModel::class.java) -> AdminProductViewModel(adminProductRepo, productRepo, warrantyRepo)
             modelClass.isAssignableFrom(AdminCategoryViewModel::class.java) -> AdminCategoryViewModel(adminCategoryRepo)
-            modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> AdminOrderViewModel(adminOrderRepo, signalRNotificationClient, tokenManager)
+            modelClass.isAssignableFrom(AdminOrderViewModel::class.java) -> {
+                val paymentApi = retrofit.create(PaymentApi::class.java)
+                AdminOrderViewModel(adminOrderRepo, signalRNotificationClient, tokenManager, PaymentRepository(paymentApi))
+            }
             modelClass.isAssignableFrom(PaymentQRViewModel::class.java) -> {
                 val paymentApi = retrofit.create(PaymentApi::class.java)
                 PaymentQRViewModel(PaymentRepository(paymentApi))
@@ -120,6 +124,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(NotificationViewModel::class.java) -> NotificationViewModel(notificationRepo)
             modelClass.isAssignableFrom(WarrantyViewModel::class.java) -> WarrantyViewModel(warrantyRepo)
             modelClass.isAssignableFrom(AdminWarrantyViewModel::class.java) -> AdminWarrantyViewModel(warrantyRepo)
+            modelClass.isAssignableFrom(AdminWarrantyManagementViewModel::class.java) -> AdminWarrantyManagementViewModel(warrantyRepo)
             modelClass.isAssignableFrom(ReturnViewModel::class.java) -> ReturnViewModel(returnRepo)
             modelClass.isAssignableFrom(AdminReturnViewModel::class.java) -> AdminReturnViewModel(returnRepo)
             modelClass.isAssignableFrom(com.example.scamazon_frontend.ui.screens.admin.user.AdminUserViewModel::class.java) -> com.example.scamazon_frontend.ui.screens.admin.user.AdminUserViewModel(adminUserRepo)
