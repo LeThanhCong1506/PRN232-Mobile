@@ -78,6 +78,8 @@ import com.example.scamazon_frontend.ui.screens.`return`.ReturnListScreen
 import com.example.scamazon_frontend.ui.screens.`return`.ReturnCreateScreen
 import com.example.scamazon_frontend.ui.screens.`return`.ReturnDetailScreen
 import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnScreen
+import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnDetailScreen
+import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyDetailScreen
 
 /**
  * Main Navigation Graph
@@ -630,7 +632,10 @@ fun NavGraph(
         composable(route = Screen.Notifications.route) {
             NotificationScreen(
                 viewModel = notificationViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToOrderDetail = { orderId ->
+                    navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                }
             )
         }
 
@@ -993,6 +998,20 @@ fun NavGraph(
 
         composable(route = Screen.AdminReturns.route) {
             AdminReturnScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToDetail = { returnId ->
+                    navController.navigate(Screen.AdminReturnDetail.createRoute(returnId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminReturnDetail.route,
+            arguments = listOf(navArgument("returnId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val returnId = backStackEntry.arguments?.getInt("returnId") ?: 0
+            AdminReturnDetailScreen(
+                returnId = returnId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -1012,7 +1031,24 @@ fun NavGraph(
                 onNavigateToEdit = { warrantyId ->
                     navController.navigate(Screen.AdminWarrantyEdit.createRoute(warrantyId))
                 },
+                onNavigateToDetail = { warrantyId ->
+                    navController.navigate(Screen.AdminWarrantyDetail.createRoute(warrantyId))
+                },
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminWarrantyDetail.route,
+            arguments = listOf(navArgument("warrantyId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val warrantyId = backStackEntry.arguments?.getInt("warrantyId") ?: 0
+            AdminWarrantyDetailScreen(
+                warrantyId = warrantyId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { id ->
+                    navController.navigate(Screen.AdminWarrantyEdit.createRoute(id))
+                }
             )
         }
 

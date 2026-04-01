@@ -16,7 +16,7 @@ package com.example.scamazon_frontend.core.utils
  */
 object SocialAuthConfig {
     const val GOOGLE_WEB_CLIENT_ID = "571495207196-eku74j0800ra1ng3gchtprk7reihrnfi.apps.googleusercontent.com"
-    const val GITHUB_CLIENT_ID = "Ov23li4fDC9o1CVWZzIU"
+    const val GITHUB_CLIENT_ID = "Ov23lif1T5CsS9KJPt1A"
 
     // HTTPS backend callback — GitHub only accepts http/https URIs.
     // The backend endpoint receives GitHub's code then deep-links back to myapp://auth/github?code=xxx.
