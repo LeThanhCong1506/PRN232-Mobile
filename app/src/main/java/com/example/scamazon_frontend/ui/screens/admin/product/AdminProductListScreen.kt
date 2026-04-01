@@ -441,7 +441,8 @@ private fun PaginationBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(White)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .padding(bottom = 72.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
