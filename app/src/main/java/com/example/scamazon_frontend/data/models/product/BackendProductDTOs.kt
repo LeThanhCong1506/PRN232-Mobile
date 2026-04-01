@@ -106,3 +106,23 @@ data class BackendBrandWithCountDto(
     @SerializedName("logoUrl") val logoUrl: String?,
     @SerializedName("productCount") val productCount: Int
 )
+
+// === KIT available stock (GET /api/product/{kitId}/bundle/available-stock) ===
+
+data class BackendKitAvailableStockDto(
+    @SerializedName("kitProductId") val kitProductId: Int,
+    @SerializedName("availableStock") val availableStock: Int,
+    @SerializedName("limitingComponent") val limitingComponent: String?
+)
+
+// === Related products (GET /api/product/{id}/related) ===
+
+data class BackendRelatedProductDto(
+    @SerializedName("productId") val productId: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("price") val price: Double,
+    @SerializedName("primaryImage") val primaryImage: String?,
+    @SerializedName("stockQuantity") val stockQuantity: Int,
+    @SerializedName("inStock") val inStock: Boolean,
+    @SerializedName("productType") val productType: String?
+)

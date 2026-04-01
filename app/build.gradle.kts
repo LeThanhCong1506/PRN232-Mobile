@@ -46,6 +46,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -110,6 +111,9 @@ dependencies {
 
     // SignalR (real-time chat)
     implementation("com.microsoft.signalr:signalr:8.0.0")
+
+    // Core library desugaring (enables java.time on API < 26)
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3")
 
     // Testing
     testImplementation(libs.junit)

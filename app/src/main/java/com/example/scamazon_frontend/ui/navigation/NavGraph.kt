@@ -41,6 +41,8 @@ import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderListScreen
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductFormScreen
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductListScreen
 import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyClaimsScreen
+import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyListScreen
+import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyFormScreen
 import com.example.scamazon_frontend.ui.screens.warranty.WarrantyClaimScreen
 import com.example.scamazon_frontend.ui.screens.warranty.WarrantyListScreen
 import com.example.scamazon_frontend.ui.screens.auth.LoginScreen
@@ -359,6 +361,9 @@ fun NavGraph(
                 },
                 onNavigateToReview = { id ->
                     navController.navigate(Screen.Review.createRoute(id, canWrite = false))
+                },
+                onNavigateToProduct = { relatedId ->
+                    navController.navigate(Screen.ProductDetail.createRoute(relatedId))
                 }
             )
         }
@@ -994,6 +999,37 @@ fun NavGraph(
 
         composable(route = Screen.AdminUserList.route) {
             AdminUserListScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // ==========================================
+        // ADMIN WARRANTY MANAGEMENT SCREENS
+        // ==========================================
+        composable(route = Screen.AdminWarrantyList.route) {
+            AdminWarrantyListScreen(
+                onNavigateToAdd = { navController.navigate(Screen.AdminWarrantyAdd.route) },
+                onNavigateToEdit = { warrantyId ->
+                    navController.navigate(Screen.AdminWarrantyEdit.createRoute(warrantyId))
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.AdminWarrantyAdd.route) {
+            AdminWarrantyFormScreen(
+                warrantyId = null,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminWarrantyEdit.route,
+            arguments = listOf(navArgument("warrantyId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val warrantyId = backStackEntry.arguments?.getInt("warrantyId")
+            AdminWarrantyFormScreen(
+                warrantyId = warrantyId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
