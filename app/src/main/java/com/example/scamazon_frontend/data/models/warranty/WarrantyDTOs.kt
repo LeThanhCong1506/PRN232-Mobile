@@ -78,3 +78,37 @@ data class ResolveWarrantyClaimResponseDto(
     @SerializedName("resolutionNote") val resolutionNote: String?,
     @SerializedName("resolvedDate") val resolvedDate: String
 )
+
+// ==================== Admin Warranty CRUD ====================
+// Matches backend WarrantyResponse DTO exactly
+
+data class AdminWarrantyDto(
+    @SerializedName("warrantyId") val warrantyId: Int,
+    @SerializedName("serialNumber") val serialNumber: String,
+    @SerializedName("warrantyPolicyId") val warrantyPolicyId: Int,
+    @SerializedName("warrantyPolicyName") val policyName: String,
+    @SerializedName("durationMonths") val durationMonths: Int?,
+    @SerializedName("startDate") val startDate: String,   // format: "yyyy-MM-dd"
+    @SerializedName("endDate") val endDate: String,       // format: "yyyy-MM-dd"
+    @SerializedName("isActive") val isActive: Boolean,
+    @SerializedName("notes") val notes: String?,
+    @SerializedName("productId") val productId: Int?,
+    @SerializedName("productName") val productName: String?,
+    @SerializedName("productSku") val productSku: String?
+)
+
+// Create: POST /api/warranty
+data class CreateWarrantyRequest(
+    @SerializedName("serialNumber") val serialNumber: String,
+    @SerializedName("warrantyPolicyId") val warrantyPolicyId: Int,
+    @SerializedName("startDate") val startDate: String,   // "yyyy-MM-dd"
+    @SerializedName("endDate") val endDate: String,       // "yyyy-MM-dd"
+    @SerializedName("notes") val notes: String? = null
+)
+
+// Update: PUT /api/warranty/{id}
+data class UpdateWarrantyRequest(
+    @SerializedName("endDate") val endDate: String,       // "yyyy-MM-dd"
+    @SerializedName("isActive") val isActive: Boolean,
+    @SerializedName("notes") val notes: String? = null
+)
