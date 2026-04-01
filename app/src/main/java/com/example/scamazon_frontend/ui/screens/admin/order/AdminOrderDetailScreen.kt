@@ -39,6 +39,7 @@ fun AdminOrderDetailScreen(
 ) {
     val orderDetailState by viewModel.orderDetailState.collectAsStateWithLifecycle()
     val updateStatusState by viewModel.updateStatusState.collectAsStateWithLifecycle()
+    val verifyPaymentState by viewModel.verifyPaymentState.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -57,6 +58,21 @@ fun AdminOrderDetailScreen(
             is Resource.Error -> {
                 snackbarHostState.showSnackbar(updateStatusState?.message ?: "Failed to update status")
                 viewModel.resetUpdateState()
+            }
+            else -> {}
+        }
+    }
+
+    // Handle verify payment result
+    LaunchedEffect(verifyPaymentState) {
+        when (verifyPaymentState) {
+            is Resource.Success -> {
+                snackbarHostState.showSnackbar("Payment verified successfully!")
+                viewModel.resetVerifyPaymentState()
+            }
+            is Resource.Error -> {
+                snackbarHostState.showSnackbar(verifyPaymentState?.message ?: "Failed to verify payment")
+                viewModel.resetVerifyPaymentState()
             }
             else -> {}
         }
@@ -112,9 +128,11 @@ fun AdminOrderDetailScreen(
                 AdminOrderDetailContent(
                     order = order,
                     isUpdating = updateStatusState is Resource.Loading,
+                    isVerifyingPayment = verifyPaymentState is Resource.Loading,
                     onUpdateStatus = { newStatus, trackingNumber, carrier ->
                         viewModel.updateOrderStatus(orderId, newStatus, trackingNumber, carrier)
                     },
+                    onVerifyPayment = { viewModel.verifyPayment(orderId) },
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -136,7 +154,9 @@ fun AdminOrderDetailScreen(
 private fun AdminOrderDetailContent(
     order: OrderDetailDataDto,
     isUpdating: Boolean,
+    isVerifyingPayment: Boolean,
     onUpdateStatus: (String, String?, String?) -> Unit,
+    onVerifyPayment: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -189,7 +209,11 @@ private fun AdminOrderDetailContent(
         // Payment Info
         if (order.payment != null) {
             item {
-                AdminPaymentInfoCard(order)
+                AdminPaymentInfoCard(
+                    order = order,
+                    isVerifyingPayment = isVerifyingPayment,
+                    onVerifyPayment = onVerifyPayment
+                )
             }
         }
 
@@ -730,7 +754,11 @@ private fun PriceRow(label: String, value: String, valueColor: Color = TextPrima
 // ==================== Payment Info Card ====================
 
 @Composable
-private fun AdminPaymentInfoCard(order: OrderDetailDataDto) {
+private fun AdminPaymentInfoCard(
+    order: OrderDetailDataDto,
+    isVerifyingPayment: Boolean,
+    onVerifyPayment: () -> Unit
+) {
     val payment = order.payment ?: return
 
     Card(
@@ -797,6 +825,45 @@ private fun AdminPaymentInfoCard(order: OrderDetailDataDto) {
             if (payment.status.lowercase() == "pending") {
                 payment.expiredAt?.let { exp ->
                     PriceRow("Expires At", exp.take(19).replace("T", " "))
+                }
+            }
+
+            // Manual verify button - show when payment is not yet completed
+            if (payment.status.uppercase() != "COMPLETED") {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = BorderLight)
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onVerifyPayment,
+                    enabled = !isVerifyingPayment,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = StatusSuccess,
+                        contentColor = White,
+                        disabledContainerColor = ButtonDisabled
+                    )
+                ) {
+                    if (isVerifyingPayment) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Xác nhận thanh toán thủ công",
+                            fontFamily = Poppins,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
             }
         }
