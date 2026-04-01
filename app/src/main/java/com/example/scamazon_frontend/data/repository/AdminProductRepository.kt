@@ -33,7 +33,7 @@ class AdminProductRepository(private val api: AdminProductApi) {
                     val body = response.body()
                     if (body?.success == true && body.data != null) {
                         val pagedData = body.data
-                        val products = pagedData.items.filter { it.isActive }.map { admin ->
+                        val products = pagedData.items.map { admin ->
                             ProductDto(
                                 id = admin.productId,
                                 name = admin.name,
@@ -142,6 +142,21 @@ class AdminProductRepository(private val api: AdminProductApi) {
                     Resource.Success(Unit)
                 } else {
                     Resource.Error(response.body()?.message ?: "Failed to upload images")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    suspend fun toggleActive(id: Int): Resource<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.toggleActive(id)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    Resource.Error(response.body()?.message ?: "Failed to toggle product status")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")

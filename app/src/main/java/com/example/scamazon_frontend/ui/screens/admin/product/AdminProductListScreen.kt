@@ -44,6 +44,7 @@ fun AdminProductListScreen(
     val context = LocalContext.current
     val productsState by viewModel.productsState.collectAsStateWithLifecycle()
     val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
+    val toggleActiveState by viewModel.toggleActiveState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf<ProductDto?>(null) }
 
@@ -66,12 +67,22 @@ fun AdminProductListScreen(
             is Resource.Success -> {
                 Toast.makeText(context, "Product deleted successfully", Toast.LENGTH_SHORT).show()
                 viewModel.resetDeleteState()
-                // Không gọi loadProducts() ở đây nữa — ViewModel đã tự reload
             }
             is Resource.Error -> {
                 Toast.makeText(context, (deleteState as Resource.Error).message ?: "Failed to delete product", Toast.LENGTH_SHORT).show()
                 viewModel.resetDeleteState()
             }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(toggleActiveState) {
+        when (toggleActiveState) {
+            is Resource.Error -> {
+                Toast.makeText(context, (toggleActiveState as Resource.Error).message ?: "Failed to toggle product", Toast.LENGTH_SHORT).show()
+                viewModel.resetToggleState()
+            }
+            is Resource.Success -> viewModel.resetToggleState()
             else -> {}
         }
     }
@@ -200,7 +211,8 @@ fun AdminProductListScreen(
                                 AdminProductItem(
                                     product = product,
                                     onEdit = { onNavigateToEditProduct(product.slug) },
-                                    onDelete = { showDeleteDialog = product }
+                                    onDelete = { showDeleteDialog = product },
+                                    onToggleActive = { viewModel.toggleActive(product.id) }
                                 )
                             }
                         }
@@ -246,14 +258,18 @@ fun AdminProductListScreen(
 private fun AdminProductItem(
     product: ProductDto,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onToggleActive: () -> Unit
 ) {
+    val isActive = product.isActive
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onEdit() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isActive) White else BackgroundLight
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -270,22 +286,42 @@ private fun AdminProductItem(
                     .size(60.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(BackgroundLight),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                alpha = if (isActive) 1f else 0.4f
             )
 
             Spacer(modifier = Modifier.width(12.dp))
 
             // Product Info
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = product.name,
-                    fontFamily = Poppins,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
-                    color = TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = product.name,
+                        fontFamily = Poppins,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = if (isActive) TextPrimary else TextHint,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (!isActive) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = StatusError.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = "Inactive",
+                                fontFamily = Poppins,
+                                fontSize = 9.sp,
+                                color = StatusError,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -295,7 +331,7 @@ private fun AdminProductItem(
                         fontFamily = Poppins,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
+                        color = if (isActive) PrimaryBlue else TextHint
                     )
                     if (product.salePrice != null) {
                         Spacer(modifier = Modifier.width(8.dp))
@@ -319,7 +355,18 @@ private fun AdminProductItem(
             }
 
             // Actions
-            Column {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Switch(
+                    checked = isActive,
+                    onCheckedChange = { onToggleActive() },
+                    modifier = Modifier.size(width = 44.dp, height = 28.dp),
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = White,
+                        checkedTrackColor = StatusSuccess,
+                        uncheckedThumbColor = White,
+                        uncheckedTrackColor = TextHint
+                    )
+                )
                 IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
                     Icon(
                         Icons.Filled.Edit,
