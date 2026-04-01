@@ -6,6 +6,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,6 +38,11 @@ fun AdminOrderListScreen(
 ) {
     val ordersState by viewModel.ordersState.collectAsStateWithLifecycle()
     val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
+    var currentPage by remember { mutableIntStateOf(1) }
+    val pageSize = 10
+
+    // Reset page when filter changes
+    LaunchedEffect(selectedFilter) { currentPage = 1 }
 
     Scaffold(
         topBar = {
@@ -48,15 +54,6 @@ fun AdminOrderListScreen(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Navy
-                        )
-                    }
                 },
                 actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -104,6 +101,10 @@ fun AdminOrderListScreen(
                     } else {
                         allOrders.filter { it.status?.lowercase() == selectedFilter }
                     }
+                    val totalPages = ((filteredOrders.size + pageSize - 1) / pageSize).coerceAtLeast(1)
+                    val pagedOrders = filteredOrders
+                        .drop((currentPage - 1) * pageSize)
+                        .take(pageSize)
 
                     if (filteredOrders.isEmpty()) {
                         Box(
@@ -117,26 +118,38 @@ fun AdminOrderListScreen(
                             )
                         }
                     } else {
-                        // Orders count
-                        Text(
-                            text = "${filteredOrders.size} order(s)",
-                            style = Typography.bodySmall,
-                            color = TextSecondary,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // Orders count
+                            Text(
+                                text = "${filteredOrders.size} đơn hàng",
+                                style = Typography.bodySmall,
+                                color = TextSecondary,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
 
-                        LazyColumn(
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(filteredOrders, key = { it.id }) { order ->
-                                AdminOrderCard(
-                                    order = order,
-                                    onClick = { onOrderClick(order.id) }
-                                )
+                            LazyColumn(
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(pagedOrders, key = { it.id }) { order ->
+                                    AdminOrderCard(
+                                        order = order,
+                                        onClick = { onOrderClick(order.id) }
+                                    )
+                                }
+                                item { Spacer(modifier = Modifier.height(8.dp)) }
                             }
 
-                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                            // Pagination bar
+                            if (totalPages > 1) {
+                                AdminPaginationBar(
+                                    currentPage = currentPage,
+                                    totalPages = totalPages,
+                                    onPrevious = { currentPage-- },
+                                    onNext = { currentPage++ }
+                                )
+                            }
                         }
                     }
                 }
@@ -304,6 +317,63 @@ private fun AdminOrderCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AdminPaginationBar(
+    currentPage: Int,
+    totalPages: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onPrevious,
+            enabled = currentPage > 1,
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ChevronLeft,
+                contentDescription = "Previous",
+                tint = if (currentPage > 1) PrimaryBlue else Color.LightGray,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = PrimaryBlue.copy(alpha = 0.1f)
+        ) {
+            Text(
+                text = "Trang $currentPage / $totalPages",
+                fontFamily = Poppins,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = PrimaryBlue,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        IconButton(
+            onClick = onNext,
+            enabled = currentPage < totalPages,
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "Next",
+                tint = if (currentPage < totalPages) PrimaryBlue else Color.LightGray,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
