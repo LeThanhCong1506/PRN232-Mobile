@@ -21,7 +21,35 @@ data class WarrantyProductInfoDto(
     @SerializedName("image") val image: String?
 )
 
-// ==================== Warranty Claims - Customer ====================
+// ==================== Warranty Claims - Customer (GET /api/warranties/claims) ====================
+
+/**
+ * Matches BE CustomerWarrantyClaimResponse — flat fields, NOT nested customer/product objects.
+ * Used by MyClaimsScreen.
+ */
+data class CustomerWarrantyClaimDto(
+    @SerializedName("claimId") val claimId: Int,
+    @SerializedName("status") val status: String,
+    @SerializedName("serialNumber") val serialNumber: String,
+    @SerializedName("productName") val productName: String,
+    @SerializedName("productImageUrl") val productImageUrl: String?,
+    @SerializedName("policyName") val policyName: String,
+    @SerializedName("warrantyExpiryDate") val warrantyExpiryDate: String,
+    @SerializedName("issueDescription") val issueDescription: String,
+    @SerializedName("resolutionNote") val resolutionNote: String?,
+    @SerializedName("submittedAt") val submittedAt: String,
+    @SerializedName("resolvedDate") val resolvedDate: String?
+)
+
+data class CustomerWarrantyClaimPagedDto(
+    @SerializedName("items") val items: List<CustomerWarrantyClaimDto>,
+    @SerializedName("page") val page: Int,
+    @SerializedName("pageSize") val pageSize: Int,
+    @SerializedName("totalItems") val totalItems: Int,
+    @SerializedName("totalPages") val totalPages: Int
+)
+
+// ==================== Warranty Claims - Submit ====================
 
 data class SubmitWarrantyClaimRequest(
     @SerializedName("issueDescription") val issueDescription: String,

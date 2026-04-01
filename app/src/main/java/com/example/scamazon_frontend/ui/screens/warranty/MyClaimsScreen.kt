@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.scamazon_frontend.core.utils.Resource
-import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimDto
+import com.example.scamazon_frontend.data.models.warranty.CustomerWarrantyClaimDto
 import com.example.scamazon_frontend.di.ViewModelFactory
 import com.example.scamazon_frontend.ui.components.*
 import com.example.scamazon_frontend.ui.theme.*
@@ -83,7 +83,7 @@ fun MyClaimsScreen(
 }
 
 @Composable
-private fun ClaimCard(claim: AdminWarrantyClaimDto) {
+private fun ClaimCard(claim: CustomerWarrantyClaimDto) {
     val statusColor = when (claim.status.uppercase()) {
         "RESOLVED", "APPROVED" -> StatusSuccess
         "REJECTED" -> StatusError
@@ -123,12 +123,19 @@ private fun ClaimCard(claim: AdminWarrantyClaimDto) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Product name — flat field from BE (not nested object)
             Text(
-                text = claim.product.name,
+                text = claim.productName,
                 fontFamily = Poppins,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryBlue
+            )
+            Text(
+                text = "SN: ${claim.serialNumber}  ·  ${claim.policyName}",
+                fontFamily = Poppins,
+                fontSize = 12.sp,
+                color = TextSecondary
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -137,6 +144,10 @@ private fun ClaimCard(claim: AdminWarrantyClaimDto) {
                 Column {
                     Text("Submitted", fontFamily = Poppins, fontSize = 11.sp, color = TextHint)
                     Text(formatDate(claim.submittedAt), fontFamily = Poppins, fontSize = 13.sp, color = TextPrimary)
+                }
+                Column {
+                    Text("Expires", fontFamily = Poppins, fontSize = 11.sp, color = TextHint)
+                    Text(claim.warrantyExpiryDate, fontFamily = Poppins, fontSize = 13.sp, color = TextPrimary)
                 }
                 if (claim.resolvedDate != null) {
                     Column {

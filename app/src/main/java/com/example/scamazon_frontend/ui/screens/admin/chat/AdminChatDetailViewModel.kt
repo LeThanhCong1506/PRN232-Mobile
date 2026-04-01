@@ -174,6 +174,23 @@ class AdminChatDetailViewModel(
         }
     }
 
+    /** Silent poll — fetches new messages without showing Loading spinner. */
+    fun silentRefresh() {
+        val userId = targetUserId ?: return
+        viewModelScope.launch {
+            val result = chatRepo.getChatHistoryWithUser(userId)
+            if (result is Resource.Success) {
+                val incoming = result.data ?: emptyList()
+                val existingIds = localMessages.map { it.id }.toSet()
+                val fresh = incoming.filter { it.id > 0 && it.id !in existingIds }
+                if (fresh.isNotEmpty()) {
+                    localMessages.addAll(fresh)
+                    _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
+                }
+            }
+        }
+    }
+
     fun clearSendError() {
         _sendError.value = null
     }

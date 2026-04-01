@@ -222,6 +222,23 @@ class ChatViewModel(
         }
     }
 
+    /** Silent refresh — polls for new messages without showing a Loading spinner.
+     *  Used as a real-time fallback when SignalR is unavailable. */
+    fun silentRefresh() {
+        viewModelScope.launch {
+            val result = chatRepo.getChatHistory()
+            if (result is Resource.Success) {
+                val incoming = result.data ?: emptyList()
+                val existingIds = localMessages.map { it.id }.toSet()
+                val fresh = incoming.filter { it.id > 0 && it.id !in existingIds }
+                if (fresh.isNotEmpty()) {
+                    localMessages.addAll(fresh)
+                    _messagesState.value = Resource.Success(localMessages.sortedBy { it.createdAt })
+                }
+            }
+        }
+    }
+
     fun clearSendError() {
         _sendError.value = null
     }

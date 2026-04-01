@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -83,6 +84,7 @@ internal fun formatVND(price: Double): String {
 @Composable
 fun ChatbotWidget(
     onSearchProduct: (String) -> Unit = {},
+    onNavigateToProduct: (String) -> Unit = {},
     viewModel: ChatbotViewModel = viewModel(factory = ViewModelFactory(LocalContext.current))
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -161,7 +163,12 @@ fun ChatbotWidget(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         items(messages) { msg ->
-                            ChatbotMessageBubble(message = msg, onSearchProduct = onSearchProduct, onAddToCart = { viewModel.addToCart(it) })
+                            ChatbotMessageBubble(
+                                message = msg,
+                                onSearchProduct = onSearchProduct,
+                                onAddToCart = { viewModel.addToCart(it) },
+                                onNavigateToProduct = onNavigateToProduct
+                            )
                         }
 
                         if (messages.size == 1 && !isLoading) {
@@ -251,7 +258,8 @@ fun ChatbotWidget(
 internal fun ChatbotMessageBubble(
     message: ChatbotMessage,
     onSearchProduct: (String) -> Unit = {},
-    onAddToCart: (Int) -> Unit = {}
+    onAddToCart: (Int) -> Unit = {},
+    onNavigateToProduct: (String) -> Unit = {}
 ) {
     val searchKeyword = if (!message.isUser) extractSearchKeyword(message.content) else null
     val isError = message.source == "error"
@@ -331,7 +339,11 @@ internal fun ChatbotMessageBubble(
                 Spacer(modifier = Modifier.height(6.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(message.products) { product ->
-                        WidgetProductCard(product = product, onAddToCart = onAddToCart)
+                        WidgetProductCard(
+                            product = product,
+                            onAddToCart = onAddToCart,
+                            onNavigateToProduct = onNavigateToProduct
+                        )
                     }
                 }
             }
@@ -340,10 +352,16 @@ internal fun ChatbotMessageBubble(
 }
 
 @Composable
-private fun WidgetProductCard(product: ProductSuggestionDto, onAddToCart: (Int) -> Unit) {
+private fun WidgetProductCard(
+    product: ProductSuggestionDto,
+    onAddToCart: (Int) -> Unit,
+    onNavigateToProduct: (String) -> Unit = {}
+) {
     val context = LocalContext.current
     Card(
-        modifier = Modifier.width(130.dp),
+        modifier = Modifier
+            .width(130.dp)
+            .clickable { onNavigateToProduct(product.productId.toString()) },
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -379,6 +397,7 @@ private fun WidgetProductCard(product: ProductSuggestionDto, onAddToCart: (Int) 
             Column(modifier = Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(product.name, fontSize = 10.sp, fontFamily = Poppins, fontWeight = FontWeight.Medium, maxLines = 2, lineHeight = 13.sp)
                 Text(formatVND(product.price), fontSize = 11.sp, fontFamily = Poppins, fontWeight = FontWeight.Bold, color = PrimaryBlue)
+                // Add to cart
                 Button(
                     onClick = { onAddToCart(product.productId) },
                     modifier = Modifier.fillMaxWidth().height(26.dp),
@@ -388,6 +407,15 @@ private fun WidgetProductCard(product: ProductSuggestionDto, onAddToCart: (Int) 
                     Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(12.dp), tint = White)
                     Spacer(modifier = Modifier.width(3.dp))
                     Text("Add", fontSize = 10.sp, color = White, fontFamily = Poppins)
+                }
+                // Buy now
+                OutlinedButton(
+                    onClick = { onNavigateToProduct(product.productId.toString()) },
+                    modifier = Modifier.fillMaxWidth().height(26.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue)
+                ) {
+                    Text("Buy", fontSize = 10.sp, color = PrimaryBlue, fontFamily = Poppins)
                 }
             }
         }

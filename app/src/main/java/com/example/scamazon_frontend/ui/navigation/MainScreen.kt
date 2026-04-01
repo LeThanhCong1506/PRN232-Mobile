@@ -123,6 +123,9 @@ fun MainScreen(
                             launchSingleTop = true
                             restoreState = true
                         }
+                    },
+                    onNavigateToProduct = { productId ->
+                        navController.navigate(Screen.ProductDetail.createRoute(productId))
                     }
                 )
             }

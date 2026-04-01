@@ -52,6 +52,15 @@ fun AdminChatDetailScreen(
         viewModel.loadMessages(chatRoomId)
     }
 
+    // Poll every 5s as real-time fallback when SignalR is unavailable
+    LaunchedEffect(chatRoomId) {
+        kotlinx.coroutines.delay(5_000L)
+        while (true) {
+            viewModel.silentRefresh()
+            kotlinx.coroutines.delay(5_000L)
+        }
+    }
+
     // Show toast when send fails
     LaunchedEffect(sendError) {
         sendError?.let { error ->

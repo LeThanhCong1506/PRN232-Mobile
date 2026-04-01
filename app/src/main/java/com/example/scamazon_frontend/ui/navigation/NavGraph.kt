@@ -634,7 +634,7 @@ fun NavGraph(
                 viewModel = notificationViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToOrderDetail = { orderId ->
-                    navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                    navController.navigate(Screen.OrderDetail.createRoute(orderId.toString()))
                 }
             )
         }
@@ -668,6 +668,9 @@ fun NavGraph(
                         launchSingleTop = true
                         restoreState = true
                     }
+                },
+                onNavigateToProduct = { productId ->
+                    navController.navigate(Screen.ProductDetail.createRoute(productId))
                 }
             )
         }

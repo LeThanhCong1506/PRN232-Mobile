@@ -35,6 +35,7 @@ fun AdminWarrantyClaimsScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
 
     var showResolveDialog by remember { mutableStateOf<AdminWarrantyClaimDto?>(null) }
+    // default resolution depends on current claim status
     var selectedResolution by remember { mutableStateOf("APPROVED") }
     var resolutionNote by remember { mutableStateOf("") }
 
@@ -127,7 +128,8 @@ fun AdminWarrantyClaimsScreen(
                                 claim = claim,
                                 onResolve = {
                                     showResolveDialog = claim
-                                    selectedResolution = "APPROVED"
+                                    // Pre-select sensible default based on current status
+                                    selectedResolution = if (claim.status.uppercase() == "APPROVED") "RESOLVED" else "APPROVED"
                                     resolutionNote = ""
                                 }
                             )
@@ -141,6 +143,13 @@ fun AdminWarrantyClaimsScreen(
 
     // Resolve Dialog
     showResolveDialog?.let { claim ->
+        // State machine: SUBMITTED → APPROVED | REJECTED
+        //                APPROVED  → RESOLVED | UNRESOLVED
+        val availableResolutions = if (claim.status.uppercase() == "APPROVED")
+            listOf("RESOLVED" to "Resolved (Repaired)", "UNRESOLVED" to "Unresolved (Irreparable)")
+        else
+            listOf("APPROVED" to "Approved (Send for repair)", "REJECTED" to "Rejected")
+
         AlertDialog(
             onDismissRequest = { showResolveDialog = null },
             title = { Text("Resolve Claim #${claim.claimId}", fontFamily = Poppins, fontWeight = FontWeight.Bold) },
@@ -150,14 +159,14 @@ fun AdminWarrantyClaimsScreen(
                     Text("Issue: ${claim.issueDescription.take(100)}...", fontFamily = Poppins, fontSize = 12.sp, color = TextSecondary)
 
                     Text("Resolution:", fontFamily = Poppins, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                    listOf("APPROVED", "REJECTED", "RESOLVED").forEach { res ->
+                    availableResolutions.forEach { (value, label) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(
-                                selected = selectedResolution == res,
-                                onClick = { selectedResolution = res },
+                                selected = selectedResolution == value,
+                                onClick = { selectedResolution = value },
                                 colors = RadioButtonDefaults.colors(selectedColor = PrimaryBlue)
                             )
-                            Text(res, fontFamily = Poppins, fontSize = 13.sp)
+                            Text(label, fontFamily = Poppins, fontSize = 13.sp)
                         }
                     }
 
@@ -247,9 +256,9 @@ private fun AdminClaimCard(claim: AdminWarrantyClaimDto, onResolve: () -> Unit) 
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(claim.submittedAt.take(10), fontFamily = Poppins, fontSize = 11.sp, color = TextHint)
-                if (claim.status.uppercase() == "SUBMITTED") {
+                if (claim.status.uppercase() == "SUBMITTED" || claim.status.uppercase() == "APPROVED") {
                     LafyuuSmallButton(
-                        text = "Resolve",
+                        text = if (claim.status.uppercase() == "APPROVED") "Mark Result" else "Resolve",
                         onClick = onResolve
                     )
                 }

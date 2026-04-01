@@ -51,6 +51,14 @@ fun ChatScreen(
         viewModel.startOrLoadChat()
     }
 
+    // Poll every 5s as real-time fallback when SignalR is unavailable
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(5_000L)
+            viewModel.silentRefresh()
+        }
+    }
+
     // Show toast when send fails
     LaunchedEffect(sendError) {
         sendError?.let { error ->

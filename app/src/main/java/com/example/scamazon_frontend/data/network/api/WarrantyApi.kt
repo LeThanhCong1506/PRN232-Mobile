@@ -2,6 +2,7 @@ package com.example.scamazon_frontend.data.network.api
 
 import com.example.scamazon_frontend.data.models.common.BackendApiResponse
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimPagedDto
+import com.example.scamazon_frontend.data.models.warranty.CustomerWarrantyClaimPagedDto
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyDto
 import com.example.scamazon_frontend.data.models.warranty.CreateWarrantyRequest
 import com.example.scamazon_frontend.data.models.warranty.MyWarrantyDto
@@ -35,7 +36,7 @@ interface WarrantyApi {
     suspend fun getMyWarrantyClaims(
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 20
-    ): Response<BackendApiResponse<AdminWarrantyClaimPagedDto>>
+    ): Response<BackendApiResponse<CustomerWarrantyClaimPagedDto>>
 
     @POST("warranties/{warrantyId}/claims")
     suspend fun submitWarrantyClaim(

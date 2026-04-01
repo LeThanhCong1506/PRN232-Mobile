@@ -3,6 +3,7 @@ package com.example.scamazon_frontend.data.repository
 import com.example.scamazon_frontend.core.utils.Resource
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimDto
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimPagedDto
+import com.example.scamazon_frontend.data.models.warranty.CustomerWarrantyClaimPagedDto
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyDto
 import com.example.scamazon_frontend.data.models.warranty.CreateWarrantyRequest
 import com.example.scamazon_frontend.data.models.warranty.MyWarrantyDto
@@ -82,7 +83,7 @@ class WarrantyRepository(private val api: WarrantyApi) {
     suspend fun getMyWarrantyClaims(
         page: Int = 1,
         pageSize: Int = 20
-    ): Resource<AdminWarrantyClaimPagedDto> {
+    ): Resource<CustomerWarrantyClaimPagedDto> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = api.getMyWarrantyClaims(page, pageSize)

@@ -2,6 +2,7 @@ package com.example.scamazon_frontend.ui.screens.chatbot
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -35,7 +36,8 @@ import com.example.scamazon_frontend.ui.theme.*
 fun ChatbotScreen(
     viewModel: ChatbotViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
-    onSearchProduct: (String) -> Unit = {}
+    onSearchProduct: (String) -> Unit = {},
+    onNavigateToProduct: (String) -> Unit = {}
 ) {
     val messages by viewModel.messages.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -104,7 +106,8 @@ fun ChatbotScreen(
                 FullScreenMessageBubble(
                     message = msg,
                     onSearchProduct = onSearchProduct,
-                    onAddToCart = { viewModel.addToCart(it) }
+                    onAddToCart = { viewModel.addToCart(it) },
+                    onNavigateToProduct = onNavigateToProduct
                 )
             }
 
@@ -178,7 +181,8 @@ fun ChatbotScreen(
 private fun FullScreenMessageBubble(
     message: ChatbotMessage,
     onSearchProduct: (String) -> Unit = {},
-    onAddToCart: (Int) -> Unit = {}
+    onAddToCart: (Int) -> Unit = {},
+    onNavigateToProduct: (String) -> Unit = {}
 ) {
     val searchKeyword = if (!message.isUser) extractSearchKeyword(message.content) else null
     val isError = message.source == "error"
@@ -260,7 +264,11 @@ private fun FullScreenMessageBubble(
                 Spacer(modifier = Modifier.height(8.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     message.products.forEach { product ->
-                        FullScreenProductCard(product = product, onAddToCart = onAddToCart)
+                        FullScreenProductCard(
+                            product = product,
+                            onAddToCart = onAddToCart,
+                            onNavigateToProduct = onNavigateToProduct
+                        )
                     }
                 }
             }
@@ -269,10 +277,16 @@ private fun FullScreenMessageBubble(
 }
 
 @Composable
-private fun FullScreenProductCard(product: ProductSuggestionDto, onAddToCart: (Int) -> Unit) {
+private fun FullScreenProductCard(
+    product: ProductSuggestionDto,
+    onAddToCart: (Int) -> Unit,
+    onNavigateToProduct: (String) -> Unit = {}
+) {
     val context = LocalContext.current
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onNavigateToProduct(product.productId.toString()) },
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = White),
         elevation = CardDefaults.cardElevation(2.dp)
@@ -309,16 +323,28 @@ private fun FullScreenProductCard(product: ProductSuggestionDto, onAddToCart: (I
                 Text(formatVND(product.price), fontSize = 14.sp, fontFamily = Poppins, fontWeight = FontWeight.Bold, color = PrimaryBlue)
             }
             Spacer(modifier = Modifier.width(8.dp))
-            // Add to cart
-            Button(
-                onClick = { onAddToCart(product.productId) },
-                modifier = Modifier.height(36.dp),
-                contentPadding = PaddingValues(horizontal = 10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
-            ) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp), tint = White)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add", fontSize = 11.sp, color = White, fontFamily = Poppins)
+            // Buttons column
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Add to cart
+                Button(
+                    onClick = { onAddToCart(product.productId) },
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                ) {
+                    Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(13.dp), tint = White)
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text("Add", fontSize = 10.sp, color = White, fontFamily = Poppins)
+                }
+                // Buy now
+                OutlinedButton(
+                    onClick = { onNavigateToProduct(product.productId.toString()) },
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue)
+                ) {
+                    Text("Buy", fontSize = 10.sp, color = PrimaryBlue, fontFamily = Poppins)
+                }
             }
         }
     }
