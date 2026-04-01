@@ -29,7 +29,8 @@ import com.example.scamazon_frontend.data.models.notification.NotificationDto
 @Composable
 fun NotificationScreen(
     viewModel: NotificationViewModel,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToOrderDetail: (Int) -> Unit = {}
 ) {
     val state by viewModel.notificationsState.collectAsState()
 
@@ -86,7 +87,8 @@ fun NotificationScreen(
                         items(notifications) { notif ->
                             NotificationItem(
                                 notif = notif,
-                                onMarkAsRead = { viewModel.markAsRead(notif.id) }
+                                onMarkAsRead = { viewModel.markAsRead(notif.id) },
+                                onNavigateToOrderDetail = onNavigateToOrderDetail
                             )
                         }
                     }
@@ -97,12 +99,22 @@ fun NotificationScreen(
 }
 
 @Composable
-private fun NotificationItem(notif: NotificationDto, onMarkAsRead: () -> Unit) {
+private fun NotificationItem(
+    notif: NotificationDto,
+    onMarkAsRead: () -> Unit,
+    onNavigateToOrderDetail: (Int) -> Unit = {}
+) {
     val unread = notif.isRead == false
+    val orderId = extractOrderId(notif.data)
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { if (unread) onMarkAsRead() },
+            .clickable {
+                if (unread) onMarkAsRead()
+                if (notif.type == "order_status" && orderId != null) {
+                    onNavigateToOrderDetail(orderId)
+                }
+            },
         colors = CardDefaults.cardColors(
             containerColor = if (unread) PrimaryBlueSoft else White
         ),
@@ -145,13 +157,30 @@ private fun NotificationItem(notif: NotificationDto, onMarkAsRead: () -> Unit) {
                     color = TextPrimary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
+                val bodyText = when {
+                    !notif.body.isNullOrBlank() -> notif.body
+                    notif.type == "order_status" -> "Tap to view your order details"
+                    notif.type == "payment" -> "Your payment has been processed"
+                    notif.type == "chat" -> "You have a new message"
+                    else -> "Tap to view details"
+                }
                 Text(
-                    text = notif.body ?: "",
+                    text = bodyText,
                     fontFamily = Poppins,
                     fontSize = 12.sp,
                     color = TextSecondary,
                     lineHeight = 18.sp
                 )
+                if (notif.type == "order_status" && extractOrderId(notif.data) != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "View order →",
+                        fontFamily = Poppins,
+                        fontSize = 11.sp,
+                        color = PrimaryBlue,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = formatNotifDate(notif.createdAt),
@@ -171,6 +200,20 @@ private fun NotificationItem(notif: NotificationDto, onMarkAsRead: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+private fun extractOrderId(data: String?): Int? {
+    if (data.isNullOrBlank()) return null
+    return try {
+        val json = org.json.JSONObject(data)
+        val id = json.optInt("orderId", 0).takeIf { it > 0 }
+            ?: json.optInt("order_id", 0).takeIf { it > 0 }
+            ?: json.optInt("OrderId", 0).takeIf { it > 0 }
+        id
+    } catch (e: Exception) {
+        // Fallback: regex extract first number
+        Regex("\\d+").find(data)?.value?.toIntOrNull()
     }
 }
 
