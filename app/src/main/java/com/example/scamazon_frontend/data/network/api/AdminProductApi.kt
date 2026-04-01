@@ -54,4 +54,9 @@ interface AdminProductApi {
         @Path("id") productId: Int,
         @Path("imageId") imageId: Int
     ): Response<BackendApiResponse<Any>>
+
+    @PATCH("admin/products/{id}/toggle-active")
+    suspend fun toggleActive(
+        @Path("id") id: Int
+    ): Response<BackendApiResponse<Any>>
 }
