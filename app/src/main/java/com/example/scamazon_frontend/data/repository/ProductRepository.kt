@@ -97,6 +97,62 @@ class ProductRepository(private val api: ProductApi) {
         }
     }
 
+    suspend fun getKitAvailableStock(kitId: Int): Resource<KitAvailableStockDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getKitAvailableStock(kitId)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        val d = body.data
+                        Resource.Success(KitAvailableStockDto(
+                            kitProductId = d.kitProductId,
+                            availableStock = d.availableStock,
+                            limitingComponent = d.limitingComponent
+                        ))
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to get KIT stock")
+                    }
+                } else {
+                    Resource.Error("Error ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    suspend fun getRelatedProducts(productId: Int): Resource<List<RelatedProductDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getRelatedProducts(productId)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        val list = body.data.map { r ->
+                            RelatedProductDto(
+                                productId = r.productId,
+                                name = r.name,
+                                price = r.price,
+                                primaryImage = r.primaryImage,
+                                stockQuantity = r.stockQuantity,
+                                inStock = r.inStock,
+                                productType = r.productType
+                            )
+                        }
+                        Resource.Success(list)
+                    } else {
+                        Resource.Error(body?.message ?: "Failed to get related products")
+                    }
+                } else {
+                    Resource.Error("Error ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
     suspend fun getBrands(): Resource<List<com.example.scamazon_frontend.data.models.admin.BrandDto>> {
         return withContext(Dispatchers.IO) {
             try {

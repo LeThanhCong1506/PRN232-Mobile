@@ -110,3 +110,19 @@ data class RatingBreakdownDto(
     @SerializedName("one") val one: Int
 )
 
+data class RelatedProductDto(
+    val productId: Int,
+    val name: String,
+    val price: Double,
+    val primaryImage: String?,
+    val stockQuantity: Int,
+    val inStock: Boolean,
+    val productType: String?
+)
+
+data class KitAvailableStockDto(
+    val kitProductId: Int,
+    val availableStock: Int,
+    val limitingComponent: String?
+)
+
