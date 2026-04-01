@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +37,7 @@ fun AdminReturnScreen(
     val processState by viewModel.processState.collectAsStateWithLifecycle()
 
     var showDialog by remember { mutableStateOf<ReturnRequestResponse?>(null) }
+    var showDetailDialog by remember { mutableStateOf<ReturnRequestResponse?>(null) }
     var adminNote by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -87,8 +89,12 @@ fun AdminReturnScreen(
                         ) {
                             items(requests) { req ->
                                 AdminReturnCard(request = req, onClick = {
-                                    if (req.status.uppercase() == "PENDING" || req.status.uppercase() == "APPROVED") {
+                                    val status = req.status.uppercase()
+                                    if (status == "PENDING" || status == "APPROVED") {
                                         showDialog = req
+                                    } else {
+                                        // COMPLETED / REJECTED / SUBMITTED -> xem detail
+                                        showDetailDialog = req
                                     }
                                 })
                             }
@@ -99,14 +105,16 @@ fun AdminReturnScreen(
         }
     }
 
-    // Process Dialog
+    // Process Dialog (PENDING / APPROVED)
     if (showDialog != null) {
         AlertDialog(
             onDismissRequest = { showDialog = null; adminNote = "" },
-            title = { Text("Process Return #${showDialog?.returnRequestId}") },
+            title = { Text("Process Return #${showDialog?.returnRequestId}", fontFamily = Poppins, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Reason: ${showDialog?.reason}")
+                    Text("Type: ${showDialog?.type}", style = Typography.bodyMedium, color = PrimaryBlue)
+                    Text("Order: #${showDialog?.orderNumber} by ${showDialog?.userName}", style = Typography.bodySmall, color = TextSecondary)
+                    Text("Reason: ${showDialog?.reason}", style = Typography.bodySmall)
                     OutlinedTextField(
                         value = adminNote,
                         onValueChange = { adminNote = it },
@@ -134,6 +142,67 @@ fun AdminReturnScreen(
             dismissButton = {
                 TextButton(onClick = { showDialog = null; adminNote = "" }) {
                     Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
+    }
+
+    // Detail Dialog (COMPLETED / REJECTED / SUBMITTED)
+    showDetailDialog?.let { req ->
+        val statusColor = when (req.status.uppercase()) {
+            "APPROVED", "COMPLETED" -> StatusSuccess
+            "REJECTED" -> StatusError
+            else -> SecondaryYellow
+        }
+        AlertDialog(
+            onDismissRequest = { showDetailDialog = null },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Request #${req.returnRequestId}",
+                        fontFamily = Poppins,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Surface(shape = RoundedCornerShape(12.dp), color = statusColor.copy(alpha = 0.15f)) {
+                        Text(
+                            text = req.status,
+                            fontFamily = Poppins,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp,
+                            color = statusColor,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DetailRow(label = "Type", value = req.type)
+                    DetailRow(label = "Order", value = "#${req.orderNumber}")
+                    DetailRow(label = "Customer", value = req.userName)
+                    DetailRow(label = "Reason", value = req.reason)
+                    if (!req.adminNote.isNullOrBlank()) {
+                        HorizontalDivider()
+                        DetailRow(label = "Admin Note", value = req.adminNote)
+                    }
+                    req.createdAt?.let {
+                        HorizontalDivider()
+                        DetailRow(
+                            label = "Created At",
+                            value = it.take(10)
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showDetailDialog = null }) {
+                    Text("Close", color = PrimaryBlue, fontFamily = Poppins)
                 }
             }
         )
@@ -191,6 +260,19 @@ private fun AdminReturnCard(request: ReturnRequestResponse, onClick: () -> Unit)
             Spacer(modifier = Modifier.height(4.dp))
             Text("Reason: ${request.reason}", style = Typography.bodySmall, color = TextSecondary, maxLines = 2)
 
+            // Hint bấm vào xem chi tiết với COMPLETED/SUBMITTED
+            val status = request.status.uppercase()
+            if (status != "PENDING" && status != "APPROVED") {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Tap to view details",
+                    fontFamily = Poppins,
+                    fontSize = 10.sp,
+                    color = TextHint,
+                    fontStyle = FontStyle.Italic
+                )
+            }
+
             if (!request.adminNote.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -205,5 +287,29 @@ private fun AdminReturnCard(request: ReturnRequestResponse, onClick: () -> Unit)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "$label:",
+            fontFamily = Poppins,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            color = TextSecondary,
+            modifier = Modifier.width(90.dp)
+        )
+        Text(
+            text = value,
+            fontFamily = Poppins,
+            fontSize = 13.sp,
+            color = TextPrimary,
+            modifier = Modifier.weight(1f)
+        )
     }
 }

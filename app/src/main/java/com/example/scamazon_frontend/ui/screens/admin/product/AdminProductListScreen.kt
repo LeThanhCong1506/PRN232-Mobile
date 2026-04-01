@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -47,13 +48,14 @@ fun AdminProductListScreen(
     val toggleActiveState by viewModel.toggleActiveState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf<ProductDto?>(null) }
+    var currentPage by remember { mutableIntStateOf(1) }
 
     // Reload products when screen resumes (e.g. after creating/editing a product)
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.loadProducts(search = searchQuery.ifEmpty { null })
+                viewModel.loadProducts(page = currentPage, search = searchQuery.ifEmpty { null })
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -190,6 +192,9 @@ fun AdminProductListScreen(
 
                 is Resource.Success -> {
                     val products = (productsState as Resource.Success).data?.items ?: emptyList()
+                    val pagination = (productsState as Resource.Success).data?.pagination
+                    val totalPages = pagination?.totalPages ?: 1
+
                     if (products.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -202,17 +207,44 @@ fun AdminProductListScreen(
                             )
                         }
                     } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(products) { product ->
-                                AdminProductItem(
-                                    product = product,
-                                    onEdit = { onNavigateToEditProduct(product.slug) },
-                                    onDelete = { showDeleteDialog = product },
-                                    onToggleActive = { viewModel.toggleActive(product.id) }
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // Total count info
+                            Text(
+                                text = "${pagination?.totalItems ?: products.size} sản phẩm",
+                                fontFamily = Poppins,
+                                fontSize = 12.sp,
+                                color = TextSecondary,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                            )
+                            LazyColumn(
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(products) { product ->
+                                    AdminProductItem(
+                                        product = product,
+                                        onEdit = { onNavigateToEditProduct(product.slug) },
+                                        onDelete = { showDeleteDialog = product },
+                                        onToggleActive = { viewModel.toggleActive(product.id) }
+                                    )
+                                }
+                            }
+                            // Pagination bar — dùng currentPage local làm source of truth
+                            if (totalPages > 1) {
+                                PaginationBar(
+                                    currentPage = currentPage,
+                                    totalPages = totalPages,
+                                    onPrevious = {
+                                        val prev = currentPage - 1
+                                        currentPage = prev
+                                        viewModel.loadProducts(page = prev, search = searchQuery.ifEmpty { null })
+                                    },
+                                    onNext = {
+                                        val next = currentPage + 1
+                                        currentPage = next
+                                        viewModel.loadProducts(page = next, search = searchQuery.ifEmpty { null })
+                                    }
                                 )
                             }
                         }
@@ -294,38 +326,19 @@ private fun AdminProductItem(
 
             // Product Info
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = product.name,
-                        fontFamily = Poppins,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        color = if (isActive) TextPrimary else TextHint,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (!isActive) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = StatusError.copy(alpha = 0.12f)
-                        ) {
-                            Text(
-                                text = "Inactive",
-                                fontFamily = Poppins,
-                                fontSize = 9.sp,
-                                color = StatusError,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
-                }
+                Text(
+                    text = product.name,
+                    fontFamily = Poppins,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = if (isActive) TextPrimary else TextHint,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = formatPrice(product.price),
                         fontFamily = Poppins,
@@ -354,36 +367,122 @@ private fun AdminProductItem(
                 )
             }
 
-            // Actions
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Switch(
-                    checked = isActive,
-                    onCheckedChange = { onToggleActive() },
-                    modifier = Modifier.size(width = 44.dp, height = 28.dp),
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = White,
-                        checkedTrackColor = StatusSuccess,
-                        uncheckedThumbColor = White,
-                        uncheckedTrackColor = TextHint
-                    )
-                )
-                IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        Icons.Filled.Edit,
-                        contentDescription = "Edit",
-                        tint = PrimaryBlue,
-                        modifier = Modifier.size(20.dp)
+            // Actions column
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Toggle + Status badge on same row
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (isActive) StatusSuccess.copy(alpha = 0.12f) else StatusError.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = if (isActive) "Active" else "Inactive",
+                            fontFamily = Poppins,
+                            fontSize = 9.sp,
+                            color = if (isActive) StatusSuccess else StatusError,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 3.dp)
+                        )
+                    }
+                    Switch(
+                        checked = isActive,
+                        onCheckedChange = { onToggleActive() },
+                        modifier = Modifier
+                            .width(44.dp)
+                            .height(26.dp),
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = White,
+                            checkedTrackColor = StatusSuccess,
+                            uncheckedThumbColor = White,
+                            uncheckedTrackColor = TextHint
+                        )
                     )
                 }
-                IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        Icons.Filled.Delete,
-                        contentDescription = "Delete",
-                        tint = StatusError,
-                        modifier = Modifier.size(20.dp)
-                    )
+                // Edit + Delete in one row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
+                    IconButton(onClick = onEdit, modifier = Modifier.size(34.dp)) {
+                        Icon(
+                            Icons.Filled.Edit,
+                            contentDescription = "Edit",
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "Delete",
+                            tint = StatusError,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PaginationBar(
+    currentPage: Int,
+    totalPages: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onPrevious,
+            enabled = currentPage > 1,
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.ChevronLeft,
+                contentDescription = "Previous",
+                tint = if (currentPage > 1) PrimaryBlue else TextHint,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = PrimaryBlue.copy(alpha = 0.1f)
+        ) {
+            Text(
+                text = "Trang $currentPage / $totalPages",
+                fontFamily = Poppins,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = PrimaryBlue,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        IconButton(
+            onClick = onNext,
+            enabled = currentPage < totalPages,
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.ChevronRight,
+                contentDescription = "Next",
+                tint = if (currentPage < totalPages) PrimaryBlue else TextHint,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
