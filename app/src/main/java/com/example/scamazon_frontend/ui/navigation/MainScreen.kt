@@ -45,6 +45,7 @@ fun MainScreen(
         Screen.AdminDashboard.route,
         Screen.AdminProducts.route,
         Screen.AdminCategories.route,
+        Screen.AdminOrders.route,
         Screen.AdminAccount.route
     )
 

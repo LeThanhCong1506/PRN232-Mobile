@@ -79,6 +79,7 @@ fun LoginScreen(
 
     // GitHub OAuth callback
     val githubCode by OAuthCallbackHolder.githubCode.collectAsStateWithLifecycle()
+    val githubError by OAuthCallbackHolder.githubError.collectAsStateWithLifecycle()
 
     // Google Sign-In client
     val googleSignInClient = remember {
@@ -128,12 +129,25 @@ fun LoginScreen(
         }
     }
 
-    // Handle GitHub OAuth code received from deep link
+    // Handle GitHub OAuth code received from deep link (via backend HTTPS redirect)
     LaunchedEffect(githubCode) {
         val code = githubCode
         if (!code.isNullOrBlank()) {
             OAuthCallbackHolder.clearGitHubCode()
             viewModel.githubLogin(code)
+        }
+    }
+
+    // Handle GitHub OAuth error from deep link
+    LaunchedEffect(githubError) {
+        val err = githubError
+        if (!err.isNullOrBlank()) {
+            OAuthCallbackHolder.clearGitHubError()
+            emailError = when (err) {
+                "access_denied" -> "GitHub sign-in was cancelled."
+                "no_code"       -> "GitHub sign-in failed. Please try again."
+                else            -> "GitHub sign-in failed: $err"
+            }
         }
     }
 

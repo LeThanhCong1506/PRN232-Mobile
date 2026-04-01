@@ -37,13 +37,21 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleOAuthIntent(intent: Intent?) {
-        // Handle GitHub OAuth callback: myapp://auth/github?code=XXX
+        // Handle GitHub OAuth callback: myapp://auth/github?code=XXX  (or ?error=XXX)
+        // The backend redirects here after receiving the code from GitHub's HTTPS callback.
         val data = intent?.data
         if (data?.scheme == "myapp" && data.host == "auth") {
             val code = data.getQueryParameter("code")
-            if (!code.isNullOrBlank()) {
-                Log.d("MainActivity", "GitHub OAuth code received")
-                OAuthCallbackHolder.setGitHubCode(code)
+            val error = data.getQueryParameter("error")
+            when {
+                !code.isNullOrBlank() -> {
+                    Log.d("MainActivity", "GitHub OAuth code received")
+                    OAuthCallbackHolder.setGitHubCode(code)
+                }
+                !error.isNullOrBlank() -> {
+                    Log.w("MainActivity", "GitHub OAuth error: $error")
+                    OAuthCallbackHolder.setGitHubError(error)
+                }
             }
         }
     }

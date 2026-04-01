@@ -50,13 +50,19 @@ class AdminUserViewModel(private val repository: AdminUserRepository) : ViewMode
 
     fun toggleUserStatus(user: AdminUserDto) {
         _updateStatusState.value = Resource.Loading()
+        // Optimistic update: flip isActive immediately so UI responds instantly
+        val current = _usersState.value
+        if (current is Resource.Success) {
+            val updated = current.data?.map {
+                if (it.userId == user.userId) it.copy(isActive = !(it.isActive ?: true)) else it
+            }
+            _usersState.value = Resource.Success(updated ?: emptyList())
+        }
         viewModelScope.launch {
             val result = repository.toggleUserStatus(user)
             _updateStatusState.value = result
-            if (result is Resource.Success) {
-                // Refresh list
-                loadUsers()
-            }
+            // Always reload to confirm server state (also reverts on failure)
+            loadUsers()
         }
     }
 

@@ -4,8 +4,10 @@ import com.example.scamazon_frontend.data.models.common.BackendApiResponse
 import com.example.scamazon_frontend.data.models.common.BackendPagedResponse
 import com.example.scamazon_frontend.data.models.product.BackendBrandWithCountDto
 import com.example.scamazon_frontend.data.models.product.BackendCategoryWithCountDto
+import com.example.scamazon_frontend.data.models.product.BackendKitAvailableStockDto
 import com.example.scamazon_frontend.data.models.product.BackendProductDetailDto
 import com.example.scamazon_frontend.data.models.product.BackendProductDto
+import com.example.scamazon_frontend.data.models.product.BackendRelatedProductDto
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -35,4 +37,16 @@ interface ProductApi {
 
     @GET("product/brands")
     suspend fun getBrands(): Response<BackendApiResponse<List<BackendBrandWithCountDto>>>
+
+    // GET /api/product/{kitId}/bundle/available-stock
+    @GET("product/{kitId}/bundle/available-stock")
+    suspend fun getKitAvailableStock(
+        @Path("kitId") kitId: Int
+    ): Response<BackendApiResponse<BackendKitAvailableStockDto>>
+
+    // GET /api/product/{id}/related
+    @GET("product/{id}/related")
+    suspend fun getRelatedProducts(
+        @Path("id") productId: Int
+    ): Response<BackendApiResponse<List<BackendRelatedProductDto>>>
 }

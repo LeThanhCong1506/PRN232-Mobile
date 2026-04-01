@@ -30,13 +30,11 @@ class AdminUserRepository(private val api: AdminUserApi) {
     suspend fun toggleUserStatus(user: AdminUserDto): Resource<String> {
         return withContext(Dispatchers.IO) {
             try {
-                // Toggle status locally first to send as update
-                val updatedUser = user.copy(isActive = !(user.isActive ?: true))
-                val response = api.updateUser(user.userId, updatedUser)
+                val response = api.toggleStatus(user.userId)
                 if (response.isSuccessful) {
-                    Resource.Success(response.body() ?: "User updated successfully")
+                    Resource.Success("User status updated successfully")
                 } else {
-                    Resource.Error("Failed to update user: ${response.message()}")
+                    Resource.Error("Failed to toggle status: ${response.message()}")
                 }
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")

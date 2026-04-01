@@ -136,6 +136,11 @@ sealed class Screen(val route: String) {
     }
     object AdminWarrantyClaims : Screen("admin_warranty_claims")
     object MyClaims : Screen("my_claims")
+    object AdminWarrantyList : Screen("admin_warranty_list")
+    object AdminWarrantyAdd : Screen("admin_warranty_add")
+    object AdminWarrantyEdit : Screen("admin_warranty_edit/{warrantyId}") {
+        fun createRoute(warrantyId: Int) = "admin_warranty_edit/$warrantyId"
+    }
 
     // ==========================================
     // RETURN REQUEST SCREENS
@@ -148,6 +153,12 @@ sealed class Screen(val route: String) {
         fun createRoute(orderId: Int) = "return_create/$orderId"
     }
     object AdminReturns : Screen("admin_returns")
+    object AdminReturnDetail : Screen("admin_return_detail/{returnId}") {
+        fun createRoute(returnId: Int) = "admin_return_detail/$returnId"
+    }
+    object AdminWarrantyDetail : Screen("admin_warranty_detail/{warrantyId}") {
+        fun createRoute(warrantyId: Int) = "admin_warranty_detail/$warrantyId"
+    }
     object AdminUserList : Screen("admin_users")
 }
 

@@ -1,8 +1,11 @@
 package com.example.scamazon_frontend.ui.components
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -47,13 +50,37 @@ fun LafyuuMainAppBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Search Field
-            LafyuuSearchField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChange,
-                onSearch = onSearchClick,
-                modifier = Modifier.weight(1f)
-            )
+            // Search Field — compact clickable bar that opens SearchScreen
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp)
+                    .clickable { onSearchClick() },
+                shape = RoundedCornerShape(12.dp),
+                color = BackgroundLight,
+                border = BorderStroke(1.dp, BorderDefault)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = TextSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Search products...",
+                        fontFamily = Poppins,
+                        fontSize = 13.sp,
+                        color = TextHint
+                    )
+                }
+            }
 
             // Favorite Icon
             IconButton(onClick = onFavoriteClick) {

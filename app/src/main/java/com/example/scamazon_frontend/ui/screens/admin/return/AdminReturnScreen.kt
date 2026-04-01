@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,33 +31,16 @@ import java.util.*
 @Composable
 fun AdminReturnScreen(
     viewModel: AdminReturnViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToDetail: (Int) -> Unit = {}
 ) {
     val returnState by viewModel.returnListState.collectAsStateWithLifecycle()
-    val processState by viewModel.processState.collectAsStateWithLifecycle()
-
-    var showDialog by remember { mutableStateOf<ReturnRequestResponse?>(null) }
-    var adminNote by remember { mutableStateOf("") }
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.loadAllReturnRequests()
     }
 
-    LaunchedEffect(processState) {
-        if (processState is Resource.Success) {
-            snackbarHostState.showSnackbar("Return processed successfully!")
-            showDialog = null
-            adminNote = ""
-            viewModel.resetProcessState()
-        } else if (processState is Resource.Error) {
-            snackbarHostState.showSnackbar(processState?.message ?: "Processing failed")
-            viewModel.resetProcessState()
-        }
-    }
-
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = { LafyuuTopAppBar(title = "Manage Returns", onBackClick = onNavigateBack) }
     ) { paddingValues ->
         Column(
@@ -82,61 +66,20 @@ fun AdminReturnScreen(
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.background(BackgroundLight).fillMaxSize()
                         ) {
                             items(requests) { req ->
-                                AdminReturnCard(request = req, onClick = {
-                                    if (req.status.uppercase() == "PENDING" || req.status.uppercase() == "APPROVED") {
-                                        showDialog = req
-                                    }
-                                })
+                                AdminReturnCard(
+                                    request = req,
+                                    onClick = { onNavigateToDetail(req.returnRequestId) }
+                                )
                             }
                         }
                     }
                 }
             }
         }
-    }
-
-    // Process Dialog
-    if (showDialog != null) {
-        AlertDialog(
-            onDismissRequest = { showDialog = null; adminNote = "" },
-            title = { Text("Process Return #${showDialog?.returnRequestId}") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Reason: ${showDialog?.reason}")
-                    OutlinedTextField(
-                        value = adminNote,
-                        onValueChange = { adminNote = it },
-                        label = { Text("Admin Note") },
-                        modifier = Modifier.fillMaxWidth().height(100.dp)
-                    )
-                }
-            },
-            confirmButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (showDialog?.status?.uppercase() == "PENDING") {
-                        TextButton(onClick = { viewModel.processReturnRequest(showDialog!!.returnRequestId, "APPROVED", adminNote) }) {
-                            Text("Approve", color = StatusSuccess)
-                        }
-                        TextButton(onClick = { viewModel.processReturnRequest(showDialog!!.returnRequestId, "REJECTED", adminNote) }) {
-                            Text("Reject", color = StatusError)
-                        }
-                    } else if (showDialog?.status?.uppercase() == "APPROVED") {
-                        TextButton(onClick = { viewModel.processReturnRequest(showDialog!!.returnRequestId, "COMPLETED", adminNote) }) {
-                            Text("Complete", color = PrimaryBlue)
-                        }
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = null; adminNote = "" }) {
-                    Text("Cancel", color = TextSecondary)
-                }
-            }
-        )
     }
 }
 
@@ -207,3 +150,4 @@ private fun AdminReturnCard(request: ReturnRequestResponse, onClick: () -> Unit)
         }
     }
 }
+

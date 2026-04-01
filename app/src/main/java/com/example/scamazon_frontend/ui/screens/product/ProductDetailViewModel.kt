@@ -3,7 +3,9 @@ package com.example.scamazon_frontend.ui.screens.product
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scamazon_frontend.core.utils.Resource
+import com.example.scamazon_frontend.data.models.product.KitAvailableStockDto
 import com.example.scamazon_frontend.data.models.product.ProductDetailDto
+import com.example.scamazon_frontend.data.models.product.RelatedProductDto
 import com.example.scamazon_frontend.data.repository.CartRepository
 import com.example.scamazon_frontend.data.repository.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +24,12 @@ class ProductDetailViewModel(
     private val _addToCartState = MutableStateFlow<Resource<String>?>(null)
     val addToCartState: StateFlow<Resource<String>?> = _addToCartState.asStateFlow()
 
+    private val _kitAvailableStock = MutableStateFlow<Resource<KitAvailableStockDto>?>(null)
+    val kitAvailableStock: StateFlow<Resource<KitAvailableStockDto>?> = _kitAvailableStock.asStateFlow()
+
+    private val _relatedProducts = MutableStateFlow<Resource<List<RelatedProductDto>>?>(null)
+    val relatedProducts: StateFlow<Resource<List<RelatedProductDto>>?> = _relatedProducts.asStateFlow()
+
     fun loadProduct(productId: Int) {
         _productState.value = Resource.Loading()
         viewModelScope.launch {
@@ -37,6 +45,20 @@ class ProductDetailViewModel(
             loadProduct(id)
         } else {
             _productState.value = Resource.Error("Invalid product identifier")
+        }
+    }
+
+    fun loadKitAvailableStock(kitId: Int) {
+        viewModelScope.launch {
+            _kitAvailableStock.value = Resource.Loading()
+            _kitAvailableStock.value = productRepository.getKitAvailableStock(kitId)
+        }
+    }
+
+    fun loadRelatedProducts(productId: Int) {
+        viewModelScope.launch {
+            _relatedProducts.value = Resource.Loading()
+            _relatedProducts.value = productRepository.getRelatedProducts(productId)
         }
     }
 

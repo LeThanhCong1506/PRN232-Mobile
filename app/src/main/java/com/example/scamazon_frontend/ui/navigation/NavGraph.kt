@@ -41,6 +41,8 @@ import com.example.scamazon_frontend.ui.screens.admin.order.AdminOrderListScreen
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductFormScreen
 import com.example.scamazon_frontend.ui.screens.admin.product.AdminProductListScreen
 import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyClaimsScreen
+import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyListScreen
+import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyFormScreen
 import com.example.scamazon_frontend.ui.screens.warranty.WarrantyClaimScreen
 import com.example.scamazon_frontend.ui.screens.warranty.WarrantyListScreen
 import com.example.scamazon_frontend.ui.screens.auth.LoginScreen
@@ -76,6 +78,8 @@ import com.example.scamazon_frontend.ui.screens.`return`.ReturnListScreen
 import com.example.scamazon_frontend.ui.screens.`return`.ReturnCreateScreen
 import com.example.scamazon_frontend.ui.screens.`return`.ReturnDetailScreen
 import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnScreen
+import com.example.scamazon_frontend.ui.screens.admin.`return`.AdminReturnDetailScreen
+import com.example.scamazon_frontend.ui.screens.admin.warranty.AdminWarrantyDetailScreen
 
 /**
  * Main Navigation Graph
@@ -133,6 +137,66 @@ fun NavGraph(
                                 .setContentIntent(pendingIntent)
                                 .build()
                             nm.notify(10002, notification)
+                            notificationViewModel.loadNotifications()
+                        }
+                    }
+                    client.onPaymentConfirmed { data ->
+                        val gson = Gson()
+                        val json = try { gson.toJson(data) } catch (e: Exception) { "{}" }
+                        @Suppress("UNCHECKED_CAST")
+                        val map = try { gson.fromJson(json, Map::class.java) as? Map<String, Any> } catch (e: Exception) { null }
+                        val title = map?.get("title")?.toString() ?: "Payment Successful!"
+                        val body = map?.get("message")?.toString() ?: "Your payment has been confirmed."
+                        Handler(Looper.getMainLooper()).post {
+                            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                nm.createNotificationChannel(
+                                    NotificationChannel("scamazon_notifications", "STEM Notifications", NotificationManager.IMPORTANCE_HIGH)
+                                        .apply { description = "Thông báo từ STEM"; enableVibration(true) }
+                                )
+                            }
+                            val tapIntent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+                            val pendingIntent = PendingIntent.getActivity(context, 0, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                            val notification = NotificationCompat.Builder(context, "scamazon_notifications")
+                                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                .setContentTitle(title)
+                                .setContentText(body)
+                                .setAutoCancel(true)
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .setDefaults(NotificationCompat.DEFAULT_SOUND)
+                                .setContentIntent(pendingIntent)
+                                .build()
+                            nm.notify(10003, notification)
+                            notificationViewModel.loadNotifications()
+                        }
+                    }
+                    client.onPaymentExpired { data ->
+                        val gson = Gson()
+                        val json = try { gson.toJson(data) } catch (e: Exception) { "{}" }
+                        @Suppress("UNCHECKED_CAST")
+                        val map = try { gson.fromJson(json, Map::class.java) as? Map<String, Any> } catch (e: Exception) { null }
+                        val title = map?.get("title")?.toString() ?: "Payment Expired"
+                        val body = map?.get("message")?.toString() ?: "Your payment window has expired. Please place a new order."
+                        Handler(Looper.getMainLooper()).post {
+                            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                nm.createNotificationChannel(
+                                    NotificationChannel("scamazon_notifications", "STEM Notifications", NotificationManager.IMPORTANCE_HIGH)
+                                        .apply { description = "Thông báo từ STEM"; enableVibration(true) }
+                                )
+                            }
+                            val tapIntent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+                            val pendingIntent = PendingIntent.getActivity(context, 0, tapIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                            val notification = NotificationCompat.Builder(context, "scamazon_notifications")
+                                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                                .setContentTitle(title)
+                                .setContentText(body)
+                                .setAutoCancel(true)
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .setDefaults(NotificationCompat.DEFAULT_SOUND)
+                                .setContentIntent(pendingIntent)
+                                .build()
+                            nm.notify(10004, notification)
                             notificationViewModel.loadNotifications()
                         }
                     }
@@ -299,6 +363,9 @@ fun NavGraph(
                 },
                 onNavigateToReview = { id ->
                     navController.navigate(Screen.Review.createRoute(id, canWrite = false))
+                },
+                onNavigateToProduct = { relatedId ->
+                    navController.navigate(Screen.ProductDetail.createRoute(relatedId))
                 }
             )
         }
@@ -565,7 +632,10 @@ fun NavGraph(
         composable(route = Screen.Notifications.route) {
             NotificationScreen(
                 viewModel = notificationViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToOrderDetail = { orderId ->
+                    navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                }
             )
         }
 
@@ -928,12 +998,74 @@ fun NavGraph(
 
         composable(route = Screen.AdminReturns.route) {
             AdminReturnScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToDetail = { returnId ->
+                    navController.navigate(Screen.AdminReturnDetail.createRoute(returnId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminReturnDetail.route,
+            arguments = listOf(navArgument("returnId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val returnId = backStackEntry.arguments?.getInt("returnId") ?: 0
+            AdminReturnDetailScreen(
+                returnId = returnId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
         composable(route = Screen.AdminUserList.route) {
             AdminUserListScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // ==========================================
+        // ADMIN WARRANTY MANAGEMENT SCREENS
+        // ==========================================
+        composable(route = Screen.AdminWarrantyList.route) {
+            AdminWarrantyListScreen(
+                onNavigateToAdd = { navController.navigate(Screen.AdminWarrantyAdd.route) },
+                onNavigateToEdit = { warrantyId ->
+                    navController.navigate(Screen.AdminWarrantyEdit.createRoute(warrantyId))
+                },
+                onNavigateToDetail = { warrantyId ->
+                    navController.navigate(Screen.AdminWarrantyDetail.createRoute(warrantyId))
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminWarrantyDetail.route,
+            arguments = listOf(navArgument("warrantyId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val warrantyId = backStackEntry.arguments?.getInt("warrantyId") ?: 0
+            AdminWarrantyDetailScreen(
+                warrantyId = warrantyId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { id ->
+                    navController.navigate(Screen.AdminWarrantyEdit.createRoute(id))
+                }
+            )
+        }
+
+        composable(route = Screen.AdminWarrantyAdd.route) {
+            AdminWarrantyFormScreen(
+                warrantyId = null,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminWarrantyEdit.route,
+            arguments = listOf(navArgument("warrantyId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val warrantyId = backStackEntry.arguments?.getInt("warrantyId")
+            AdminWarrantyFormScreen(
+                warrantyId = warrantyId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

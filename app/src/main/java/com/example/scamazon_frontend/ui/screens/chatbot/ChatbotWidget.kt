@@ -14,11 +14,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -204,8 +207,12 @@ fun ChatbotWidget(
                             onValueChange = { inputText = it },
                             placeholder = { Text("Ask me anything...", fontSize = 12.sp, color = TextHint) },
                             modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(24.dp),
-                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            maxLines = 3,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                            keyboardActions = KeyboardActions(onSend = {
+                                if (canSend) { viewModel.sendMessage(inputText.trim()); inputText = "" }
+                            }),
                             textStyle = LocalTextStyle.current.copy(fontSize = 12.sp),
                             colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = PrimaryBlue, unfocusedBorderColor = BorderDefault)
                         )
@@ -342,15 +349,33 @@ private fun WidgetProductCard(product: ProductSuggestionDto, onAddToCart: (Int) 
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(product.imageUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = product.name,
-                modifier = Modifier.fillMaxWidth().height(70.dp).clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
-                contentScale = ContentScale.Crop
-            )
+            // Image area — shows placeholder when imageUrl is null or empty
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(70.dp)
+                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                    .background(Color(0xFFEEF2FF)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.ShoppingCart,
+                    contentDescription = null,
+                    tint = PrimaryBlue.copy(alpha = 0.20f),
+                    modifier = Modifier.size(28.dp)
+                )
+                if (!product.imageUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(product.imageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = product.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
             Column(modifier = Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(product.name, fontSize = 10.sp, fontFamily = Poppins, fontWeight = FontWeight.Medium, maxLines = 2, lineHeight = 13.sp)
                 Text(formatVND(product.price), fontSize = 11.sp, fontFamily = Poppins, fontWeight = FontWeight.Bold, color = PrimaryBlue)

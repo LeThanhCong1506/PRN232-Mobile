@@ -9,6 +9,21 @@ import kotlinx.coroutines.withContext
 class PaymentRepository(
     private val paymentApi: PaymentApi
 ) {
+    suspend fun verifyPaymentManually(orderId: Int): Resource<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = paymentApi.verifyPaymentManually(orderId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    Resource.Success(Unit)
+                } else {
+                    Resource.Error(response.body()?.message ?: "Failed to verify payment (${response.code()})")
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "An error occurred verifying payment")
+            }
+        }
+    }
+
     suspend fun getPaymentStatus(orderId: Int): Resource<PaymentStatusResponse> {
         return withContext(Dispatchers.IO) {
             try {

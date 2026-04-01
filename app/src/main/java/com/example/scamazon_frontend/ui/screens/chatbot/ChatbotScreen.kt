@@ -278,13 +278,29 @@ private fun FullScreenProductCard(product: ProductSuggestionDto, onAddToCart: (I
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Product image
-            AsyncImage(
-                model = ImageRequest.Builder(context).data(product.imageUrl).crossfade(true).build(),
-                contentDescription = product.name,
-                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
+            // Product image — shows placeholder when imageUrl is null or empty
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFFEEF2FF)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.ShoppingCart,
+                    contentDescription = null,
+                    tint = PrimaryBlue.copy(alpha = 0.20f),
+                    modifier = Modifier.size(28.dp)
+                )
+                if (!product.imageUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context).data(product.imageUrl).crossfade(true).build(),
+                        contentDescription = product.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
             Spacer(modifier = Modifier.width(10.dp))
             // Info
             Column(modifier = Modifier.weight(1f)) {

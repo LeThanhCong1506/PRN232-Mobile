@@ -1,13 +1,16 @@
 package com.example.scamazon_frontend.data.repository
 
 import com.example.scamazon_frontend.core.utils.Resource
-import com.example.scamazon_frontend.data.models.warranty.SubmitWarrantyClaimRequest
-import com.example.scamazon_frontend.data.models.warranty.SubmitWarrantyClaimResponseDto
-import com.example.scamazon_frontend.data.models.warranty.MyWarrantyDto
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimDto
 import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyClaimPagedDto
+import com.example.scamazon_frontend.data.models.warranty.AdminWarrantyDto
+import com.example.scamazon_frontend.data.models.warranty.CreateWarrantyRequest
+import com.example.scamazon_frontend.data.models.warranty.MyWarrantyDto
 import com.example.scamazon_frontend.data.models.warranty.ResolveWarrantyClaimRequest
 import com.example.scamazon_frontend.data.models.warranty.ResolveWarrantyClaimResponseDto
+import com.example.scamazon_frontend.data.models.warranty.SubmitWarrantyClaimRequest
+import com.example.scamazon_frontend.data.models.warranty.SubmitWarrantyClaimResponseDto
+import com.example.scamazon_frontend.data.models.warranty.UpdateWarrantyRequest
 import com.example.scamazon_frontend.data.network.api.WarrantyApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -168,6 +171,109 @@ class WarrantyRepository(private val api: WarrantyApi) {
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Network error")
             }
+        }
+    }
+
+    // ==================== Admin Warranty CRUD ====================
+
+    suspend fun getAdminWarrantyById(id: Int): Resource<AdminWarrantyDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getAdminWarrantyById(id)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) Resource.Success(body.data)
+                    else Resource.Error(body?.message ?: "Warranty not found")
+                } else Resource.Error("Error ${response.code()}")
+            } catch (e: Exception) { Resource.Error(e.message ?: "Network error") }
+        }
+    }
+
+    suspend fun getAllWarranties(): Resource<List<AdminWarrantyDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getAllWarranties()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) Resource.Success(body.data)
+                    else Resource.Error(body?.message ?: "Failed to load warranties")
+                } else Resource.Error("Error ${response.code()}: ${response.message()}")
+            } catch (e: Exception) { Resource.Error(e.message ?: "Network error") }
+        }
+    }
+
+    suspend fun getWarrantyBySerial(serialNumber: String): Resource<AdminWarrantyDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getWarrantyBySerial(serialNumber)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) Resource.Success(body.data)
+                    else Resource.Error(body?.message ?: "Warranty not found")
+                } else Resource.Error("Error ${response.code()}")
+            } catch (e: Exception) { Resource.Error(e.message ?: "Network error") }
+        }
+    }
+
+    suspend fun getActiveWarranties(): Resource<List<AdminWarrantyDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getActiveWarranties()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) Resource.Success(body.data)
+                    else Resource.Error(body?.message ?: "Failed")
+                } else Resource.Error("Error ${response.code()}")
+            } catch (e: Exception) { Resource.Error(e.message ?: "Network error") }
+        }
+    }
+
+    suspend fun getExpiredWarranties(): Resource<List<AdminWarrantyDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getExpiredWarranties()
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) Resource.Success(body.data)
+                    else Resource.Error(body?.message ?: "Failed")
+                } else Resource.Error("Error ${response.code()}")
+            } catch (e: Exception) { Resource.Error(e.message ?: "Network error") }
+        }
+    }
+
+    suspend fun createWarranty(request: CreateWarrantyRequest): Resource<AdminWarrantyDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.createWarranty(request)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) Resource.Success(body.data)
+                    else Resource.Error(body?.message ?: "Failed to create warranty")
+                } else Resource.Error("Error ${response.code()}: ${response.message()}")
+            } catch (e: Exception) { Resource.Error(e.message ?: "Network error") }
+        }
+    }
+
+    suspend fun updateWarranty(id: Int, request: UpdateWarrantyRequest): Resource<AdminWarrantyDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.updateWarranty(id, request)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) Resource.Success(body.data)
+                    else Resource.Error(body?.message ?: "Failed to update warranty")
+                } else Resource.Error("Error ${response.code()}: ${response.message()}")
+            } catch (e: Exception) { Resource.Error(e.message ?: "Network error") }
+        }
+    }
+
+    suspend fun deleteWarranty(id: Int): Resource<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.deleteWarranty(id)
+                if (response.isSuccessful && response.body()?.success == true) Resource.Success(Unit)
+                else Resource.Error(response.body()?.message ?: "Failed to delete warranty")
+            } catch (e: Exception) { Resource.Error(e.message ?: "Network error") }
         }
     }
 }

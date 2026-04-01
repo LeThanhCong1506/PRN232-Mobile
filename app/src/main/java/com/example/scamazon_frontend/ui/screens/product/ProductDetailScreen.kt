@@ -54,12 +54,15 @@ fun ProductDetailScreen(
     cartViewModel: CartViewModel = viewModel(factory = ViewModelFactory(LocalContext.current)),
     onNavigateBack: () -> Unit = {},
     onNavigateToCart: () -> Unit = {},
-    onNavigateToReview: (Int) -> Unit = {}
+    onNavigateToReview: (Int) -> Unit = {},
+    onNavigateToProduct: (String) -> Unit = {}
 ) {
     var quantity by remember { mutableStateOf(1) }
 
     val productState by viewModel.productState.collectAsStateWithLifecycle()
     val addToCartState by viewModel.addToCartState.collectAsStateWithLifecycle()
+    val kitAvailableStock by viewModel.kitAvailableStock.collectAsStateWithLifecycle()
+    val relatedProducts by viewModel.relatedProducts.collectAsStateWithLifecycle()
     val favoriteIds by favoriteViewModel.favoriteIds.collectAsStateWithLifecycle()
     val cartState by cartViewModel.cartState.collectAsStateWithLifecycle()
 
@@ -86,6 +89,20 @@ fun ProductDetailScreen(
     // Load product on first composition
     LaunchedEffect(productId) {
         viewModel.loadProduct(productId)
+        val id = productId.toIntOrNull()
+        if (id != null) {
+            viewModel.loadRelatedProducts(id)
+        }
+    }
+
+    // Load KIT stock once product type is known
+    LaunchedEffect(productState) {
+        if (productState is Resource.Success) {
+            val product = (productState as Resource.Success).data!!
+            if (product.productType?.uppercase() == "KIT") {
+                viewModel.loadKitAvailableStock(product.id)
+            }
+        }
     }
 
     // Handle add to cart result
@@ -333,7 +350,7 @@ fun ProductDetailScreen(
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
 
-                            // Bundle Components
+                            // Bundle Components (KIT)
                             product.bundleComponents?.let { components ->
                                 if (components.isNotEmpty()) {
                                     Text(
@@ -377,6 +394,128 @@ fun ProductDetailScreen(
                                                 }
                                                 if (component != components.last()) {
                                                     HorizontalDivider(color = BorderLight, modifier = Modifier.padding(vertical = 4.dp))
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // KIT Available Stock
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    when (val stockState = kitAvailableStock) {
+                                        is Resource.Success -> {
+                                            val stock = stockState.data!!
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = if (stock.availableStock > 0)
+                                                        Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                                                ),
+                                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = "KIT có thể lắp ráp",
+                                                        style = Typography.bodySmall,
+                                                        color = TextSecondary
+                                                    )
+                                                    Text(
+                                                        text = "${stock.availableStock} bộ",
+                                                        style = Typography.bodyMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (stock.availableStock > 0)
+                                                            Color(0xFF2E7D32) else StatusError
+                                                    )
+                                                }
+                                                stock.limitingComponent?.let { limiting ->
+                                                    Text(
+                                                        text = "Giới hạn bởi: $limiting",
+                                                        style = Typography.bodySmall,
+                                                        color = TextHint,
+                                                        modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        is Resource.Loading -> {
+                                            LinearProgressIndicator(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                color = PrimaryBlue
+                                            )
+                                        }
+                                        else -> {}
+                                    }
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                }
+                            }
+
+                            // Related Products Section
+                            val relatedState = relatedProducts
+                            if (relatedState is Resource.Success) {
+                                val related = relatedState.data
+                                if (!related.isNullOrEmpty()) {
+                                    Text(
+                                        text = "Sản phẩm liên quan",
+                                        style = Typography.titleMedium,
+                                        color = TextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        items(related) { relProd ->
+                                            Card(
+                                                modifier = Modifier
+                                                    .width(140.dp)
+                                                    .clickable { onNavigateToProduct(relProd.productId.toString()) },
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                                                colors = CardDefaults.cardColors(containerColor = BackgroundLight),
+                                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                            ) {
+                                                Column(modifier = Modifier.padding(8.dp)) {
+                                                    AsyncImage(
+                                                        model = ImageRequest.Builder(LocalContext.current)
+                                                            .data(relProd.primaryImage)
+                                                            .crossfade(true)
+                                                            .build(),
+                                                        contentDescription = relProd.name,
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .height(100.dp)
+                                                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)),
+                                                        contentScale = ContentScale.Crop
+                                                    )
+                                                    Spacer(modifier = Modifier.height(6.dp))
+                                                    Text(
+                                                        text = relProd.name,
+                                                        style = Typography.bodySmall,
+                                                        color = TextPrimary,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        maxLines = 2,
+                                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = "${formatPrice(relProd.price)}đ",
+                                                        style = Typography.bodySmall,
+                                                        color = PrimaryBlue,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    if (!relProd.inStock) {
+                                                        Text(
+                                                            text = "Hết hàng",
+                                                            style = Typography.bodySmall,
+                                                            color = StatusError,
+                                                            fontSize = 10.sp
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }

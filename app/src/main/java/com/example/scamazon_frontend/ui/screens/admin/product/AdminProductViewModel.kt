@@ -46,6 +46,9 @@ class AdminProductViewModel(
     private val _deleteState = MutableStateFlow<Resource<Any>?>(null)
     val deleteState: StateFlow<Resource<Any>?> = _deleteState.asStateFlow()
 
+    private val _toggleActiveState = MutableStateFlow<Resource<Any>?>(null)
+    val toggleActiveState: StateFlow<Resource<Any>?> = _toggleActiveState.asStateFlow()
+
     // Lưu search query hiện tại để reload sau khi delete
     private var lastSearchQuery: String? = null
 
@@ -243,7 +246,31 @@ class AdminProductViewModel(
         }
     }
 
+    fun toggleActive(id: Int) {
+        viewModelScope.launch {
+            _toggleActiveState.value = Resource.Loading()
+            val result = adminProductRepo.toggleActive(id)
+            if (result is Resource.Success) {
+                // Optimistically flip isActive in current state
+                val current = _productsState.value
+                if (current is Resource.Success && current.data != null) {
+                    val updatedItems = current.data.items.map { product ->
+                        if (product.id == id) product.copy(isActive = !(product.isActive))
+                        else product
+                    }
+                    _productsState.value = Resource.Success(current.data.copy(items = updatedItems))
+                }
+            }
+            _toggleActiveState.value = when (result) {
+                is Resource.Success -> Resource.Success(Unit)
+                is Resource.Error -> Resource.Error(result.message ?: "Failed to toggle product")
+                is Resource.Loading -> Resource.Loading()
+            }
+        }
+    }
+
     fun resetSaveState() { _saveState.value = null }
     fun resetDeleteState() { _deleteState.value = null }
     fun resetUploadState() { _uploadState.value = null }
+    fun resetToggleState() { _toggleActiveState.value = null }
 }
